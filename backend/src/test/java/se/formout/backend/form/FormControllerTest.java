@@ -25,6 +25,9 @@ class FormControllerTest {
     @Autowired
     private FormRepository formRepository;
 
+    @Autowired
+    private FormVersionRepository formVersionRepository;
+
     @Test
     void listsOnlyPublishedForms() throws Exception {
         Instant now = Instant.now();
@@ -37,5 +40,37 @@ class FormControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.title == 'Published form')]").exists())
                 .andExpect(jsonPath("$[?(@.title == 'Draft form')]").doesNotExist());
+    }
+
+    @Test
+    void returnsAPublishedFormWithItsCurrentSchema() throws Exception {
+        Instant now = Instant.now();
+        String slug = "wellbeing-form-" + UUID.randomUUID();
+        Form form = formRepository.save(new Form(UUID.randomUUID(), "user-1", "Wellbeing form", "desc",
+                slug, FormStatus.PUBLISHED, 1, now, now));
+        formVersionRepository.save(new FormVersion(UUID.randomUUID(), form.getId(), 1,
+                "{\"schemaVersion\":1}", now));
+
+        mockMvc.perform(get("/api/forms/{slug}", slug))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Wellbeing form"))
+                .andExpect(jsonPath("$.schema.schemaVersion").value(1));
+    }
+
+    @Test
+    void returnsNotFoundForAnUnpublishedForm() throws Exception {
+        Instant now = Instant.now();
+        String slug = "draft-form-" + UUID.randomUUID();
+        formRepository.save(new Form(UUID.randomUUID(), "user-1", "Draft form", "desc",
+                slug, FormStatus.DRAFT, 1, now, now));
+
+        mockMvc.perform(get("/api/forms/{slug}", slug))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void returnsNotFoundForAnUnknownSlug() throws Exception {
+        mockMvc.perform(get("/api/forms/{slug}", "does-not-exist"))
+                .andExpect(status().isNotFound());
     }
 }
