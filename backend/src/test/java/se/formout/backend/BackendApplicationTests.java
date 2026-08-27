@@ -1,4 +1,4 @@
-package com.formout.backend;
+package se.formout.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

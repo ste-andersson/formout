@@ -1,4 +1,4 @@
-package com.formout.backend;
+package se.formout.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
