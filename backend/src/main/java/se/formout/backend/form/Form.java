@@ -1,4 +1,4 @@
-package com.formout.backend.form;
+package se.formout.backend.form;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

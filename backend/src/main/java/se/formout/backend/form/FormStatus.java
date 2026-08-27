@@ -1,4 +1,4 @@
-package com.formout.backend.form;
+package se.formout.backend.form;
 
 public enum FormStatus {
     DRAFT,

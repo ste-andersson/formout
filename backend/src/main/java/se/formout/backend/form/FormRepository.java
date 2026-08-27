@@ -1,4 +1,4 @@
-package com.formout.backend.form;
+package se.formout.backend.form;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

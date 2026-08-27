@@ -1,4 +1,4 @@
-package com.formout.backend.form;
+package se.formout.backend.form;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
