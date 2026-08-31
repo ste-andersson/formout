@@ -93,4 +93,24 @@ public class Form {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setStatus(FormStatus status) {
+        this.status = status;
+    }
+
+    public void setCurrentVersion(int currentVersion) {
+        this.currentVersion = currentVersion;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

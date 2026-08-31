@@ -11,4 +11,6 @@ public interface FormRepository extends JpaRepository<Form, UUID> {
     List<Form> findByStatusOrderByUpdatedAtDesc(FormStatus status);
 
     Optional<Form> findBySlug(String slug);
+
+    List<Form> findByUserIdOrderByUpdatedAtDesc(String userId);
 }
