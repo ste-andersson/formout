@@ -1,0 +1,13 @@
+.drag-preview {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: grabbing;
+}
+
+.drag-preview--chip {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}

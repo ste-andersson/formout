@@ -1,7 +1,8 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Field } from '../../lib/formSchema'
-import { fieldTypeLabel, isContentBlock } from '../../lib/formSchema'
+import { fieldTypeLabel } from '../../lib/formSchema'
+import { FieldPreview } from './FieldPreview'
 import './SortableFieldItem.css'
 
 interface SortableFieldItemProps {
@@ -42,9 +43,7 @@ export function SortableFieldItem({ field, sectionId, isSelected, onSelect, onRe
       </button>
       <button type="button" className="sortable-field-item__body" onClick={onSelect}>
         <span className="sortable-field-item__type">{fieldTypeLabel(field.type)}</span>
-        <span className="sortable-field-item__label">
-          {field.label || (isContentBlock(field.type) ? '(tom text)' : '(ingen etikett)')}
-        </span>
+        <FieldPreview field={field} />
       </button>
       <button type="button" className="sortable-field-item__remove" onClick={onRemove} aria-label="Ta bort">
         ×

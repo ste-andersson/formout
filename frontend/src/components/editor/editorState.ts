@@ -1,12 +1,11 @@
 import type { Field, FieldType, FormSchema, Section } from '../../lib/formSchema'
 import { createField, createSection } from '../../lib/formSchema'
-import { slugify } from '../../lib/slugify'
+import { generateFormCode } from '../../lib/formCode'
 
 export interface EditorState {
   title: string
   description: string
   slug: string
-  slugEditedManually: boolean
   sections: Section[]
   selectedElementId: string | null
 }
@@ -30,8 +29,7 @@ export function initialEditorState(): EditorState {
   return {
     title: '',
     description: '',
-    slug: '',
-    slugEditedManually: false,
+    slug: generateFormCode(),
     sections: [createSection()],
     selectedElementId: null,
   }
@@ -44,21 +42,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         title: action.title,
         description: action.description,
         slug: action.slug,
-        slugEditedManually: true,
         sections: action.sections,
         selectedElementId: null,
       }
 
-    case 'SET_TITLE': {
-      const slug = state.slugEditedManually ? state.slug : slugify(action.title)
-      return { ...state, title: action.title, slug }
-    }
+    case 'SET_TITLE':
+      return { ...state, title: action.title }
 
     case 'SET_DESCRIPTION':
       return { ...state, description: action.description }
 
     case 'SET_SLUG':
-      return { ...state, slug: action.slug, slugEditedManually: true }
+      return { ...state, slug: action.slug }
 
     case 'ADD_SECTION':
       return { ...state, sections: [...state.sections, createSection()] }

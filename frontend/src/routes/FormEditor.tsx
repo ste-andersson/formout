@@ -1,14 +1,18 @@
 import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/clerk-react'
-import type { DragEndEvent } from '@dnd-kit/core'
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { useEffect, useReducer, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import * as adminApi from '../lib/adminApi'
-import type { FieldType } from '../lib/formSchema'
+import { generateFormCode } from '../lib/formCode'
+import type { FieldType, Section } from '../lib/formSchema'
+import type { ActiveDragItem } from '../components/editor/DragPreview'
+import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
 import { JsonPreview } from '../components/editor/JsonPreview'
 import { PropertiesPanel } from '../components/editor/PropertiesPanel'
 import { SectionCanvas } from '../components/editor/SectionCanvas'
+import type { DropIndicator } from '../components/editor/SectionCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
 import './FormEditor.css'
 
@@ -42,6 +46,8 @@ function FormEditorContent() {
   const [loadState, setLoadState] = useState<LoadState>(isEditMode ? { status: 'loading' } : { status: 'ready' })
   const [saveState, setSaveState] = useState<LoadState>({ status: 'ready' })
   const [activeTab, setActiveTab] = useState<'build' | 'json'>('build')
+  const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
+  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
 
   useEffect(() => {
     if (!isEditMode || !id) return
@@ -75,32 +81,72 @@ function FormEditorContent() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
+  function resolveDropTarget(
+    sections: Section[],
+    activeData: PaletteDragData | FieldDragData | undefined,
+    overData: FieldDragData | SectionContainerDropData | undefined,
+  ): DropIndicator | null {
+    if (!activeData || !overData) return null
+
+    const targetSectionId = overData.sectionId
+    const targetSection = sections.find((s) => s.id === targetSectionId)
+    if (!targetSection) return null
+
+    const index =
+      overData.source === 'field' ? targetSection.fields.findIndex((f) => f.id === overData.fieldId) : targetSection.fields.length
+
+    return { sectionId: targetSectionId, index }
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    const data = event.active.data.current as PaletteDragData | FieldDragData | undefined
+    if (!data) return
+
+    if (data.source === 'palette') {
+      setActiveDragItem({ source: 'palette', fieldType: data.fieldType })
+      return
+    }
+
+    const field = findField(state, data.fieldId)
+    if (field) {
+      setActiveDragItem({ source: 'field', field })
+    }
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const activeData = event.active.data.current as PaletteDragData | FieldDragData | undefined
+    const overData = event.over?.data.current as FieldDragData | SectionContainerDropData | undefined
+    setDropIndicator(resolveDropTarget(state.sections, activeData, overData))
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    setActiveDragItem(null)
+    setDropIndicator(null)
+
     const { active, over } = event
     if (!over) return
 
     const activeData = active.data.current as PaletteDragData | FieldDragData | undefined
     const overData = over.data.current as FieldDragData | SectionContainerDropData | undefined
+    const target = resolveDropTarget(state.sections, activeData, overData)
 
-    if (!activeData || !overData) return
-
-    const targetSectionId = overData.sectionId
-    const targetSection = state.sections.find((s) => s.id === targetSectionId)
-    if (!targetSection) return
-
-    const targetIndex =
-      overData.source === 'field' ? targetSection.fields.findIndex((f) => f.id === overData.fieldId) : targetSection.fields.length
+    if (!activeData || !target) return
 
     if (activeData.source === 'palette') {
       dispatch({
         type: 'ADD_ELEMENT',
-        sectionId: targetSectionId,
+        sectionId: target.sectionId,
         fieldType: activeData.fieldType,
-        index: targetIndex,
+        index: target.index,
       })
     } else {
-      dispatch({ type: 'MOVE_ELEMENT', fieldId: activeData.fieldId, toSectionId: targetSectionId, toIndex: targetIndex })
+      dispatch({ type: 'MOVE_ELEMENT', fieldId: activeData.fieldId, toSectionId: target.sectionId, toIndex: target.index })
     }
+  }
+
+  function handleDragCancel() {
+    setActiveDragItem(null)
+    setDropIndicator(null)
   }
 
   async function handleSave() {
@@ -116,12 +162,28 @@ function FormEditorContent() {
         await adminApi.addVersion(token, id, { schema })
         setSaveState({ status: 'ready' })
       } else {
-        const created = await adminApi.createForm(token, {
-          title: state.title,
-          description: state.description || null,
-          slug: state.slug,
-          schema,
-        })
+        let slug = state.slug
+        let created: adminApi.AdminFormDetail | undefined
+
+        for (let attempt = 0; attempt < 5 && !created; attempt++) {
+          try {
+            created = await adminApi.createForm(token, {
+              title: state.title,
+              description: state.description || null,
+              slug,
+              schema,
+            })
+          } catch (err) {
+            if (err instanceof adminApi.AdminApiError && err.status === 409) {
+              slug = generateFormCode()
+              dispatch({ type: 'SET_SLUG', slug })
+            } else {
+              throw err
+            }
+          }
+        }
+
+        if (!created) throw new Error('Could not generate a unique code')
         navigate(`/admin/forms/${created.id}/edit`)
       }
     } catch {
@@ -158,7 +220,13 @@ function FormEditorContent() {
   const schema = buildFormSchema(state)
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
       <div className="form-editor">
         <div className="form-editor__meta">
           <label>
@@ -172,10 +240,17 @@ function FormEditorContent() {
               onChange={(e) => dispatch({ type: 'SET_DESCRIPTION', description: e.target.value })}
             />
           </label>
-          <label>
-            Kod (slug)
-            <input value={state.slug} onChange={(e) => dispatch({ type: 'SET_SLUG', slug: e.target.value })} />
-          </label>
+          <div className="form-editor__code">
+            <span>
+              Kod: <strong>{state.slug}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
+            >
+              Generera ny kod
+            </button>
+          </div>
         </div>
 
         <div className="form-editor__tabs">
@@ -193,6 +268,7 @@ function FormEditorContent() {
             <SectionCanvas
               sections={state.sections}
               selectedElementId={state.selectedElementId}
+              dropIndicator={dropIndicator}
               onSelectElement={(fieldId) => dispatch({ type: 'SELECT_ELEMENT', fieldId })}
               onRemoveElement={(fieldId) => dispatch({ type: 'REMOVE_ELEMENT', fieldId })}
               onRenameSection={(sectionId, title) => dispatch({ type: 'RENAME_SECTION', sectionId, title })}
@@ -243,6 +319,7 @@ function FormEditorContent() {
           {saveState.status === 'error' && <p>{saveState.message}</p>}
         </div>
       </div>
+      <DragOverlay>{activeDragItem && <DragPreview item={activeDragItem} />}</DragOverlay>
     </DndContext>
   )
 }

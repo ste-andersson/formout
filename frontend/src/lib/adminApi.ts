@@ -38,6 +38,15 @@ export interface AddFormVersionRequest {
   schema: FormSchema
 }
 
+export class AdminApiError extends Error {
+  status: number
+
+  constructor(status: number) {
+    super(`Admin API request failed: ${status}`)
+    this.status = status
+  }
+}
+
 async function adminFetch(token: string, path: string, init?: RequestInit): Promise<Response> {
   const response = await fetch(`/api/admin/forms${path}`, {
     ...init,
@@ -49,7 +58,7 @@ async function adminFetch(token: string, path: string, init?: RequestInit): Prom
   })
 
   if (!response.ok) {
-    throw new Error(`Admin API request failed: ${response.status}`)
+    throw new AdminApiError(response.status)
   }
 
   return response

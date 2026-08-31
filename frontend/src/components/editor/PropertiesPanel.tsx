@@ -13,8 +13,8 @@ export function PropertiesPanel({ field, onChange, onClose }: PropertiesPanelPro
     <div className="properties-panel">
       <div className="properties-panel__header">
         <h2>Egenskaper</h2>
-        <button type="button" onClick={onClose} aria-label="Stäng">
-          ×
+        <button type="button" className="properties-panel__save" onClick={onClose}>
+          Spara
         </button>
       </div>
 
