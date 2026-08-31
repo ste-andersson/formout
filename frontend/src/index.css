@@ -1,0 +1,70 @@
+:root {
+  --text: #1f1f1f;
+  --text-secondary: #666;
+  --bg: #fff;
+  --border: #e2e2e2;
+  --accent: #6c3bff;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  font: 16px/1.5 var(--sans);
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f0f0f0;
+    --text-secondary: #a7a7a7;
+    --bg: #16171d;
+    --border: #2e303a;
+    --accent: #a37bff;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .app-main {
+    padding: 1.5rem 2rem;
+  }
+}
+
+h1 {
+  font-size: 1.375rem;
+  margin: 0 0 0.5rem;
+}
+
+@media (min-width: 640px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+}
+
+p {
+  margin: 0 0 1rem;
+}

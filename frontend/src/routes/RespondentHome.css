@@ -1,0 +1,39 @@
+.respondent-home {
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.respondent-home__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.respondent-home__label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.respondent-home__input {
+  font-size: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  min-height: 44px;
+}
+
+.respondent-home__submit {
+  font-size: 1rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: var(--accent);
+  color: #fff;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.respondent-home__submit:hover,
+.respondent-home__submit:focus-visible {
+  opacity: 0.9;
+}
