@@ -7,5 +7,8 @@ public enum FieldType {
     CHECKBOX,
     SINGLE_CHOICE,
     MULTIPLE_CHOICE,
-    SCALE
+    SCALE,
+    HEADING,
+    SUBHEADING,
+    PARAGRAPH
 }

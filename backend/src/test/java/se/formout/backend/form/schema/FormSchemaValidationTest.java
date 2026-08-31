@@ -61,6 +61,27 @@ class FormSchemaValidationTest {
     }
 
     @Test
+    void aHeadingWithEmptySettingsIsAccepted() {
+        Field field = new Field("field-1", FieldType.HEADING, "About you", false,
+                new FieldSettings(null, null, null, null, null));
+
+        Set<ConstraintViolation<Field>> violations = validator.validate(field);
+
+        assertTrue(violations.isEmpty(), violations::toString);
+    }
+
+    @Test
+    void aParagraphWithEmptySettingsIsAccepted() {
+        Field field = new Field("field-1", FieldType.PARAGRAPH,
+                "Please answer honestly, there are no wrong answers.", false,
+                new FieldSettings(null, null, null, null, null));
+
+        Set<ConstraintViolation<Field>> violations = validator.validate(field);
+
+        assertTrue(violations.isEmpty(), violations::toString);
+    }
+
+    @Test
     void aSchemaWithoutSectionsIsRejected() {
         FormSchema schema = new FormSchema(1, "Empty form", null, List.of());
 
