@@ -1,0 +1,88 @@
+.section-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.section-block {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.section-block__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-block__title {
+  flex: 1;
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  background: none;
+  color: inherit;
+}
+
+.section-block__title:focus {
+  border-color: var(--border);
+}
+
+.section-block__controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.section-block__controls button {
+  font: inherit;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--bg);
+  color: inherit;
+  cursor: pointer;
+}
+
+.section-block__controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.section-block__fields {
+  min-height: 3rem;
+  border-radius: 0.375rem;
+}
+
+.section-block__fields[data-drop-active] {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+}
+
+.section-block__empty {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.75rem;
+  margin: 0;
+  border: 1px dashed var(--border);
+  border-radius: 0.375rem;
+}
+
+.section-canvas__add-section {
+  font: inherit;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.375rem;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}

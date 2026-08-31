@@ -1,0 +1,93 @@
+.properties-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.properties-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.properties-panel__header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.properties-panel__header button {
+  font-size: 1.25rem;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.properties-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.properties-panel__field input {
+  font: inherit;
+  color: var(--text);
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.properties-panel__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.properties-panel__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.properties-panel__option-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.properties-panel__option-row input {
+  flex: 1;
+  font: inherit;
+  color: var(--text);
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.properties-panel__option-row button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+@media (min-width: 1024px) {
+  .properties-panel {
+    border-radius: 0.5rem;
+  }
+}
