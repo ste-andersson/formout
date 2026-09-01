@@ -12,6 +12,7 @@ export interface EditorState {
 
 export type EditorAction =
   | { type: 'LOAD'; title: string; description: string; slug: string; sections: Section[] }
+  | { type: 'LOAD_INTERPRETED'; title: string; description: string; sections: Section[] }
   | { type: 'SET_TITLE'; title: string }
   | { type: 'SET_DESCRIPTION'; description: string }
   | { type: 'SET_SLUG'; slug: string }
@@ -42,6 +43,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         title: action.title,
         description: action.description,
         slug: action.slug,
+        sections: action.sections,
+        lastAddedFieldId: null,
+      }
+
+    case 'LOAD_INTERPRETED':
+      return {
+        ...state,
+        title: action.title,
+        description: action.description,
         sections: action.sections,
         lastAddedFieldId: null,
       }

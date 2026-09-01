@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { isTouchDevice } from '../../lib/device'
 import type { Field, FieldSettings } from '../../lib/formSchema'
 import { isContentBlock } from '../../lib/formSchema'
 import './FieldPreview.css'
@@ -23,10 +24,7 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
     // shifts the viewport and throws off drag coordinates for the *next*
     // drag gesture. Skip the native focus there; keep it on desktop where
     // there's no such side effect.
-    const isTouchDevice =
-      typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
-
-    if (primaryElRef.current && !isTouchDevice) {
+    if (primaryElRef.current && !isTouchDevice()) {
       primaryElRef.current.focus()
       primaryElRef.current.select()
     }

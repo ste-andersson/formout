@@ -119,3 +119,24 @@ export async function archive(token: string, id: string): Promise<AdminFormDetai
 export async function deleteForm(token: string, id: string): Promise<void> {
   await adminFetch(token, `/${id}`, { method: 'DELETE' })
 }
+
+export async function interpretImage(token: string, file: File): Promise<FormSchema> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  // Not routed through adminFetch: it always sets Content-Type: application/json,
+  // but a multipart body needs the browser to set its own boundary-aware header.
+  const response = await fetch('/api/admin/forms/interpret', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new AdminApiError(response.status)
+  }
+
+  return (await response.json()) as FormSchema
+}

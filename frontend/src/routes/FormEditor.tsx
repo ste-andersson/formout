@@ -1,10 +1,11 @@
 import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/clerk-react'
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { useCallback, useEffect, useReducer, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import * as adminApi from '../lib/adminApi'
 import { generateFormCode } from '../lib/formCode'
+import { resizeImageForUpload } from '../lib/imageResize'
 import type { FieldType, Section } from '../lib/formSchema'
 import { useToast } from '../components/toastContext'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
@@ -42,12 +43,34 @@ function FormEditorContent() {
   const isEditMode = Boolean(id)
   const { getToken } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
+
+  const [uploadedImage] = useState<File | null>(() => {
+    const state = location.state as { uploadedFile?: File } | null
+    return state?.uploadedFile ?? null
+  })
+  const [uploadedImageUrl] = useState<string | null>(() =>
+    uploadedImage ? URL.createObjectURL(uploadedImage) : null,
+  )
 
   const [state, dispatch] = useReducer(editorReducer, initialEditorState())
   const [loadState, setLoadState] = useState<LoadState>(isEditMode ? { status: 'loading' } : { status: 'ready' })
   const [saveState, setSaveState] = useState<LoadState>({ status: 'ready' })
-  const [activeTab, setActiveTab] = useState<'build' | 'preview' | 'json'>('build')
+  const [interpretState, setInterpretState] = useState<LoadState>(
+    uploadedImage ? { status: 'loading' } : { status: 'ready' },
+  )
+  const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview' | 'json'>(
+    uploadedImage ? 'image' : 'build',
+  )
+
+  useEffect(() => {
+    return () => {
+      if (uploadedImageUrl) {
+        URL.revokeObjectURL(uploadedImageUrl)
+      }
+    }
+  }, [uploadedImageUrl])
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
 
@@ -80,6 +103,42 @@ function FormEditorContent() {
       cancelled = true
     }
   }, [isEditMode, id, getToken])
+
+  const interpretUploadedImage = useCallback(async () => {
+    if (!uploadedImage) return
+
+    setInterpretState({ status: 'loading' })
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Not signed in')
+
+      const fileToSend = await resizeImageForUpload(uploadedImage)
+      const schema = await adminApi.interpretImage(token, fileToSend)
+      dispatch({
+        type: 'LOAD_INTERPRETED',
+        title: schema.title,
+        description: schema.description ?? '',
+        sections: schema.sections,
+      })
+      setInterpretState({ status: 'ready' })
+      showToast('Formuläret är tolkat', 'success')
+      setActiveTab('preview')
+    } catch {
+      setInterpretState({ status: 'error', message: 'Kunde inte tolka formuläret.' })
+      showToast('Kunde inte tolka formuläret', 'error')
+    }
+  }, [uploadedImage, getToken, showToast])
+
+  // Auto-run once per mounted editor instance. Guarded with a ref (not just
+  // the effect dependency array) so React StrictMode's dev-only double-invoke
+  // of effects can't trigger two real OpenAI calls.
+  const hasStartedInterpretation = useRef(false)
+  useEffect(() => {
+    if (uploadedImage && !hasStartedInterpretation.current) {
+      hasStartedInterpretation.current = true
+      interpretUploadedImage()
+    }
+  }, [uploadedImage, interpretUploadedImage])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
@@ -268,6 +327,15 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__tabs">
+          {uploadedImage && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('image')}
+              data-active={activeTab === 'image' || undefined}
+            >
+              Bild
+            </button>
+          )}
           <button type="button" onClick={() => setActiveTab('build')} data-active={activeTab === 'build' || undefined}>
             Bygg
           </button>
@@ -284,6 +352,34 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__body">
+          {uploadedImage && uploadedImageUrl && (
+            <div className="form-editor__image" data-hidden={activeTab !== 'image' || undefined}>
+              {interpretState.status === 'loading' && (
+                <p className="form-editor__image-status">Tolkar formuläret med AI…</p>
+              )}
+              {interpretState.status === 'error' && (
+                <div className="form-editor__image-status form-editor__image-status--error">
+                  <p>{interpretState.message}</p>
+                  <button type="button" onClick={() => interpretUploadedImage()}>
+                    Försök igen
+                  </button>
+                </div>
+              )}
+              {uploadedImage.type === 'application/pdf' ? (
+                <object data={uploadedImageUrl} type="application/pdf" className="form-editor__image-pdf">
+                  <p>
+                    Kunde inte visa PDF:en i webbläsaren.{' '}
+                    <a href={uploadedImageUrl} download={uploadedImage.name}>
+                      Ladda ner filen
+                    </a>
+                    .
+                  </p>
+                </object>
+              ) : (
+                <img src={uploadedImageUrl} alt="Uppladdat formulär" className="form-editor__image-preview" />
+              )}
+            </div>
+          )}
           <div className="form-editor__build" data-hidden={activeTab !== 'build' || undefined}>
             <ElementPalette />
             <SectionCanvas
