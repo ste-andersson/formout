@@ -58,8 +58,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'ADD_SECTION':
       return { ...state, sections: [...state.sections, createSection()] }
 
-    case 'REMOVE_SECTION':
+    case 'REMOVE_SECTION': {
+      // Always keep at least one section, so there's somewhere to drop
+      // elements. Removing the last remaining section clears it instead.
+      if (state.sections.length === 1) {
+        return {
+          ...state,
+          sections: state.sections.map((s) => (s.id === action.sectionId ? { ...createSection(), id: s.id } : s)),
+        }
+      }
       return { ...state, sections: state.sections.filter((s) => s.id !== action.sectionId) }
+    }
 
     case 'RENAME_SECTION':
       return {
