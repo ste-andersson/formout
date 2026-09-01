@@ -88,8 +88,20 @@ function defaultLabelFor(type: FieldType): string {
       return 'Underrubrik'
     case 'PARAGRAPH':
       return 'Förklarande text'
-    default:
-      return ''
+    case 'TEXT':
+      return 'Skriv ett kort svar'
+    case 'TEXTAREA':
+      return 'Skriv ett långt svar'
+    case 'NUMBER':
+      return 'Skriv en siffra'
+    case 'CHECKBOX':
+      return 'Kryssa i rutan'
+    case 'SINGLE_CHOICE':
+      return 'Välj ett alternativ'
+    case 'MULTIPLE_CHOICE':
+      return 'Välj ett eller flera alternativ'
+    case 'SCALE':
+      return 'Välj en position på skalan'
   }
 }
 

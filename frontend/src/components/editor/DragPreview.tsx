@@ -18,7 +18,7 @@ export function DragPreview({ item }: DragPreviewProps) {
 
   return (
     <div className="drag-preview">
-      <FieldPreview field={item.field} />
+      <FieldPreview field={item.field} autoFocus={false} onChange={() => {}} onFocused={() => {}} />
     </div>
   )
 }

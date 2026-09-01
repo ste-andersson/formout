@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Fragment } from 'react'
-import type { Section } from '../../lib/formSchema'
+import type { Field, Section } from '../../lib/formSchema'
 import { TrashIcon } from '../icons'
 import { SortableFieldItem } from './SortableFieldItem'
 import './SectionCanvas.css'
@@ -13,9 +13,10 @@ export interface DropIndicator {
 
 interface SectionCanvasProps {
   sections: Section[]
-  selectedElementId: string | null
+  lastAddedFieldId: string | null
   dropIndicator: DropIndicator | null
-  onSelectElement: (fieldId: string) => void
+  onChangeElement: (fieldId: string, patch: Partial<Field>) => void
+  onFieldFocused: () => void
   onRemoveElement: (fieldId: string) => void
   onRenameSection: (sectionId: string, title: string) => void
   onRemoveSection: (sectionId: string) => void
@@ -26,9 +27,10 @@ interface SectionCanvasProps {
 
 export function SectionCanvas({
   sections,
-  selectedElementId,
+  lastAddedFieldId,
   dropIndicator,
-  onSelectElement,
+  onChangeElement,
+  onFieldFocused,
   onRemoveElement,
   onRenameSection,
   onRemoveSection,
@@ -37,23 +39,26 @@ export function SectionCanvas({
   onAddSection,
 }: SectionCanvasProps) {
   return (
-    <div className="section-canvas">
-      {sections.map((section, index) => (
-        <SectionBlock
-          key={section.id}
-          section={section}
-          isFirst={index === 0}
-          isLast={index === sections.length - 1}
-          selectedElementId={selectedElementId}
-          dropIndicatorIndex={dropIndicator?.sectionId === section.id ? dropIndicator.index : null}
-          onSelectElement={onSelectElement}
-          onRemoveElement={onRemoveElement}
-          onRenameSection={onRenameSection}
-          onRemoveSection={onRemoveSection}
-          onMoveUp={() => onMoveSectionUp(section.id)}
-          onMoveDown={() => onMoveSectionDown(section.id)}
-        />
-      ))}
+    <div className="section-canvas-wrapper">
+      <div className="section-canvas">
+        {sections.map((section, index) => (
+          <SectionBlock
+            key={section.id}
+            section={section}
+            isFirst={index === 0}
+            isLast={index === sections.length - 1}
+            lastAddedFieldId={lastAddedFieldId}
+            dropIndicatorIndex={dropIndicator?.sectionId === section.id ? dropIndicator.index : null}
+            onChangeElement={onChangeElement}
+            onFieldFocused={onFieldFocused}
+            onRemoveElement={onRemoveElement}
+            onRenameSection={onRenameSection}
+            onRemoveSection={onRemoveSection}
+            onMoveUp={() => onMoveSectionUp(section.id)}
+            onMoveDown={() => onMoveSectionDown(section.id)}
+          />
+        ))}
+      </div>
       <button type="button" className="section-canvas__add-section" onClick={onAddSection}>
         + Lägg till sektion
       </button>
@@ -65,9 +70,10 @@ interface SectionBlockProps {
   section: Section
   isFirst: boolean
   isLast: boolean
-  selectedElementId: string | null
+  lastAddedFieldId: string | null
   dropIndicatorIndex: number | null
-  onSelectElement: (fieldId: string) => void
+  onChangeElement: (fieldId: string, patch: Partial<Field>) => void
+  onFieldFocused: () => void
   onRemoveElement: (fieldId: string) => void
   onRenameSection: (sectionId: string, title: string) => void
   onRemoveSection: (sectionId: string) => void
@@ -79,9 +85,10 @@ function SectionBlock({
   section,
   isFirst,
   isLast,
-  selectedElementId,
+  lastAddedFieldId,
   dropIndicatorIndex,
-  onSelectElement,
+  onChangeElement,
+  onFieldFocused,
   onRemoveElement,
   onRenameSection,
   onRemoveSection,
@@ -130,8 +137,9 @@ function SectionBlock({
               <SortableFieldItem
                 field={field}
                 sectionId={section.id}
-                isSelected={field.id === selectedElementId}
-                onSelect={() => onSelectElement(field.id)}
+                autoFocus={field.id === lastAddedFieldId}
+                onChange={(patch) => onChangeElement(field.id, patch)}
+                onFocused={onFieldFocused}
                 onRemove={() => onRemoveElement(field.id)}
               />
             </Fragment>

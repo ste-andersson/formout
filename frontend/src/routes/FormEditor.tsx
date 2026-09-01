@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/clerk-react'
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { useEffect, useReducer, useState } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import * as adminApi from '../lib/adminApi'
 import { generateFormCode } from '../lib/formCode'
@@ -10,7 +10,6 @@ import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
 import { JsonPreview } from '../components/editor/JsonPreview'
-import { PropertiesPanel } from '../components/editor/PropertiesPanel'
 import { SectionCanvas } from '../components/editor/SectionCanvas'
 import type { DropIndicator } from '../components/editor/SectionCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
@@ -149,6 +148,10 @@ function FormEditorContent() {
     setDropIndicator(null)
   }
 
+  const handleFieldFocused = useCallback(() => {
+    dispatch({ type: 'CLEAR_LAST_ADDED' })
+  }, [])
+
   async function handleSave() {
     setSaveState({ status: 'loading' })
     try {
@@ -216,7 +219,6 @@ function FormEditorContent() {
     return <p>{loadState.message}</p>
   }
 
-  const selectedField = state.selectedElementId ? findField(state, state.selectedElementId) : undefined
   const schema = buildFormSchema(state)
 
   return (
@@ -267,9 +269,10 @@ function FormEditorContent() {
             <ElementPalette />
             <SectionCanvas
               sections={state.sections}
-              selectedElementId={state.selectedElementId}
+              lastAddedFieldId={state.lastAddedFieldId}
               dropIndicator={dropIndicator}
-              onSelectElement={(fieldId) => dispatch({ type: 'SELECT_ELEMENT', fieldId })}
+              onChangeElement={(fieldId, patch) => dispatch({ type: 'UPDATE_ELEMENT', fieldId, patch })}
+              onFieldFocused={handleFieldFocused}
               onRemoveElement={(fieldId) => dispatch({ type: 'REMOVE_ELEMENT', fieldId })}
               onRenameSection={(sectionId, title) => dispatch({ type: 'RENAME_SECTION', sectionId, title })}
               onRemoveSection={(sectionId) => dispatch({ type: 'REMOVE_SECTION', sectionId })}
@@ -288,16 +291,6 @@ function FormEditorContent() {
             <JsonPreview schema={schema} />
           </div>
         </div>
-
-        {selectedField && (
-          <div className="form-editor__properties-overlay">
-            <PropertiesPanel
-              field={selectedField}
-              onChange={(patch) => dispatch({ type: 'UPDATE_ELEMENT', fieldId: selectedField.id, patch })}
-              onClose={() => dispatch({ type: 'SELECT_ELEMENT', fieldId: null })}
-            />
-          </div>
-        )}
 
         <div className="form-editor__actions">
           <button type="button" onClick={handleSave} disabled={saveState.status === 'loading'}>

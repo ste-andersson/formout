@@ -8,12 +8,20 @@ import './SortableFieldItem.css'
 interface SortableFieldItemProps {
   field: Field
   sectionId: string
-  isSelected: boolean
-  onSelect: () => void
+  autoFocus: boolean
+  onChange: (patch: Partial<Field>) => void
+  onFocused: () => void
   onRemove: () => void
 }
 
-export function SortableFieldItem({ field, sectionId, isSelected, onSelect, onRemove }: SortableFieldItemProps) {
+export function SortableFieldItem({
+  field,
+  sectionId,
+  autoFocus,
+  onChange,
+  onFocused,
+  onRemove,
+}: SortableFieldItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: field.id,
     data: { source: 'field', sectionId, fieldId: field.id },
@@ -25,13 +33,7 @@ export function SortableFieldItem({ field, sectionId, isSelected, onSelect, onRe
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="sortable-field-item"
-      data-selected={isSelected || undefined}
-      data-dragging={isDragging || undefined}
-    >
+    <div ref={setNodeRef} style={style} className="sortable-field-item" data-dragging={isDragging || undefined}>
       <button
         type="button"
         className="sortable-field-item__handle"
@@ -41,10 +43,10 @@ export function SortableFieldItem({ field, sectionId, isSelected, onSelect, onRe
       >
         ⠿
       </button>
-      <button type="button" className="sortable-field-item__body" onClick={onSelect}>
+      <div className="sortable-field-item__body">
         <span className="sortable-field-item__type">{fieldTypeLabel(field.type)}</span>
-        <FieldPreview field={field} />
-      </button>
+        <FieldPreview field={field} autoFocus={autoFocus} onChange={onChange} onFocused={onFocused} />
+      </div>
       <button type="button" className="sortable-field-item__remove" onClick={onRemove} aria-label="Ta bort">
         ×
       </button>

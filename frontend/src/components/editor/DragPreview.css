@@ -5,6 +5,7 @@
   border: 1px solid var(--accent);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   cursor: grabbing;
+  pointer-events: none;
 }
 
 .drag-preview--chip {

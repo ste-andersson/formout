@@ -94,17 +94,6 @@
   display: none;
 }
 
-.form-editor__properties-overlay {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 70vh;
-  overflow: auto;
-  z-index: 10;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
-}
-
 .form-editor__actions {
   display: flex;
   flex-wrap: wrap;
@@ -129,32 +118,9 @@
 }
 
 @media (min-width: 1024px) {
-  .form-editor__tabs {
-    display: none;
-  }
-
-  .form-editor__body {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 1.5rem;
-  }
-
-  .form-editor__build[data-hidden],
-  .form-editor__json[data-hidden] {
-    display: flex;
-  }
-
   .form-editor__build {
     flex-direction: row;
     flex: 1;
     min-width: 0;
-  }
-
-  .form-editor__properties-overlay {
-    left: auto;
-    top: 0;
-    width: 22rem;
-    max-height: 100vh;
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
   }
 }

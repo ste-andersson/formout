@@ -7,7 +7,7 @@ export interface EditorState {
   description: string
   slug: string
   sections: Section[]
-  selectedElementId: string | null
+  lastAddedFieldId: string | null
 }
 
 export type EditorAction =
@@ -23,7 +23,7 @@ export type EditorAction =
   | { type: 'UPDATE_ELEMENT'; fieldId: string; patch: Partial<Field> }
   | { type: 'MOVE_ELEMENT'; fieldId: string; toSectionId: string; toIndex: number }
   | { type: 'MOVE_SECTION'; sectionId: string; toIndex: number }
-  | { type: 'SELECT_ELEMENT'; fieldId: string | null }
+  | { type: 'CLEAR_LAST_ADDED' }
 
 export function initialEditorState(): EditorState {
   return {
@@ -31,7 +31,7 @@ export function initialEditorState(): EditorState {
     description: '',
     slug: generateFormCode(),
     sections: [createSection()],
-    selectedElementId: null,
+    lastAddedFieldId: null,
   }
 }
 
@@ -43,7 +43,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         description: action.description,
         slug: action.slug,
         sections: action.sections,
-        selectedElementId: null,
+        lastAddedFieldId: null,
       }
 
     case 'SET_TITLE':
@@ -77,7 +77,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           fields.splice(action.index, 0, field)
           return { ...s, fields }
         }),
-        selectedElementId: field.id,
+        lastAddedFieldId: field.id,
       }
     }
 
@@ -88,7 +88,6 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           ...s,
           fields: s.fields.filter((f) => f.id !== action.fieldId),
         })),
-        selectedElementId: state.selectedElementId === action.fieldId ? null : state.selectedElementId,
       }
 
     case 'UPDATE_ELEMENT':
@@ -130,8 +129,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, sections }
     }
 
-    case 'SELECT_ELEMENT':
-      return { ...state, selectedElementId: action.fieldId }
+    case 'CLEAR_LAST_ADDED':
+      return { ...state, lastAddedFieldId: null }
   }
 }
 
