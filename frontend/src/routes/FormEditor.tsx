@@ -2,7 +2,7 @@ import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/clerk-react'
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { useCallback, useEffect, useReducer, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import * as adminApi from '../lib/adminApi'
 import { generateFormCode } from '../lib/formCode'
 import type { FieldType, Section } from '../lib/formSchema'
@@ -42,12 +42,31 @@ function FormEditorContent() {
   const isEditMode = Boolean(id)
   const { getToken } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
+
+  const [uploadedImage] = useState<File | null>(() => {
+    const state = location.state as { uploadedFile?: File } | null
+    return state?.uploadedFile ?? null
+  })
+  const [uploadedImageUrl] = useState<string | null>(() =>
+    uploadedImage ? URL.createObjectURL(uploadedImage) : null,
+  )
 
   const [state, dispatch] = useReducer(editorReducer, initialEditorState())
   const [loadState, setLoadState] = useState<LoadState>(isEditMode ? { status: 'loading' } : { status: 'ready' })
   const [saveState, setSaveState] = useState<LoadState>({ status: 'ready' })
-  const [activeTab, setActiveTab] = useState<'build' | 'preview' | 'json'>('build')
+  const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview' | 'json'>(
+    uploadedImage ? 'image' : 'build',
+  )
+
+  useEffect(() => {
+    return () => {
+      if (uploadedImageUrl) {
+        URL.revokeObjectURL(uploadedImageUrl)
+      }
+    }
+  }, [uploadedImageUrl])
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
 
@@ -268,6 +287,15 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__tabs">
+          {uploadedImage && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('image')}
+              data-active={activeTab === 'image' || undefined}
+            >
+              Bild
+            </button>
+          )}
           <button type="button" onClick={() => setActiveTab('build')} data-active={activeTab === 'build' || undefined}>
             Bygg
           </button>
@@ -284,6 +312,23 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__body">
+          {uploadedImage && uploadedImageUrl && (
+            <div className="form-editor__image" data-hidden={activeTab !== 'image' || undefined}>
+              {uploadedImage.type === 'application/pdf' ? (
+                <object data={uploadedImageUrl} type="application/pdf" className="form-editor__image-pdf">
+                  <p>
+                    Kunde inte visa PDF:en i webbläsaren.{' '}
+                    <a href={uploadedImageUrl} download={uploadedImage.name}>
+                      Ladda ner filen
+                    </a>
+                    .
+                  </p>
+                </object>
+              ) : (
+                <img src={uploadedImageUrl} alt="Uppladdat formulär" className="form-editor__image-preview" />
+              )}
+            </div>
+          )}
           <div className="form-editor__build" data-hidden={activeTab !== 'build' || undefined}>
             <ElementPalette />
             <SectionCanvas

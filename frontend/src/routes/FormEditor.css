@@ -83,6 +83,7 @@
 }
 
 .form-editor__build,
+.form-editor__image,
 .form-editor__preview,
 .form-editor__json {
   display: flex;
@@ -91,9 +92,23 @@
 }
 
 .form-editor__build[data-hidden],
+.form-editor__image[data-hidden],
 .form-editor__preview[data-hidden],
 .form-editor__json[data-hidden] {
   display: none;
+}
+
+.form-editor__image-preview {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.form-editor__image-pdf {
+  width: 100%;
+  height: 70vh;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
 }
 
 .form-editor__actions {

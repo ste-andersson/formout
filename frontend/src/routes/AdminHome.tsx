@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/clerk-react'
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { isTouchDevice } from '../lib/device'
 import { listMyForms } from '../lib/adminApi'
 import type { AdminFormSummary } from '../lib/adminApi'
 import './AdminHome.css'
@@ -17,6 +18,35 @@ export function AdminHome() {
         <MyForms />
       </SignedIn>
     </div>
+  )
+}
+
+function PhotoUploadButton() {
+  const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const isMobile = isTouchDevice()
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    navigate('/admin/forms/new', { state: { uploadedFile: file } })
+  }
+
+  return (
+    <>
+      <button type="button" className="my-forms__upload-button" onClick={() => inputRef.current?.click()}>
+        {isMobile ? 'Formulär från foto' : 'Formulär från fil'}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        capture={isMobile ? 'environment' : undefined}
+        onChange={handleFileChange}
+        hidden
+      />
+    </>
   )
 }
 
@@ -53,34 +83,36 @@ function MyForms() {
     }
   }, [getToken])
 
-  if (state.status === 'loading') {
-    return <p>Laddar…</p>
-  }
-
-  if (state.status === 'error') {
-    return <p>Kunde inte hämta dina formulär.</p>
-  }
-
   return (
     <div className="my-forms">
-      <Link to="/admin/forms/new" className="my-forms__new-button">
-        + Nytt formulär
-      </Link>
-      {state.forms.length === 0 ? (
-        <p>Du har inga formulär än.</p>
-      ) : (
-        <ul className="my-forms__list">
-          {state.forms.map((form) => (
-            <li key={form.id} className="my-forms__item">
-              <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
-                {form.title}
-              </Link>
-              <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
-                {form.status}
-              </span>
-            </li>
-          ))}
-        </ul>
+      <div className="my-forms__actions">
+        <Link to="/admin/forms/new" className="my-forms__new-button">
+          + Nytt formulär
+        </Link>
+        <PhotoUploadButton />
+      </div>
+
+      {state.status === 'loading' && <p>Laddar…</p>}
+      {state.status === 'error' && <p>Kunde inte hämta dina formulär.</p>}
+      {state.status === 'loaded' && (
+        <>
+          {state.forms.length === 0 ? (
+            <p>Du har inga formulär än.</p>
+          ) : (
+            <ul className="my-forms__list">
+              {state.forms.map((form) => (
+                <li key={form.id} className="my-forms__item">
+                  <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
+                    {form.title}
+                  </Link>
+                  <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
+                    {form.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   )
