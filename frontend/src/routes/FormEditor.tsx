@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router'
 import * as adminApi from '../lib/adminApi'
 import { generateFormCode } from '../lib/formCode'
 import type { FieldType, Section } from '../lib/formSchema'
+import { useToast } from '../components/toastContext'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
@@ -41,6 +42,7 @@ function FormEditorContent() {
   const isEditMode = Boolean(id)
   const { getToken } = useAuth()
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [state, dispatch] = useReducer(editorReducer, initialEditorState())
   const [loadState, setLoadState] = useState<LoadState>(isEditMode ? { status: 'loading' } : { status: 'ready' })
@@ -165,6 +167,7 @@ function FormEditorContent() {
         await adminApi.updateMetadata(token, id, { title: state.title, description: state.description || null })
         await adminApi.addVersion(token, id, { schema })
         setSaveState({ status: 'ready' })
+        showToast('Formuläret är sparat', 'success')
       } else {
         let slug = state.slug
         let created: adminApi.AdminFormDetail | undefined
@@ -188,28 +191,36 @@ function FormEditorContent() {
         }
 
         if (!created) throw new Error('Could not generate a unique code')
+        showToast('Formuläret är skapat', 'success')
         navigate(`/admin/forms/${created.id}/edit`)
       }
     } catch {
       setSaveState({ status: 'error', message: 'Kunde inte spara formuläret.' })
+      showToast('Kunde inte spara formuläret', 'error')
     }
   }
 
   async function handleStatusAction(action: 'publish' | 'archive' | 'delete') {
     if (!id) return
-    const token = await getToken()
-    if (!token) return
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Not signed in')
 
-    if (action === 'publish') {
-      await adminApi.publish(token, id)
-      return
+      if (action === 'publish') {
+        await adminApi.publish(token, id)
+        showToast('Formuläret är publicerat', 'success')
+      } else if (action === 'archive') {
+        await adminApi.archive(token, id)
+        showToast('Formuläret är arkiverat', 'success')
+      } else {
+        await adminApi.deleteForm(token, id)
+        showToast('Formuläret är raderat', 'success')
+      }
+
+      navigate('/admin')
+    } catch {
+      showToast('Något gick fel, försök igen', 'error')
     }
-    if (action === 'archive') {
-      await adminApi.archive(token, id)
-      return
-    }
-    await adminApi.deleteForm(token, id)
-    navigate('/admin')
   }
 
   if (loadState.status === 'loading') {
@@ -320,7 +331,6 @@ function FormEditorContent() {
               </button>
             </>
           )}
-          {saveState.status === 'error' && <p>{saveState.message}</p>}
         </div>
       </div>
       <DragOverlay dropAnimation={null}>{activeDragItem && <DragPreview item={activeDragItem} />}</DragOverlay>
