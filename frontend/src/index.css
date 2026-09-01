@@ -4,6 +4,8 @@
   --bg: #fff;
   --border: #e2e2e2;
   --accent: #6c3bff;
+  --code-bg: #f4f3ec;
+  --canvas-bg: #f4f4f6;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 
@@ -24,6 +26,8 @@
     --bg: #16171d;
     --border: #2e303a;
     --accent: #a37bff;
+    --code-bg: #1f2028;
+    --canvas-bg: #1c1d24;
   }
 }
 

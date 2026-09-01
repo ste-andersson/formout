@@ -9,7 +9,7 @@ export function RespondentHome() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    const trimmed = code.trim()
+    const trimmed = code.trim().toLowerCase()
     if (trimmed.length === 0) {
       return
     }

@@ -1,0 +1,128 @@
+.form-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-editor__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-editor__meta label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-editor__meta input {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.form-editor__code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-editor__code strong {
+  font-size: 1rem;
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+
+.form-editor__code button {
+  font: inherit;
+  font-size: 0.85rem;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--bg);
+  color: inherit;
+  cursor: pointer;
+}
+
+.form-editor__tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-editor__tabs button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.form-editor__tabs button[data-active] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.form-editor__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-editor__build,
+.form-editor__preview,
+.form-editor__json {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-editor__build[data-hidden],
+.form-editor__preview[data-hidden],
+.form-editor__json[data-hidden] {
+  display: none;
+}
+
+.form-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.form-editor__actions button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--bg);
+  color: inherit;
+  cursor: pointer;
+}
+
+.form-editor__actions button:first-child {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+@media (min-width: 1024px) {
+  .form-editor__build {
+    flex-direction: row;
+    flex: 1;
+    min-width: 0;
+  }
+}
