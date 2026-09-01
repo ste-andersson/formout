@@ -83,6 +83,7 @@
 }
 
 .form-editor__build,
+.form-editor__preview,
 .form-editor__json {
   display: flex;
   flex-direction: column;
@@ -90,6 +91,7 @@
 }
 
 .form-editor__build[data-hidden],
+.form-editor__preview[data-hidden],
 .form-editor__json[data-hidden] {
   display: none;
 }

@@ -17,11 +17,21 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
   }
 
   useEffect(() => {
-    if (autoFocus && primaryElRef.current) {
+    if (!autoFocus) return
+
+    // On touch devices, focusing an input opens the on-screen keyboard, which
+    // shifts the viewport and throws off drag coordinates for the *next*
+    // drag gesture. Skip the native focus there; keep it on desktop where
+    // there's no such side effect.
+    const isTouchDevice =
+      typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
+    if (primaryElRef.current && !isTouchDevice) {
       primaryElRef.current.focus()
       primaryElRef.current.select()
-      onFocused()
     }
+
+    onFocused()
   }, [autoFocus, onFocused])
 
   function updateSettings(patch: Partial<FieldSettings>) {

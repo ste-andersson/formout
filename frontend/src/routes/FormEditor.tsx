@@ -9,6 +9,7 @@ import type { FieldType, Section } from '../lib/formSchema'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
+import { FormPreview } from '../components/editor/FormPreview'
 import { JsonPreview } from '../components/editor/JsonPreview'
 import { SectionCanvas } from '../components/editor/SectionCanvas'
 import type { DropIndicator } from '../components/editor/SectionCanvas'
@@ -44,7 +45,7 @@ function FormEditorContent() {
   const [state, dispatch] = useReducer(editorReducer, initialEditorState())
   const [loadState, setLoadState] = useState<LoadState>(isEditMode ? { status: 'loading' } : { status: 'ready' })
   const [saveState, setSaveState] = useState<LoadState>({ status: 'ready' })
-  const [activeTab, setActiveTab] = useState<'build' | 'json'>('build')
+  const [activeTab, setActiveTab] = useState<'build' | 'preview' | 'json'>('build')
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
 
@@ -259,6 +260,13 @@ function FormEditorContent() {
           <button type="button" onClick={() => setActiveTab('build')} data-active={activeTab === 'build' || undefined}>
             Bygg
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('preview')}
+            data-active={activeTab === 'preview' || undefined}
+          >
+            Förhandsvisning
+          </button>
           <button type="button" onClick={() => setActiveTab('json')} data-active={activeTab === 'json' || undefined}>
             JSON
           </button>
@@ -287,6 +295,9 @@ function FormEditorContent() {
               onAddSection={() => dispatch({ type: 'ADD_SECTION' })}
             />
           </div>
+          <div className="form-editor__preview" data-hidden={activeTab !== 'preview' || undefined}>
+            <FormPreview schema={schema} />
+          </div>
           <div className="form-editor__json" data-hidden={activeTab !== 'json' || undefined}>
             <JsonPreview schema={schema} />
           </div>
@@ -312,7 +323,7 @@ function FormEditorContent() {
           {saveState.status === 'error' && <p>{saveState.message}</p>}
         </div>
       </div>
-      <DragOverlay>{activeDragItem && <DragPreview item={activeDragItem} />}</DragOverlay>
+      <DragOverlay dropAnimation={null}>{activeDragItem && <DragPreview item={activeDragItem} />}</DragOverlay>
     </DndContext>
   )
 }
