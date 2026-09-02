@@ -9,6 +9,7 @@ import { buildResponseCsv, buildResponseCsvFallback, downloadCsv } from '../lib/
 import { useToast } from '../components/toastContext'
 import { FormFiller } from '../components/FormFiller'
 import { ResponsePrintView } from '../components/ResponsePrintView'
+import { ExportDialog } from '../components/ExportDialog'
 import './ResponseEditor.css'
 
 type LoadState =
@@ -123,22 +124,16 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
         </button>
       </div>
 
-      <dialog ref={exportDialogRef} className="response-editor__export-dialog">
-        <h2>Exportera</h2>
-        <div className="response-editor__export-options">
-          <button type="button" onClick={() => handleExportCsv(response, form)}>
-            CSV
-          </button>
-          {form && (
-            <button type="button" onClick={handleExportPdf}>
-              PDF
-            </button>
-          )}
-        </div>
-        <button type="button" onClick={() => exportDialogRef.current?.close()}>
-          Avbryt
+      <ExportDialog dialogRef={exportDialogRef} title="Exportera">
+        <button type="button" onClick={() => handleExportCsv(response, form)}>
+          CSV
         </button>
-      </dialog>
+        {form && (
+          <button type="button" onClick={handleExportPdf}>
+            PDF
+          </button>
+        )}
+      </ExportDialog>
 
       {form && <ResponsePrintView schema={form.schema} answers={response.answers} filledInAt={responseTimestamp(response)} />}
 

@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { getFormBySlug } from '../lib/api'
+import type { FormDetail } from '../lib/api'
 import { listResponses, responseTimestamp } from '../lib/responseStorage'
 import type { SavedResponse } from '../lib/responseStorage'
 import { formatResponseDateTime } from '../lib/responseFormat'
+import { buildBulkResponseCsv, downloadCsv } from '../lib/responseExport'
+import { ExportDialog } from '../components/ExportDialog'
+import { ResponsePrintGroupView } from '../components/ResponsePrintView'
 import './RespondentHome.css'
 
 interface ResponseGroup {
@@ -30,10 +35,16 @@ function groupResponses(responses: SavedResponse[]): ResponseGroup[] {
   )
 }
 
+type ExportLoadState = 'idle' | 'loading' | 'error'
+
 export function RespondentHome() {
   const [code, setCode] = useState('')
   const [groups, setGroups] = useState<ResponseGroup[]>([])
   const [responsesError, setResponsesError] = useState(false)
+  const [exportGroup, setExportGroup] = useState<ResponseGroup | null>(null)
+  const [exportForm, setExportForm] = useState<FormDetail | null>(null)
+  const [exportLoadState, setExportLoadState] = useState<ExportLoadState>('idle')
+  const exportDialogRef = useRef<HTMLDialogElement>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -62,6 +73,41 @@ export function RespondentHome() {
       return
     }
     navigate(`/forms/${encodeURIComponent(trimmed)}`)
+  }
+
+  function handleOpenExportAll(group: ResponseGroup) {
+    setExportGroup(group)
+    setExportForm(null)
+    setExportLoadState('loading')
+    exportDialogRef.current?.showModal()
+
+    const latestSlug = group.responses[0].formSlug
+    getFormBySlug(latestSlug)
+      .then((form) => {
+        if (form) {
+          setExportForm(form)
+          setExportLoadState('idle')
+        } else {
+          setExportLoadState('error')
+        }
+      })
+      .catch(() => setExportLoadState('error'))
+  }
+
+  function safeFilenamePart(title: string): string {
+    return title.replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '-').replace(/^-+|-+$/g, '') || 'formular'
+  }
+
+  function handleExportAllCsv() {
+    if (!exportGroup || !exportForm) return
+    const csv = buildBulkResponseCsv(exportForm.schema, exportGroup.responses)
+    downloadCsv(`${safeFilenamePart(exportGroup.formTitle)}-alla-svar.csv`, csv)
+    exportDialogRef.current?.close()
+  }
+
+  function handleExportAllPdf() {
+    exportDialogRef.current?.close()
+    window.print()
   }
 
   return (
@@ -102,9 +148,35 @@ export function RespondentHome() {
                   </li>
                 ))}
               </ul>
+              <button
+                type="button"
+                className="respondent-home__export-all"
+                onClick={() => handleOpenExportAll(group)}
+              >
+                Exportera alla
+              </button>
             </section>
           ))}
         </div>
+      )}
+
+      <ExportDialog dialogRef={exportDialogRef} title="Exportera alla">
+        {exportLoadState === 'loading' && <p>Hämtar formulär…</p>}
+        {exportLoadState === 'error' && <p>Kunde inte hämta formuläret.</p>}
+        {exportLoadState === 'idle' && exportForm && (
+          <>
+            <button type="button" onClick={handleExportAllCsv}>
+              CSV
+            </button>
+            <button type="button" onClick={handleExportAllPdf}>
+              PDF
+            </button>
+          </>
+        )}
+      </ExportDialog>
+
+      {exportForm && exportGroup && (
+        <ResponsePrintGroupView schema={exportForm.schema} responses={exportGroup.responses} />
       )}
     </div>
   )

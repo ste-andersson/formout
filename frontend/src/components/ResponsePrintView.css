@@ -34,6 +34,11 @@
     padding: 2cm 1.5cm;
     box-sizing: border-box;
   }
+
+  .response-print__page--break {
+    page-break-before: always;
+    break-before: page;
+  }
 }
 
 .response-print h1 {

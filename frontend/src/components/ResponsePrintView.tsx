@@ -1,6 +1,8 @@
 import type { Field, FormSchema } from '../lib/formSchema'
 import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
 import { formatResponseDateTime } from '../lib/responseFormat'
+import type { SavedResponse } from '../lib/responseStorage'
+import { responseTimestamp } from '../lib/responseStorage'
 import './ResponsePrintView.css'
 
 interface ResponsePrintViewProps {
@@ -9,9 +11,9 @@ interface ResponsePrintViewProps {
   filledInAt: string
 }
 
-export function ResponsePrintView({ schema, answers, filledInAt }: ResponsePrintViewProps) {
+export function ResponsePrintContent({ schema, answers, filledInAt }: ResponsePrintViewProps) {
   return (
-    <div className="response-print">
+    <>
       <h1>{schema.title || 'Namnlöst formulär'}</h1>
       <p className="response-print__meta">Ifyllt: {formatResponseDateTime(filledInAt)}</p>
       {schema.sections.map((section) => (
@@ -21,6 +23,26 @@ export function ResponsePrintView({ schema, answers, filledInAt }: ResponsePrint
             <ResponsePrintField key={field.id} field={field} answer={answers[field.id]} />
           ))}
         </section>
+      ))}
+    </>
+  )
+}
+
+export function ResponsePrintView(props: ResponsePrintViewProps) {
+  return (
+    <div className="response-print">
+      <ResponsePrintContent {...props} />
+    </div>
+  )
+}
+
+export function ResponsePrintGroupView({ schema, responses }: { schema: FormSchema; responses: SavedResponse[] }) {
+  return (
+    <div className="response-print">
+      {responses.map((response, index) => (
+        <div key={response.id} className={`response-print__page${index > 0 ? ' response-print__page--break' : ''}`}>
+          <ResponsePrintContent schema={schema} answers={response.answers} filledInAt={responseTimestamp(response)} />
+        </div>
       ))}
     </div>
   )
