@@ -10,6 +10,7 @@ import { AdminHome } from './routes/AdminHome.tsx'
 import { FormEditor } from './routes/FormEditor.tsx'
 import { FormViewer } from './routes/FormViewer.tsx'
 import { RespondentHome } from './routes/RespondentHome.tsx'
+import { ResponseEditor } from './routes/ResponseEditor.tsx'
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
               <Route element={<App />}>
                 <Route index element={<RespondentHome />} />
                 <Route path="forms/:slug" element={<FormViewer />} />
+                <Route path="responses/:responseId" element={<ResponseEditor />} />
                 <Route path="admin" element={<AdminHome />} />
                 <Route path="admin/forms/new" element={<FormEditor />} />
                 <Route path="admin/forms/:id/edit" element={<FormEditor />} />

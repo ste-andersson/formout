@@ -1,11 +1,62 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { listResponses, responseTimestamp } from '../lib/responseStorage'
+import type { SavedResponse } from '../lib/responseStorage'
 import './RespondentHome.css'
+
+interface ResponseGroup {
+  formId: string
+  formTitle: string
+  responses: SavedResponse[]
+}
+
+function groupResponses(responses: SavedResponse[]): ResponseGroup[] {
+  const groups = new Map<string, ResponseGroup>()
+  for (const response of responses) {
+    let group = groups.get(response.formId)
+    if (!group) {
+      group = { formId: response.formId, formTitle: response.formTitle, responses: [] }
+      groups.set(response.formId, group)
+    }
+    group.responses.push(response)
+  }
+  for (const group of groups.values()) {
+    group.responses.sort((a, b) => responseTimestamp(b).localeCompare(responseTimestamp(a)))
+  }
+  return Array.from(groups.values()).sort((a, b) =>
+    responseTimestamp(b.responses[0]).localeCompare(responseTimestamp(a.responses[0])),
+  )
+}
+
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('sv-SE', { dateStyle: 'medium', timeStyle: 'short' })
+}
 
 export function RespondentHome() {
   const [code, setCode] = useState('')
+  const [groups, setGroups] = useState<ResponseGroup[]>([])
+  const [responsesError, setResponsesError] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let cancelled = false
+
+    listResponses()
+      .then((responses) => {
+        if (cancelled) return
+        setGroups(groupResponses(responses))
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        console.error('Kunde inte läsa sparade svar från IndexedDB', error)
+        setResponsesError(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -38,6 +89,26 @@ export function RespondentHome() {
           Ladda formulär
         </button>
       </form>
+
+      {responsesError && <p className="respondent-home__responses-error">Kunde inte hämta dina sparade svar.</p>}
+
+      {groups.length > 0 && (
+        <div className="respondent-home__responses">
+          <h2 className="respondent-home__responses-heading">Mina ifyllda formulär</h2>
+          {groups.map((group) => (
+            <section key={group.formId} className="respondent-home__group">
+              <h3 className="respondent-home__group-title">{group.formTitle}</h3>
+              <ul className="respondent-home__response-list">
+                {group.responses.map((response) => (
+                  <li key={response.id}>
+                    <Link to={`/responses/${response.id}`}>{formatDateTime(responseTimestamp(response))}</Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
