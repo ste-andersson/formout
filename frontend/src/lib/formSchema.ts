@@ -135,7 +135,7 @@ export function createSection(): Section {
  * would be undefined and throw. This falls back to crypto.getRandomValues
  * (not secure-context-restricted), and finally to Math.random.
  */
-function generateId(): string {
+export function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
   }
