@@ -91,10 +91,16 @@
   border-color: var(--accent);
 }
 
-.respondent-home__export-all {
+.respondent-home__group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.respondent-home__group-action {
   font: inherit;
   font-size: 0.85rem;
-  margin-top: 0.5rem;
   min-height: 44px;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);

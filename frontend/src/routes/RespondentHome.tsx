@@ -148,13 +148,22 @@ export function RespondentHome() {
                   </li>
                 ))}
               </ul>
-              <button
-                type="button"
-                className="respondent-home__export-all"
-                onClick={() => handleOpenExportAll(group)}
-              >
-                Exportera alla
-              </button>
+              <div className="respondent-home__group-actions">
+                <button
+                  type="button"
+                  className="respondent-home__group-action"
+                  onClick={() => navigate(`/forms/${encodeURIComponent(group.responses[0].formSlug)}`)}
+                >
+                  Fyll i igen
+                </button>
+                <button
+                  type="button"
+                  className="respondent-home__group-action"
+                  onClick={() => handleOpenExportAll(group)}
+                >
+                  Exportera alla
+                </button>
+              </div>
             </section>
           ))}
         </div>
