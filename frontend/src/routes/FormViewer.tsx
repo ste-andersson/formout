@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { getFormBySlug } from '../lib/api'
 import type { FormDetail } from '../lib/api'
+import { defaultAnswersFor, validateRequiredFields } from '../lib/formAnswers'
+import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
+import { useToast } from '../components/toastContext'
+import { FormRenderer } from '../components/FormRenderer'
+import './FormViewer.css'
 
 type LoadState =
   | { status: 'loading' }
@@ -16,6 +22,10 @@ export function FormViewer() {
 
 function FormViewerContent({ slug }: { slug?: string }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+  const [answers, setAnswers] = useState<FormAnswers>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (!slug) {
@@ -27,7 +37,12 @@ function FormViewerContent({ slug }: { slug?: string }) {
     getFormBySlug(slug)
       .then((form) => {
         if (cancelled) return
-        setState(form ? { status: 'loaded', form } : { status: 'not-found' })
+        if (form) {
+          setState({ status: 'loaded', form })
+          setAnswers(defaultAnswersFor(form.schema))
+        } else {
+          setState({ status: 'not-found' })
+        }
       })
       .catch(() => {
         if (cancelled) return
@@ -38,6 +53,22 @@ function FormViewerContent({ slug }: { slug?: string }) {
       cancelled = true
     }
   }, [slug])
+
+  function handleAnswerChange(fieldId: string, value: FieldAnswerValue) {
+    setAnswers((prev) => ({ ...prev, [fieldId]: value }))
+  }
+
+  function handleSubmit(event: FormEvent, form: FormDetail) {
+    event.preventDefault()
+    const validationErrors = validateRequiredFields(form.schema, answers)
+    setErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) {
+      showToast('Fyll i de obligatoriska fälten', 'error')
+      return
+    }
+    setSubmitted(true)
+    showToast('Formuläret är ifyllt', 'success')
+  }
 
   if (state.status === 'loading') {
     return <p>Laddar formulär…</p>
@@ -65,10 +96,22 @@ function FormViewerContent({ slug }: { slug?: string }) {
 
   const { form } = state
 
+  if (submitted) {
+    return (
+      <div className="form-viewer__confirmation">
+        <h1>Tack!</h1>
+        <p>Dina svar är ifyllda. Lokal sparning av svaren kommer i ett senare steg.</p>
+        <Link to="/">Till startsidan</Link>
+      </div>
+    )
+  }
+
   return (
-    <div>
-      <h1>{form.title}</h1>
-      {form.description && <p>{form.description}</p>}
-    </div>
+    <form onSubmit={(event) => handleSubmit(event, form)} className="form-viewer">
+      <FormRenderer schema={form.schema} answers={answers} errors={errors} onAnswerChange={handleAnswerChange} />
+      <button type="submit" className="form-viewer__submit">
+        Skicka in
+      </button>
+    </form>
   )
 }
