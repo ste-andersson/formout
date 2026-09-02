@@ -21,6 +21,11 @@
   opacity: 0.9;
 }
 
+.form-viewer__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .form-viewer__confirmation {
   max-width: 28rem;
   margin: 0 auto;

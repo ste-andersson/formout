@@ -5,6 +5,7 @@ import { getFormBySlug } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor, validateRequiredFields } from '../lib/formAnswers'
 import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
+import { saveResponse } from '../lib/responseStorage'
 import { useToast } from '../components/toastContext'
 import { FormRenderer } from '../components/FormRenderer'
 import './FormViewer.css'
@@ -25,6 +26,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
   const [answers, setAnswers] = useState<FormAnswers>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -58,7 +60,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
     setAnswers((prev) => ({ ...prev, [fieldId]: value }))
   }
 
-  function handleSubmit(event: FormEvent, form: FormDetail) {
+  async function handleSubmit(event: FormEvent, form: FormDetail) {
     event.preventDefault()
     const validationErrors = validateRequiredFields(form.schema, answers)
     setErrors(validationErrors)
@@ -66,8 +68,23 @@ function FormViewerContent({ slug }: { slug?: string }) {
       showToast('Fyll i de obligatoriska fälten', 'error')
       return
     }
-    setSubmitted(true)
-    showToast('Formuläret är ifyllt', 'success')
+
+    setIsSaving(true)
+    try {
+      await saveResponse({
+        formId: form.id,
+        formSlug: form.slug,
+        formTitle: form.title,
+        formVersion: form.currentVersion,
+        answers,
+      })
+      setSubmitted(true)
+      showToast('Formuläret är ifyllt', 'success')
+    } catch {
+      showToast('Kunde inte spara svaret lokalt', 'error')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   if (state.status === 'loading') {
@@ -100,7 +117,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
     return (
       <div className="form-viewer__confirmation">
         <h1>Tack!</h1>
-        <p>Dina svar är ifyllda. Lokal sparning av svaren kommer i ett senare steg.</p>
+        <p>Dina svar är sparade på den här enheten.</p>
         <Link to="/">Till startsidan</Link>
       </div>
     )
@@ -109,8 +126,8 @@ function FormViewerContent({ slug }: { slug?: string }) {
   return (
     <form onSubmit={(event) => handleSubmit(event, form)} className="form-viewer">
       <FormRenderer schema={form.schema} answers={answers} errors={errors} onAnswerChange={handleAnswerChange} />
-      <button type="submit" className="form-viewer__submit">
-        Skicka in
+      <button type="submit" className="form-viewer__submit" disabled={isSaving}>
+        {isSaving ? 'Sparar…' : 'Skicka in'}
       </button>
     </form>
   )
