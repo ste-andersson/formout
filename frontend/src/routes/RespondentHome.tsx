@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { listResponses, responseTimestamp } from '../lib/responseStorage'
 import type { SavedResponse } from '../lib/responseStorage'
+import { formatResponseDateTime } from '../lib/responseFormat'
 import './RespondentHome.css'
 
 interface ResponseGroup {
@@ -27,10 +28,6 @@ function groupResponses(responses: SavedResponse[]): ResponseGroup[] {
   return Array.from(groups.values()).sort((a, b) =>
     responseTimestamp(b.responses[0]).localeCompare(responseTimestamp(a.responses[0])),
   )
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('sv-SE', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 export function RespondentHome() {
@@ -101,7 +98,7 @@ export function RespondentHome() {
               <ul className="respondent-home__response-list">
                 {group.responses.map((response) => (
                   <li key={response.id}>
-                    <Link to={`/responses/${response.id}`}>{formatDateTime(responseTimestamp(response))}</Link>
+                    <Link to={`/responses/${response.id}`}>{formatResponseDateTime(responseTimestamp(response))}</Link>
                   </li>
                 ))}
               </ul>

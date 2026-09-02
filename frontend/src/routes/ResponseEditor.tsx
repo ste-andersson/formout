@@ -8,6 +8,7 @@ import { deleteResponse, getResponse, responseTimestamp, updateResponse } from '
 import { buildResponseCsv, buildResponseCsvFallback, downloadCsv } from '../lib/responseExport'
 import { useToast } from '../components/toastContext'
 import { FormFiller } from '../components/FormFiller'
+import { ResponsePrintView } from '../components/ResponsePrintView'
 import './ResponseEditor.css'
 
 type LoadState =
@@ -70,6 +71,11 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
     exportDialogRef.current?.close()
   }
 
+  function handleExportPdf() {
+    exportDialogRef.current?.close()
+    window.print()
+  }
+
   async function handleDelete(response: SavedResponse) {
     try {
       await deleteResponse(response.id)
@@ -123,11 +129,18 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
           <button type="button" onClick={() => handleExportCsv(response, form)}>
             CSV
           </button>
+          {form && (
+            <button type="button" onClick={handleExportPdf}>
+              PDF
+            </button>
+          )}
         </div>
         <button type="button" onClick={() => exportDialogRef.current?.close()}>
           Avbryt
         </button>
       </dialog>
+
+      {form && <ResponsePrintView schema={form.schema} answers={response.answers} filledInAt={responseTimestamp(response)} />}
 
       {state.status === 'form-unavailable' && (
         <div>
