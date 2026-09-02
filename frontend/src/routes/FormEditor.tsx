@@ -8,10 +8,10 @@ import { generateFormCode } from '../lib/formCode'
 import { resizeImageForUpload } from '../lib/imageResize'
 import type { FieldType, Section } from '../lib/formSchema'
 import { useToast } from '../components/toastContext'
+import { FormRenderer } from '../components/FormRenderer'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
-import { FormPreview } from '../components/editor/FormPreview'
 import { JsonPreview } from '../components/editor/JsonPreview'
 import { SectionCanvas } from '../components/editor/SectionCanvas'
 import type { DropIndicator } from '../components/editor/SectionCanvas'
@@ -403,7 +403,7 @@ function FormEditorContent() {
             />
           </div>
           <div className="form-editor__preview" data-hidden={activeTab !== 'preview' || undefined}>
-            <FormPreview schema={schema} />
+            <FormRenderer schema={schema} />
           </div>
           <div className="form-editor__json" data-hidden={activeTab !== 'json' || undefined}>
             <JsonPreview schema={schema} />

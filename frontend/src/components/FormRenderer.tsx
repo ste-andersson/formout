@@ -1,0 +1,202 @@
+import type { Field, FormSchema } from '../lib/formSchema'
+import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
+import './FormRenderer.css'
+
+interface FormRendererProps {
+  schema: FormSchema
+  answers?: FormAnswers
+  errors?: Record<string, string>
+  onAnswerChange?: (fieldId: string, value: FieldAnswerValue) => void
+}
+
+export function FormRenderer({ schema, answers, errors, onAnswerChange }: FormRendererProps) {
+  return (
+    <div className="form-renderer">
+      <h1>{schema.title || 'Namnlöst formulär'}</h1>
+      {schema.description && <p className="form-renderer__description">{schema.description}</p>}
+      {schema.sections.map((section) => (
+        <section key={section.id} className="form-renderer__section">
+          <h2>{section.title}</h2>
+          {section.fields.map((field) => (
+            <FormRendererField
+              key={field.id}
+              field={field}
+              answer={answers?.[field.id]}
+              error={errors?.[field.id]}
+              onAnswerChange={onAnswerChange}
+            />
+          ))}
+        </section>
+      ))}
+    </div>
+  )
+}
+
+function FormRendererField({
+  field,
+  answer,
+  error,
+  onAnswerChange,
+}: {
+  field: Field
+  answer?: FieldAnswerValue
+  error?: string
+  onAnswerChange?: (fieldId: string, value: FieldAnswerValue) => void
+}) {
+  const options = field.settings.options ?? []
+
+  switch (field.type) {
+    case 'HEADING':
+      return <h3 className="form-renderer__heading">{field.label}</h3>
+
+    case 'SUBHEADING':
+      return <h4 className="form-renderer__subheading">{field.label}</h4>
+
+    case 'PARAGRAPH':
+      return <p className="form-renderer__paragraph">{field.label}</p>
+
+    case 'TEXT': {
+      const controlledProps = onAnswerChange
+        ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
+        : {}
+      return (
+        <label className="form-renderer__field">
+          <FieldLabel field={field} />
+          <input type="text" {...controlledProps} />
+          <FieldError error={error} />
+        </label>
+      )
+    }
+
+    case 'TEXTAREA': {
+      const controlledProps = onAnswerChange
+        ? {
+            value: (answer as string) ?? '',
+            onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => onAnswerChange(field.id, e.target.value),
+          }
+        : {}
+      return (
+        <label className="form-renderer__field">
+          <FieldLabel field={field} />
+          <textarea rows={3} {...controlledProps} />
+          <FieldError error={error} />
+        </label>
+      )
+    }
+
+    case 'NUMBER': {
+      const controlledProps = onAnswerChange
+        ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
+        : {}
+      return (
+        <label className="form-renderer__field">
+          <FieldLabel field={field} />
+          <input type="number" {...controlledProps} />
+          <FieldError error={error} />
+        </label>
+      )
+    }
+
+    case 'CHECKBOX': {
+      const controlledProps = onAnswerChange
+        ? { checked: answer === true, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.checked) }
+        : {}
+      return (
+        <div className="form-renderer__field">
+          <label className="form-renderer__checkbox-row">
+            <input type="checkbox" {...controlledProps} />
+            <FieldLabel field={field} />
+          </label>
+          <FieldError error={error} />
+        </div>
+      )
+    }
+
+    case 'SINGLE_CHOICE':
+      return (
+        <fieldset className="form-renderer__fieldset">
+          <legend>
+            <FieldLabel field={field} />
+          </legend>
+          {options.map((option, index) => {
+            const controlledProps = onAnswerChange
+              ? { checked: answer === option, onChange: () => onAnswerChange(field.id, option) }
+              : {}
+            return (
+              <label key={index} className="form-renderer__checkbox-row">
+                <input type="radio" name={field.id} {...controlledProps} />
+                {option}
+              </label>
+            )
+          })}
+          <FieldError error={error} />
+        </fieldset>
+      )
+
+    case 'MULTIPLE_CHOICE': {
+      const selected = Array.isArray(answer) ? answer : []
+      return (
+        <fieldset className="form-renderer__fieldset">
+          <legend>
+            <FieldLabel field={field} />
+          </legend>
+          {options.map((option, index) => {
+            const controlledProps = onAnswerChange
+              ? {
+                  checked: selected.includes(option),
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const next = e.target.checked ? [...selected, option] : selected.filter((o) => o !== option)
+                    onAnswerChange(field.id, next)
+                  },
+                }
+              : {}
+            return (
+              <label key={index} className="form-renderer__checkbox-row">
+                <input type="checkbox" {...controlledProps} />
+                {option}
+              </label>
+            )
+          })}
+          <FieldError error={error} />
+        </fieldset>
+      )
+    }
+
+    case 'SCALE': {
+      const min = field.settings.min ?? 1
+      const max = field.settings.max ?? 5
+      const controlledProps = onAnswerChange
+        ? {
+            value: (answer as number) ?? Math.round((min + max) / 2),
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, Number(e.target.value)),
+          }
+        : { defaultValue: Math.round((min + max) / 2) }
+      return (
+        <div className="form-renderer__field">
+          <FieldLabel field={field} />
+          <div className="form-renderer__scale-track">
+            <input type="range" min={min} max={max} {...controlledProps} />
+          </div>
+          <div className="form-renderer__scale-labels">
+            <span>{field.settings.minLabel ?? min}</span>
+            <span>{field.settings.maxLabel ?? max}</span>
+          </div>
+        </div>
+      )
+    }
+  }
+}
+
+function FieldLabel({ field }: { field: Field }) {
+  return (
+    <span className="form-renderer__label">
+      {field.label}
+      {field.required && <span className="form-renderer__required-mark"> *</span>}
+    </span>
+  )
+}
+
+function FieldError({ error }: { error?: string }) {
+  if (!error) return null
+  return <p className="form-renderer__error">{error}</p>
+}

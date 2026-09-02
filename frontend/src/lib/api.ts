@@ -1,10 +1,12 @@
+import type { FormSchema } from './formSchema'
+
 export interface FormDetail {
   id: string
   title: string
   description: string | null
   slug: string
   currentVersion: number
-  schema: unknown
+  schema: FormSchema
   updatedAt: string
 }
 
