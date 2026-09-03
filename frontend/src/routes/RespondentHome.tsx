@@ -6,9 +6,11 @@ import type { FormDetail } from '../lib/api'
 import { listResponses, responseTimestamp } from '../lib/responseStorage'
 import type { SavedResponse } from '../lib/responseStorage'
 import { formatResponseDateTime } from '../lib/responseFormat'
-import { buildBulkResponseCsv, downloadCsv } from '../lib/responseExport'
+import { buildBulkResponseCsv, buildCsvFile, downloadCsv } from '../lib/responseExport'
+import { buildBulkResponsePdf, downloadPdf } from '../lib/responsePdf'
+import { isWebShareSupported, shareFiles } from '../lib/webShare'
+import { useToast } from '../components/toastContext'
 import { ExportDialog } from '../components/ExportDialog'
-import { ResponsePrintGroupView } from '../components/ResponsePrintView'
 import './RespondentHome.css'
 
 interface ResponseGroup {
@@ -45,7 +47,9 @@ export function RespondentHome() {
   const [exportForm, setExportForm] = useState<FormDetail | null>(null)
   const [exportLoadState, setExportLoadState] = useState<ExportLoadState>('idle')
   const exportDialogRef = useRef<HTMLDialogElement>(null)
+  const shareDialogRef = useRef<HTMLDialogElement>(null)
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   useEffect(() => {
     let cancelled = false
@@ -75,11 +79,10 @@ export function RespondentHome() {
     navigate(`/forms/${encodeURIComponent(trimmed)}`)
   }
 
-  function handleOpenExportAll(group: ResponseGroup) {
+  function beginExportFetch(group: ResponseGroup) {
     setExportGroup(group)
     setExportForm(null)
     setExportLoadState('loading')
-    exportDialogRef.current?.showModal()
 
     const latestSlug = group.responses[0].formSlug
     getFormBySlug(latestSlug)
@@ -94,6 +97,16 @@ export function RespondentHome() {
       .catch(() => setExportLoadState('error'))
   }
 
+  function handleOpenExportAll(group: ResponseGroup) {
+    beginExportFetch(group)
+    exportDialogRef.current?.showModal()
+  }
+
+  function handleOpenShareAll(group: ResponseGroup) {
+    beginExportFetch(group)
+    shareDialogRef.current?.showModal()
+  }
+
   function safeFilenamePart(title: string): string {
     return title.replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '-').replace(/^-+|-+$/g, '') || 'formular'
   }
@@ -106,8 +119,38 @@ export function RespondentHome() {
   }
 
   function handleExportAllPdf() {
+    if (!exportGroup || !exportForm) return
+    const pdf = buildBulkResponsePdf(exportForm.schema, exportGroup.responses)
+    downloadPdf(`${safeFilenamePart(exportGroup.formTitle)}-alla-svar.pdf`, pdf)
     exportDialogRef.current?.close()
-    window.print()
+  }
+
+  async function handleShareAllCsv() {
+    if (!exportGroup || !exportForm) return
+    const csvFile = buildCsvFile(
+      `${safeFilenamePart(exportGroup.formTitle)}-alla-svar.csv`,
+      buildBulkResponseCsv(exportForm.schema, exportGroup.responses),
+    )
+    const result = await shareFiles([csvFile], exportGroup.formTitle)
+    if (result === 'shared') {
+      shareDialogRef.current?.close()
+    } else if (result === 'error' || result === 'unsupported') {
+      showToast('Kunde inte dela filen', 'error')
+    }
+  }
+
+  async function handleShareAllPdf() {
+    if (!exportGroup || !exportForm) return
+    const pdfBlob = buildBulkResponsePdf(exportForm.schema, exportGroup.responses)
+    const pdfFile = new File([pdfBlob], `${safeFilenamePart(exportGroup.formTitle)}-alla-svar.pdf`, {
+      type: 'application/pdf',
+    })
+    const result = await shareFiles([pdfFile], exportGroup.formTitle)
+    if (result === 'shared') {
+      shareDialogRef.current?.close()
+    } else if (result === 'error' || result === 'unsupported') {
+      showToast('Kunde inte dela filen', 'error')
+    }
   }
 
   return (
@@ -163,6 +206,15 @@ export function RespondentHome() {
                 >
                   Exportera alla
                 </button>
+                {isWebShareSupported() && (
+                  <button
+                    type="button"
+                    className="respondent-home__group-action"
+                    onClick={() => handleOpenShareAll(group)}
+                  >
+                    Dela alla
+                  </button>
+                )}
               </div>
             </section>
           ))}
@@ -184,9 +236,20 @@ export function RespondentHome() {
         )}
       </ExportDialog>
 
-      {exportForm && exportGroup && (
-        <ResponsePrintGroupView schema={exportForm.schema} responses={exportGroup.responses} />
-      )}
+      <ExportDialog dialogRef={shareDialogRef} title="Dela alla">
+        {exportLoadState === 'loading' && <p>Hämtar formulär…</p>}
+        {exportLoadState === 'error' && <p>Kunde inte hämta formuläret.</p>}
+        {exportLoadState === 'idle' && exportForm && (
+          <>
+            <button type="button" onClick={handleShareAllCsv}>
+              CSV
+            </button>
+            <button type="button" onClick={handleShareAllPdf}>
+              PDF
+            </button>
+          </>
+        )}
+      </ExportDialog>
     </div>
   )
 }

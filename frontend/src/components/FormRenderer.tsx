@@ -7,9 +7,10 @@ interface FormRendererProps {
   answers?: FormAnswers
   errors?: Record<string, string>
   onAnswerChange?: (fieldId: string, value: FieldAnswerValue) => void
+  readOnly?: boolean
 }
 
-export function FormRenderer({ schema, answers, errors, onAnswerChange }: FormRendererProps) {
+export function FormRenderer({ schema, answers, errors, onAnswerChange, readOnly }: FormRendererProps) {
   return (
     <div className="form-renderer">
       <h1>{schema.title || 'Namnlöst formulär'}</h1>
@@ -24,6 +25,7 @@ export function FormRenderer({ schema, answers, errors, onAnswerChange }: FormRe
               answer={answers?.[field.id]}
               error={errors?.[field.id]}
               onAnswerChange={onAnswerChange}
+              readOnly={readOnly}
             />
           ))}
         </section>
@@ -37,11 +39,13 @@ function FormRendererField({
   answer,
   error,
   onAnswerChange,
+  readOnly,
 }: {
   field: Field
   answer?: FieldAnswerValue
   error?: string
   onAnswerChange?: (fieldId: string, value: FieldAnswerValue) => void
+  readOnly?: boolean
 }) {
   const options = field.settings.options ?? []
 
@@ -56,9 +60,11 @@ function FormRendererField({
       return <p className="form-renderer__paragraph">{field.label}</p>
 
     case 'TEXT': {
-      const controlledProps = onAnswerChange
-        ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
-        : {}
+      const controlledProps = readOnly
+        ? { value: (answer as string) ?? '', disabled: true }
+        : onAnswerChange
+          ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
+          : {}
       return (
         <label className="form-renderer__field">
           <FieldLabel field={field} />
@@ -69,12 +75,14 @@ function FormRendererField({
     }
 
     case 'TEXTAREA': {
-      const controlledProps = onAnswerChange
-        ? {
-            value: (answer as string) ?? '',
-            onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => onAnswerChange(field.id, e.target.value),
-          }
-        : {}
+      const controlledProps = readOnly
+        ? { value: (answer as string) ?? '', disabled: true }
+        : onAnswerChange
+          ? {
+              value: (answer as string) ?? '',
+              onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => onAnswerChange(field.id, e.target.value),
+            }
+          : {}
       return (
         <label className="form-renderer__field">
           <FieldLabel field={field} />
@@ -85,9 +93,11 @@ function FormRendererField({
     }
 
     case 'NUMBER': {
-      const controlledProps = onAnswerChange
-        ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
-        : {}
+      const controlledProps = readOnly
+        ? { value: (answer as string) ?? '', disabled: true }
+        : onAnswerChange
+          ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
+          : {}
       return (
         <label className="form-renderer__field">
           <FieldLabel field={field} />
@@ -98,9 +108,11 @@ function FormRendererField({
     }
 
     case 'CHECKBOX': {
-      const controlledProps = onAnswerChange
-        ? { checked: answer === true, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.checked) }
-        : {}
+      const controlledProps = readOnly
+        ? { checked: answer === true, disabled: true }
+        : onAnswerChange
+          ? { checked: answer === true, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.checked) }
+          : {}
       return (
         <div className="form-renderer__field">
           <label className="form-renderer__checkbox-row">
@@ -119,9 +131,11 @@ function FormRendererField({
             <FieldLabel field={field} />
           </legend>
           {options.map((option, index) => {
-            const controlledProps = onAnswerChange
-              ? { checked: answer === option, onChange: () => onAnswerChange(field.id, option) }
-              : {}
+            const controlledProps = readOnly
+              ? { checked: answer === option, disabled: true }
+              : onAnswerChange
+                ? { checked: answer === option, onChange: () => onAnswerChange(field.id, option) }
+                : {}
             return (
               <label key={index} className="form-renderer__checkbox-row">
                 <input type="radio" name={field.id} {...controlledProps} />
@@ -141,15 +155,17 @@ function FormRendererField({
             <FieldLabel field={field} />
           </legend>
           {options.map((option, index) => {
-            const controlledProps = onAnswerChange
-              ? {
-                  checked: selected.includes(option),
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                    const next = e.target.checked ? [...selected, option] : selected.filter((o) => o !== option)
-                    onAnswerChange(field.id, next)
-                  },
-                }
-              : {}
+            const controlledProps = readOnly
+              ? { checked: selected.includes(option), disabled: true }
+              : onAnswerChange
+                ? {
+                    checked: selected.includes(option),
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                      const next = e.target.checked ? [...selected, option] : selected.filter((o) => o !== option)
+                      onAnswerChange(field.id, next)
+                    },
+                  }
+                : {}
             return (
               <label key={index} className="form-renderer__checkbox-row">
                 <input type="checkbox" {...controlledProps} />
@@ -165,12 +181,14 @@ function FormRendererField({
     case 'SCALE': {
       const min = field.settings.min ?? 1
       const max = field.settings.max ?? 5
-      const controlledProps = onAnswerChange
-        ? {
-            value: (answer as number) ?? Math.round((min + max) / 2),
-            onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, Number(e.target.value)),
-          }
-        : { defaultValue: Math.round((min + max) / 2) }
+      const controlledProps = readOnly
+        ? { value: (answer as number) ?? Math.round((min + max) / 2), disabled: true }
+        : onAnswerChange
+          ? {
+              value: (answer as number) ?? Math.round((min + max) / 2),
+              onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, Number(e.target.value)),
+            }
+          : { defaultValue: Math.round((min + max) / 2) }
       return (
         <div className="form-renderer__field">
           <FieldLabel field={field} />

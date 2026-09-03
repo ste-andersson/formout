@@ -80,6 +80,16 @@
   resize: none;
 }
 
+/* Browsers fade disabled inputs heavily by default -- fine for a real
+   disabled control, but this is used to show someone else's already-filled
+   answer, which needs to stay legible. */
+.form-renderer__field input:disabled,
+.form-renderer__field textarea:disabled {
+  opacity: 1;
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+
 .form-renderer__checkbox-row {
   display: flex;
   align-items: center;

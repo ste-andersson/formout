@@ -11,6 +11,7 @@ import { FormEditor } from './routes/FormEditor.tsx'
 import { FormViewer } from './routes/FormViewer.tsx'
 import { RespondentHome } from './routes/RespondentHome.tsx'
 import { ResponseEditor } from './routes/ResponseEditor.tsx'
+import { SharedResponse } from './routes/SharedResponse.tsx'
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route index element={<RespondentHome />} />
                 <Route path="forms/:slug" element={<FormViewer />} />
                 <Route path="responses/:responseId" element={<ResponseEditor />} />
+                <Route path="shared" element={<SharedResponse />} />
                 <Route path="admin" element={<AdminHome />} />
                 <Route path="admin/forms/new" element={<FormEditor />} />
                 <Route path="admin/forms/:id/edit" element={<FormEditor />} />

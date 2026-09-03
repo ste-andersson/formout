@@ -31,3 +31,11 @@
   color: inherit;
   cursor: pointer;
 }
+
+/* Looks disabled but stays a real, clickable button -- a native `disabled`
+   button never fires on mobile taps, so a tooltip explaining why would never
+   be reachable there. Clicking this shows the explanation instead. */
+.export-dialog__option--muted {
+  opacity: 0.5;
+  color: var(--text-secondary);
+}

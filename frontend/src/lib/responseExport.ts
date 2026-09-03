@@ -73,3 +73,7 @@ export function downloadCsv(filename: string, content: string): void {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+export function buildCsvFile(filename: string, content: string): File {
+  return new File(['﻿' + content], filename, { type: 'text/csv;charset=utf-8;' })
+}
