@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 public record Field(
         @NotBlank String id,
         @NotNull FieldType type,
-        @NotBlank String label,
+        String label,
         boolean required,
         @NotNull @Valid FieldSettings settings
 ) {

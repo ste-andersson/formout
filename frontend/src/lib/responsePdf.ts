@@ -142,6 +142,16 @@ function drawScale(
   cursor.y += 6
 }
 
+function drawDivider(cursor: PdfCursor) {
+  const { doc } = cursor
+  cursor.ensureSpace(6)
+  const y = cursor.y + 3
+  doc.setDrawColor(150)
+  doc.setLineWidth(0.3)
+  doc.line(MARGIN, y, MARGIN + CONTENT_WIDTH, y)
+  cursor.y = y + 5
+}
+
 function drawField(cursor: PdfCursor, field: Field, answer: FieldAnswerValue | undefined) {
   const options = field.settings.options ?? []
 
@@ -156,6 +166,10 @@ function drawField(cursor: PdfCursor, field: Field, answer: FieldAnswerValue | u
 
     case 'PARAGRAPH':
       drawText(cursor, field.label, { fontSize: 10, color: 90, gapAfter: 2 })
+      return
+
+    case 'DIVIDER':
+      drawDivider(cursor)
       return
 
     case 'TEXT':
@@ -203,12 +217,8 @@ function drawResponseContent(cursor: PdfCursor, schema: FormSchema, answers: For
   drawText(cursor, schema.title || 'Namnlöst formulär', { fontSize: 16, bold: true, gapAfter: 1 })
   drawText(cursor, `Ifyllt: ${formatResponseDateTime(filledInAt)}`, { fontSize: 9, color: 110, gapAfter: 6 })
 
-  for (const section of schema.sections) {
-    drawText(cursor, section.title, { fontSize: 12, bold: true, gapAfter: 3 })
-    for (const field of section.fields) {
-      drawField(cursor, field, answers[field.id])
-    }
-    cursor.y += 3
+  for (const field of schema.fields) {
+    drawField(cursor, field, answers[field.id])
   }
 }
 

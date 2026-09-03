@@ -9,6 +9,7 @@ export type FieldType =
   | 'HEADING'
   | 'SUBHEADING'
   | 'PARAGRAPH'
+  | 'DIVIDER'
 
 export interface FieldSettings {
   min: number | null
@@ -26,17 +27,11 @@ export interface Field {
   settings: FieldSettings
 }
 
-export interface Section {
-  id: string
-  title: string
-  fields: Field[]
-}
-
 export interface FormSchema {
   schemaVersion: number
   title: string
   description: string | null
-  sections: Section[]
+  fields: Field[]
 }
 
 export function emptyFieldSettings(): FieldSettings {
@@ -44,7 +39,7 @@ export function emptyFieldSettings(): FieldSettings {
 }
 
 export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
-  { label: 'Innehåll', types: ['HEADING', 'SUBHEADING', 'PARAGRAPH'] },
+  { label: 'Innehåll', types: ['HEADING', 'SUBHEADING', 'PARAGRAPH', 'DIVIDER'] },
   {
     label: 'Svarstyper',
     types: ['TEXT', 'TEXTAREA', 'NUMBER', 'CHECKBOX', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'SCALE'],
@@ -59,6 +54,8 @@ export function fieldTypeLabel(type: FieldType): string {
       return 'Underrubrik'
     case 'PARAGRAPH':
       return 'Text'
+    case 'DIVIDER':
+      return 'Avdelare'
     case 'TEXT':
       return 'Kort text'
     case 'TEXTAREA':
@@ -77,7 +74,7 @@ export function fieldTypeLabel(type: FieldType): string {
 }
 
 export function isContentBlock(type: FieldType): boolean {
-  return type === 'HEADING' || type === 'SUBHEADING' || type === 'PARAGRAPH'
+  return type === 'HEADING' || type === 'SUBHEADING' || type === 'PARAGRAPH' || type === 'DIVIDER'
 }
 
 function defaultLabelFor(type: FieldType): string {
@@ -88,6 +85,8 @@ function defaultLabelFor(type: FieldType): string {
       return 'Underrubrik'
     case 'PARAGRAPH':
       return 'Förklarande text'
+    case 'DIVIDER':
+      return ''
     case 'TEXT':
       return 'Skriv ett kort svar'
     case 'TEXTAREA':
@@ -123,10 +122,6 @@ export function createField(type: FieldType): Field {
     required: false,
     settings: defaultSettingsFor(type),
   }
-}
-
-export function createSection(): Section {
-  return { id: generateId(), title: 'Ny sektion', fields: [] }
 }
 
 /**

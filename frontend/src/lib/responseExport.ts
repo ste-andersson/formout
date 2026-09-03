@@ -22,22 +22,20 @@ function formatAnswer(value: FieldAnswerValue | undefined): string {
 }
 
 export function buildResponseCsv(schema: FormSchema, answers: FormAnswers): string {
-  const rows: string[][] = [['Sektion', 'Fråga', 'Svar']]
+  const rows: string[][] = [['Fråga', 'Svar']]
 
-  for (const section of schema.sections) {
-    for (const field of section.fields) {
-      if (field.type === 'HEADING' || field.type === 'SUBHEADING' || field.type === 'PARAGRAPH') {
-        continue
-      }
-      rows.push([section.title, field.label, formatAnswer(answers[field.id])])
+  for (const field of schema.fields) {
+    if (isContentBlock(field.type)) {
+      continue
     }
+    rows.push([field.label, formatAnswer(answers[field.id])])
   }
 
   return toCsv(rows)
 }
 
 export function buildBulkResponseCsv(schema: FormSchema, responses: SavedResponse[]): string {
-  const fields = schema.sections.flatMap((section) => section.fields).filter((field) => !isContentBlock(field.type))
+  const fields = schema.fields.filter((field) => !isContentBlock(field.type))
   const header = ['Ifyllt', ...fields.map((field) => field.label)]
   const rows = responses.map((response) => [
     formatResponseDateTime(responseTimestamp(response)),

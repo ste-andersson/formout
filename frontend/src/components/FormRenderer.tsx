@@ -15,20 +15,15 @@ export function FormRenderer({ schema, answers, errors, onAnswerChange, readOnly
     <div className="form-renderer">
       <h1>{schema.title || 'Namnlöst formulär'}</h1>
       {schema.description && <p className="form-renderer__description">{schema.description}</p>}
-      {schema.sections.map((section) => (
-        <section key={section.id} className="form-renderer__section">
-          <h2>{section.title}</h2>
-          {section.fields.map((field) => (
-            <FormRendererField
-              key={field.id}
-              field={field}
-              answer={answers?.[field.id]}
-              error={errors?.[field.id]}
-              onAnswerChange={onAnswerChange}
-              readOnly={readOnly}
-            />
-          ))}
-        </section>
+      {schema.fields.map((field) => (
+        <FormRendererField
+          key={field.id}
+          field={field}
+          answer={answers?.[field.id]}
+          error={errors?.[field.id]}
+          onAnswerChange={onAnswerChange}
+          readOnly={readOnly}
+        />
       ))}
     </div>
   )
@@ -58,6 +53,9 @@ function FormRendererField({
 
     case 'PARAGRAPH':
       return <p className="form-renderer__paragraph">{field.label}</p>
+
+    case 'DIVIDER':
+      return <hr className="form-renderer__divider" />
 
     case 'TEXT': {
       const controlledProps = readOnly

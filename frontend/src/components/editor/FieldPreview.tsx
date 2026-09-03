@@ -72,6 +72,8 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
         />
       )}
 
+      {field.type === 'DIVIDER' && <hr className="field-preview__divider" />}
+
       {field.type === 'PARAGRAPH' && (
         <textarea
           ref={primaryRef}

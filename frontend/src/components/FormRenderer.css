@@ -19,24 +19,6 @@
   color: var(--text-secondary);
 }
 
-.form-renderer__section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.form-renderer__section:first-of-type {
-  padding-top: 0;
-  border-top: none;
-}
-
-.form-renderer__section h2 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
 .form-renderer__heading {
   margin: 0;
   font-size: 1.15rem;
@@ -50,6 +32,13 @@
 .form-renderer__paragraph {
   margin: 0;
   color: var(--text-secondary);
+}
+
+.form-renderer__divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
 }
 
 .form-renderer__field {

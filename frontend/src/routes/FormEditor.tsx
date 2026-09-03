@@ -6,7 +6,7 @@ import { useLocation, useNavigate, useParams } from 'react-router'
 import * as adminApi from '../lib/adminApi'
 import { generateFormCode } from '../lib/formCode'
 import { resizeImageForUpload } from '../lib/imageResize'
-import type { FieldType, Section } from '../lib/formSchema'
+import type { Field, FieldType } from '../lib/formSchema'
 import { useToast } from '../components/toastContext'
 import { FormRenderer } from '../components/FormRenderer'
 import { ShareFormLink } from '../components/ShareFormLink'
@@ -14,8 +14,7 @@ import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
 import { JsonPreview } from '../components/editor/JsonPreview'
-import { SectionCanvas } from '../components/editor/SectionCanvas'
-import type { DropIndicator } from '../components/editor/SectionCanvas'
+import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
 import './FormEditor.css'
 
@@ -36,8 +35,8 @@ export function FormEditor() {
 type LoadState = { status: 'ready' } | { status: 'loading' } | { status: 'error'; message: string }
 
 type PaletteDragData = { source: 'palette'; fieldType: FieldType }
-type FieldDragData = { source: 'field'; sectionId: string; fieldId: string }
-type SectionContainerDropData = { source: 'section-container'; sectionId: string }
+type FieldDragData = { source: 'field'; fieldId: string }
+type CanvasDropData = { source: 'canvas' }
 
 function FormEditorContent() {
   const { id } = useParams<{ id: string }>()
@@ -74,7 +73,7 @@ function FormEditorContent() {
     }
   }, [uploadedImageUrl])
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
-  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isEditMode || !id) return
@@ -92,7 +91,7 @@ function FormEditorContent() {
           title: form.title,
           description: form.description ?? '',
           slug: form.slug,
-          sections: form.schema.sections,
+          fields: form.schema.fields,
         })
         setFormStatus(form.status)
         setLoadState({ status: 'ready' })
@@ -121,7 +120,7 @@ function FormEditorContent() {
         type: 'LOAD_INTERPRETED',
         title: schema.title,
         description: schema.description ?? '',
-        sections: schema.sections,
+        fields: schema.fields,
       })
       setInterpretState({ status: 'ready' })
       showToast('Formuläret är tolkat', 'success')
@@ -146,20 +145,13 @@ function FormEditorContent() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
   function resolveDropTarget(
-    sections: Section[],
+    fields: Field[],
     activeData: PaletteDragData | FieldDragData | undefined,
-    overData: FieldDragData | SectionContainerDropData | undefined,
-  ): DropIndicator | null {
+    overData: FieldDragData | CanvasDropData | undefined,
+  ): number | null {
     if (!activeData || !overData) return null
 
-    const targetSectionId = overData.sectionId
-    const targetSection = sections.find((s) => s.id === targetSectionId)
-    if (!targetSection) return null
-
-    const index =
-      overData.source === 'field' ? targetSection.fields.findIndex((f) => f.id === overData.fieldId) : targetSection.fields.length
-
-    return { sectionId: targetSectionId, index }
+    return overData.source === 'field' ? fields.findIndex((f) => f.id === overData.fieldId) : fields.length
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -179,38 +171,33 @@ function FormEditorContent() {
 
   function handleDragOver(event: DragOverEvent) {
     const activeData = event.active.data.current as PaletteDragData | FieldDragData | undefined
-    const overData = event.over?.data.current as FieldDragData | SectionContainerDropData | undefined
-    setDropIndicator(resolveDropTarget(state.sections, activeData, overData))
+    const overData = event.over?.data.current as FieldDragData | CanvasDropData | undefined
+    setDropIndicatorIndex(resolveDropTarget(state.fields, activeData, overData))
   }
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveDragItem(null)
-    setDropIndicator(null)
+    setDropIndicatorIndex(null)
 
     const { active, over } = event
     if (!over) return
 
     const activeData = active.data.current as PaletteDragData | FieldDragData | undefined
-    const overData = over.data.current as FieldDragData | SectionContainerDropData | undefined
-    const target = resolveDropTarget(state.sections, activeData, overData)
+    const overData = over.data.current as FieldDragData | CanvasDropData | undefined
+    const targetIndex = resolveDropTarget(state.fields, activeData, overData)
 
-    if (!activeData || !target) return
+    if (!activeData || targetIndex === null) return
 
     if (activeData.source === 'palette') {
-      dispatch({
-        type: 'ADD_ELEMENT',
-        sectionId: target.sectionId,
-        fieldType: activeData.fieldType,
-        index: target.index,
-      })
+      dispatch({ type: 'ADD_ELEMENT', fieldType: activeData.fieldType, index: targetIndex })
     } else {
-      dispatch({ type: 'MOVE_ELEMENT', fieldId: activeData.fieldId, toSectionId: target.sectionId, toIndex: target.index })
+      dispatch({ type: 'MOVE_ELEMENT', fieldId: activeData.fieldId, toIndex: targetIndex })
     }
   }
 
   function handleDragCancel() {
     setActiveDragItem(null)
-    setDropIndicator(null)
+    setDropIndicatorIndex(null)
   }
 
   const handleFieldFocused = useCallback(() => {
@@ -385,24 +372,13 @@ function FormEditorContent() {
           )}
           <div className="form-editor__build" data-hidden={activeTab !== 'build' || undefined}>
             <ElementPalette />
-            <SectionCanvas
-              sections={state.sections}
+            <FieldCanvas
+              fields={state.fields}
               lastAddedFieldId={state.lastAddedFieldId}
-              dropIndicator={dropIndicator}
+              dropIndicatorIndex={dropIndicatorIndex}
               onChangeElement={(fieldId, patch) => dispatch({ type: 'UPDATE_ELEMENT', fieldId, patch })}
               onFieldFocused={handleFieldFocused}
               onRemoveElement={(fieldId) => dispatch({ type: 'REMOVE_ELEMENT', fieldId })}
-              onRenameSection={(sectionId, title) => dispatch({ type: 'RENAME_SECTION', sectionId, title })}
-              onRemoveSection={(sectionId) => dispatch({ type: 'REMOVE_SECTION', sectionId })}
-              onMoveSectionUp={(sectionId) => {
-                const idx = state.sections.findIndex((s) => s.id === sectionId)
-                if (idx > 0) dispatch({ type: 'MOVE_SECTION', sectionId, toIndex: idx - 1 })
-              }}
-              onMoveSectionDown={(sectionId) => {
-                const idx = state.sections.findIndex((s) => s.id === sectionId)
-                if (idx < state.sections.length - 1) dispatch({ type: 'MOVE_SECTION', sectionId, toIndex: idx + 1 })
-              }}
-              onAddSection={() => dispatch({ type: 'ADD_SECTION' })}
             />
           </div>
           <div className="form-editor__preview" data-hidden={activeTab !== 'preview' || undefined}>

@@ -2,29 +2,22 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Field } from '../../lib/formSchema'
 import { fieldTypeLabel } from '../../lib/formSchema'
+import { blurActiveFieldIfKeyboardOpen } from '../../lib/device'
 import { FieldPreview } from './FieldPreview'
 import './SortableFieldItem.css'
 
 interface SortableFieldItemProps {
   field: Field
-  sectionId: string
   autoFocus: boolean
   onChange: (patch: Partial<Field>) => void
   onFocused: () => void
   onRemove: () => void
 }
 
-export function SortableFieldItem({
-  field,
-  sectionId,
-  autoFocus,
-  onChange,
-  onFocused,
-  onRemove,
-}: SortableFieldItemProps) {
+export function SortableFieldItem({ field, autoFocus, onChange, onFocused, onRemove }: SortableFieldItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: field.id,
-    data: { source: 'field', sectionId, fieldId: field.id },
+    data: { source: 'field', fieldId: field.id },
   })
 
   const style = {
@@ -38,6 +31,11 @@ export function SortableFieldItem({
         type="button"
         className="sortable-field-item__handle"
         aria-label="Dra för att flytta"
+        onPointerDownCapture={(e) => {
+          if (blurActiveFieldIfKeyboardOpen()) {
+            e.stopPropagation()
+          }
+        }}
         {...listeners}
         {...attributes}
       >

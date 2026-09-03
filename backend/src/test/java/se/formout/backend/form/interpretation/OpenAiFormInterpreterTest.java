@@ -10,7 +10,6 @@ import se.formout.backend.form.schema.Field;
 import se.formout.backend.form.schema.FieldSettings;
 import se.formout.backend.form.schema.FieldType;
 import se.formout.backend.form.schema.FormSchema;
-import se.formout.backend.form.schema.Section;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -35,14 +34,11 @@ class OpenAiFormInterpreterTest {
         AiInterpretedForm aiForm = new AiInterpretedForm(
                 "Wellbeing form",
                 null,
-                List.of(new AiInterpretedSection(
-                        "General questions",
-                        List.of(new AiInterpretedField(
-                                FieldType.TEXT,
-                                "How are you today?",
-                                true,
-                                new FieldSettings(null, null, null, null, null)
-                        ))
+                List.of(new AiInterpretedField(
+                        FieldType.TEXT,
+                        "How are you today?",
+                        true,
+                        new FieldSettings(null, null, null, null, null)
                 ))
         );
         String outputText = objectMapper.writeValueAsString(aiForm);
@@ -67,13 +63,9 @@ class OpenAiFormInterpreterTest {
 
         server.verify();
         assertEquals("Wellbeing form", schema.title());
-        assertEquals(1, schema.sections().size());
+        assertEquals(1, schema.fields().size());
 
-        Section section = schema.sections().get(0);
-        assertEquals("General questions", section.title());
-        assertNotNull(section.id());
-
-        Field field = section.fields().get(0);
+        Field field = schema.fields().get(0);
         assertEquals(FieldType.TEXT, field.type());
         assertEquals("How are you today?", field.label());
         assertNotNull(field.id());

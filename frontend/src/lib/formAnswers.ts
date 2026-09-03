@@ -10,6 +10,7 @@ export function isFieldAnswered(field: Field, answers: FormAnswers): boolean {
     case 'HEADING':
     case 'SUBHEADING':
     case 'PARAGRAPH':
+    case 'DIVIDER':
     case 'SCALE':
       return true
 
@@ -29,13 +30,11 @@ export function isFieldAnswered(field: Field, answers: FormAnswers): boolean {
 
 export function defaultAnswersFor(schema: FormSchema): FormAnswers {
   const answers: FormAnswers = {}
-  for (const section of schema.sections) {
-    for (const field of section.fields) {
-      if (field.type === 'SCALE') {
-        const min = field.settings.min ?? 1
-        const max = field.settings.max ?? 5
-        answers[field.id] = Math.round((min + max) / 2)
-      }
+  for (const field of schema.fields) {
+    if (field.type === 'SCALE') {
+      const min = field.settings.min ?? 1
+      const max = field.settings.max ?? 5
+      answers[field.id] = Math.round((min + max) / 2)
     }
   }
   return answers
@@ -43,11 +42,9 @@ export function defaultAnswersFor(schema: FormSchema): FormAnswers {
 
 export function validateRequiredFields(schema: FormSchema, answers: FormAnswers): Record<string, string> {
   const errors: Record<string, string> = {}
-  for (const section of schema.sections) {
-    for (const field of section.fields) {
-      if (field.required && !isFieldAnswered(field, answers)) {
-        errors[field.id] = 'Obligatoriskt fält'
-      }
+  for (const field of schema.fields) {
+    if (field.required && !isFieldAnswered(field, answers)) {
+      errors[field.id] = 'Obligatoriskt fält'
     }
   }
   return errors

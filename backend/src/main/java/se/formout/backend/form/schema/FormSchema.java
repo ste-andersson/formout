@@ -12,6 +12,6 @@ public record FormSchema(
         @NotNull @Min(1) Integer schemaVersion,
         @NotBlank String title,
         String description,
-        @NotEmpty List<@Valid Section> sections
+        @NotEmpty List<@Valid Field> fields
 ) {
 }
