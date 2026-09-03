@@ -14,7 +14,8 @@
   --canvas-bg: #f0ebe5;
   color-scheme: light;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Public Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading-font: 'Fredoka', var(--sans);
 
   font: 16px/1.5 var(--sans);
   color: var(--text);
@@ -169,6 +170,8 @@ body {
 }
 
 h1 {
+  font-family: var(--heading-font);
+  font-weight: 600;
   font-size: 1.375rem;
   margin: 0 0 0.5rem;
 }

@@ -20,11 +20,15 @@
 }
 
 .form-renderer__heading {
+  font-family: var(--heading-font);
+  font-weight: 600;
   margin: 0;
   font-size: 1.15rem;
 }
 
 .form-renderer__subheading {
+  font-family: var(--heading-font);
+  font-weight: 600;
   margin: 0;
   font-size: 1rem;
 }
