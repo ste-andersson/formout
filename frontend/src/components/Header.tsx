@@ -1,5 +1,6 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { Link } from 'react-router'
+import { ColorSchemePicker } from './ColorSchemePicker'
 import './Header.css'
 
 export function Header() {
@@ -9,6 +10,7 @@ export function Header() {
         Formout
       </Link>
       <div className="app-header__actions">
+        <ColorSchemePicker />
         <SignedOut>
           <SignInButton mode="modal">
             <button type="button" className="app-header__admin-link">

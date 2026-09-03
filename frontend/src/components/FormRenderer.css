@@ -65,7 +65,7 @@
   min-height: 44px;
   border: 1px solid var(--border);
   border-radius: 0.375rem;
-  background: var(--bg);
+  background: var(--field-bg);
   resize: none;
 }
 

@@ -2,6 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Sätter färgschemat innan CSS:n målas upp, så sidan inte flimrar till
+      // fel schema vid laddning. Nyckelnamnet och logiken speglar
+      // getStoredScheme()/applyScheme() i src/lib/colorScheme.ts -- håll dem i synk.
+      ;(function () {
+        try {
+          var scheme = localStorage.getItem('formout:color-scheme')
+          if (scheme) document.documentElement.setAttribute('data-scheme', scheme)
+        } catch (e) {}
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Formout</title>

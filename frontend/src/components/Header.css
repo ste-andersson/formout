@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e2e2;
+  border-bottom: 1px solid var(--border);
 }
 
 .app-header__brand {
@@ -23,7 +23,7 @@
 .app-header__admin-link {
   font: inherit;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-secondary);
   text-decoration: none;
   background: none;
   border: none;
@@ -37,6 +37,6 @@
 
 .app-header__admin-link:hover,
 .app-header__admin-link:focus-visible {
-  background: #f2f2f2;
-  color: #111;
+  background: var(--canvas-bg);
+  color: var(--text);
 }
