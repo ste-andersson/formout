@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core'
 import type { FieldType } from '../../lib/formSchema'
 import { FIELD_TYPE_GROUPS, fieldTypeLabel } from '../../lib/formSchema'
+import { blurActiveFieldIfKeyboardOpen } from '../../lib/device'
 import './ElementPalette.css'
 
 export function ElementPalette() {
@@ -32,6 +33,11 @@ function PaletteItem({ fieldType }: { fieldType: FieldType }) {
       ref={setNodeRef}
       className="element-palette__item"
       data-dragging={isDragging || undefined}
+      onPointerDownCapture={(e) => {
+        if (blurActiveFieldIfKeyboardOpen()) {
+          e.stopPropagation()
+        }
+      }}
       {...listeners}
       {...attributes}
     >

@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Field } from '../../lib/formSchema'
 import { fieldTypeLabel } from '../../lib/formSchema'
+import { blurActiveFieldIfKeyboardOpen } from '../../lib/device'
 import { FieldPreview } from './FieldPreview'
 import './SortableFieldItem.css'
 
@@ -30,6 +31,11 @@ export function SortableFieldItem({ field, autoFocus, onChange, onFocused, onRem
         type="button"
         className="sortable-field-item__handle"
         aria-label="Dra för att flytta"
+        onPointerDownCapture={(e) => {
+          if (blurActiveFieldIfKeyboardOpen()) {
+            e.stopPropagation()
+          }
+        }}
         {...listeners}
         {...attributes}
       >
