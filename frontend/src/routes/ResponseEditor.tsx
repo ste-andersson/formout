@@ -239,7 +239,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
               qrDialogRef.current?.showModal()
             }}
           >
-            Visa QR/länk
+            Visa QR-kod/länk
           </button>
         </ExportDialog>
       )}
