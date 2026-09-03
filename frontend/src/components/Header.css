@@ -15,11 +15,29 @@
 }
 
 .app-header__brand {
-  font-weight: 600;
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
   color: inherit;
   text-decoration: none;
   flex-shrink: 0;
+}
+
+.app-header__logo {
+  display: block;
+  height: 1.25rem;
+  width: auto;
+}
+
+@media (min-width: 640px) {
+  .app-header__logo {
+    height: 1.75rem;
+  }
+}
+
+/* Loggan är mörk (transparent bakgrund) -- vänd den ljus i mörkt läge så den
+   syns mot den mörka bakgrunden istället för att försvinna i den. */
+:root[data-theme='dark'] .app-header__logo {
+  filter: invert(1);
 }
 
 .app-header__tabs {
@@ -46,6 +64,8 @@
   min-height: 44px;
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
 }
 

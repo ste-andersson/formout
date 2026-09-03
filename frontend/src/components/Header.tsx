@@ -11,7 +11,7 @@ export function Header() {
     <header className="app-header">
       <div className="app-header__start">
         <Link to="/" className="app-header__brand">
-          Formout
+          <img src="/logo-wide.webp" alt="Formout" className="app-header__logo" />
         </Link>
         <nav className="app-header__tabs" aria-label="Huvudnavigering">
           <Link to="/" className="app-header__tab" data-active={!isAdminSection || undefined}>
