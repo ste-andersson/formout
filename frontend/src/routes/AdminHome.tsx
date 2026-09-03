@@ -36,7 +36,11 @@ function PhotoUploadButton() {
 
   return (
     <>
-      <button type="button" className="my-forms__upload-button" onClick={() => inputRef.current?.click()}>
+      <button
+        type="button"
+        className="my-forms__action my-forms__action--primary"
+        onClick={() => inputRef.current?.click()}
+      >
         {isMobile ? 'Formulär från foto' : 'Formulär från fil'}
       </button>
       <input
@@ -87,10 +91,10 @@ function MyForms() {
   return (
     <div className="my-forms">
       <div className="my-forms__actions">
-        <Link to="/admin/forms/new" className="my-forms__new-button">
-          + Nytt formulär
-        </Link>
         <PhotoUploadButton />
+        <Link to="/admin/forms/new" className="my-forms__action my-forms__action--secondary">
+          Bygg formulär
+        </Link>
       </div>
 
       {state.status === 'loading' && <p>Laddar…</p>}
