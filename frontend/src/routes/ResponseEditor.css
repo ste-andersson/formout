@@ -24,3 +24,52 @@
   color: inherit;
   cursor: pointer;
 }
+
+.response-editor__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.response-editor__qr-frame {
+  /* Always white, regardless of light/dark theme -- QR scanners need a
+     light quiet zone around the code to read it reliably, not just looks. */
+  background: #fff;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  line-height: 0;
+}
+
+.response-editor__link-copy {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.response-editor__link-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--bg);
+  color: var(--text-secondary);
+}
+
+.response-editor__link-copy button {
+  flex-shrink: 0;
+  font: inherit;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--bg);
+  color: inherit;
+  cursor: pointer;
+}

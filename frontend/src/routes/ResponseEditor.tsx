@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import QRCode from 'react-qr-code'
 import { getFormBySlug } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor } from '../lib/formAnswers'
@@ -32,6 +33,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   const { showToast } = useToast()
   const exportDialogRef = useRef<HTMLDialogElement>(null)
   const shareDialogRef = useRef<HTMLDialogElement>(null)
+  const qrDialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
     if (!responseId) {
@@ -124,6 +126,15 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
     shareDialogRef.current?.close()
   }
 
+  async function handleCopyLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url)
+      showToast('Länk kopierad', 'success')
+    } catch {
+      showToast('Kunde inte kopiera länken', 'error')
+    }
+  }
+
   async function handleDelete(response: SavedResponse) {
     try {
       await deleteResponse(response.id)
@@ -213,8 +224,45 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
             title={linkUrl ? undefined : 'Formuläret är för långt för att delas som länk.'}
             onClick={() => handleShareLink(linkUrl, response.formTitle)}
           >
-            Länk
+            Maila länk
           </button>
+          <button
+            type="button"
+            className={linkUrl ? undefined : 'export-dialog__option--muted'}
+            title={linkUrl ? undefined : 'Formuläret är för långt för att visas som QR-kod/länk.'}
+            onClick={() => {
+              if (!linkUrl) {
+                showToast('Formuläret är för långt för att visas som QR-kod/länk.', 'error')
+                return
+              }
+              shareDialogRef.current?.close()
+              qrDialogRef.current?.showModal()
+            }}
+          >
+            Visa QR/länk
+          </button>
+        </ExportDialog>
+      )}
+
+      {linkUrl && (
+        <ExportDialog dialogRef={qrDialogRef} title="QR-kod">
+          <div className="response-editor__qr">
+            <div className="response-editor__qr-frame">
+              <QRCode value={linkUrl} size={200} />
+            </div>
+            <div className="response-editor__link-copy">
+              <input
+                type="text"
+                readOnly
+                value={linkUrl}
+                onFocus={(e) => e.target.select()}
+                className="response-editor__link-input"
+              />
+              <button type="button" onClick={() => handleCopyLink(linkUrl)}>
+                Kopiera länk
+              </button>
+            </div>
+          </div>
         </ExportDialog>
       )}
 
