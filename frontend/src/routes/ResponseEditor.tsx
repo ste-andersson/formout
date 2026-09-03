@@ -5,10 +5,11 @@ import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor } from '../lib/formAnswers'
 import type { SavedResponse } from '../lib/responseStorage'
 import { deleteResponse, getResponse, responseTimestamp, updateResponse } from '../lib/responseStorage'
-import { buildResponseCsv, buildResponseCsvFallback, downloadCsv } from '../lib/responseExport'
+import { buildCsvFile, buildResponseCsv, buildResponseCsvFallback, downloadCsv } from '../lib/responseExport'
+import { buildResponsePdf, downloadPdf } from '../lib/responsePdf'
+import { isWebShareSupported, shareFiles } from '../lib/webShare'
 import { useToast } from '../components/toastContext'
 import { FormFiller } from '../components/FormFiller'
-import { ResponsePrintView } from '../components/ResponsePrintView'
 import { ExportDialog } from '../components/ExportDialog'
 import './ResponseEditor.css'
 
@@ -29,6 +30,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const exportDialogRef = useRef<HTMLDialogElement>(null)
+  const shareDialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
     if (!responseId) {
@@ -64,17 +66,50 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
     }
   }, [responseId])
 
+  function safeFilenamePart(title: string): string {
+    return title.replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '-').replace(/^-+|-+$/g, '') || 'formular'
+  }
+
   function handleExportCsv(response: SavedResponse, form?: FormDetail) {
     const csv = form ? buildResponseCsv(form.schema, response.answers) : buildResponseCsvFallback(response.answers)
-    const safeTitle = response.formTitle.replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '-').replace(/^-+|-+$/g, '') || 'formular'
     const dateStr = responseTimestamp(response).slice(0, 10)
-    downloadCsv(`${safeTitle}-${dateStr}.csv`, csv)
+    downloadCsv(`${safeFilenamePart(response.formTitle)}-${dateStr}.csv`, csv)
     exportDialogRef.current?.close()
   }
 
-  function handleExportPdf() {
+  function handleExportPdf(response: SavedResponse, form: FormDetail) {
+    const pdf = buildResponsePdf(form.schema, response.answers, responseTimestamp(response))
+    const dateStr = responseTimestamp(response).slice(0, 10)
+    downloadPdf(`${safeFilenamePart(response.formTitle)}-${dateStr}.pdf`, pdf)
     exportDialogRef.current?.close()
-    window.print()
+  }
+
+  async function handleShareCsv(response: SavedResponse, form: FormDetail) {
+    const dateStr = responseTimestamp(response).slice(0, 10)
+    const csvFile = buildCsvFile(
+      `${safeFilenamePart(response.formTitle)}-${dateStr}.csv`,
+      buildResponseCsv(form.schema, response.answers),
+    )
+    const result = await shareFiles([csvFile], response.formTitle)
+    if (result === 'shared') {
+      shareDialogRef.current?.close()
+    } else if (result === 'error' || result === 'unsupported') {
+      showToast('Kunde inte dela filen', 'error')
+    }
+  }
+
+  async function handleSharePdf(response: SavedResponse, form: FormDetail) {
+    const dateStr = responseTimestamp(response).slice(0, 10)
+    const pdfBlob = buildResponsePdf(form.schema, response.answers, responseTimestamp(response))
+    const pdfFile = new File([pdfBlob], `${safeFilenamePart(response.formTitle)}-${dateStr}.pdf`, {
+      type: 'application/pdf',
+    })
+    const result = await shareFiles([pdfFile], response.formTitle)
+    if (result === 'shared') {
+      shareDialogRef.current?.close()
+    } else if (result === 'error' || result === 'unsupported') {
+      showToast('Kunde inte dela filen', 'error')
+    }
   }
 
   async function handleDelete(response: SavedResponse) {
@@ -119,6 +154,11 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
         <button type="button" onClick={() => exportDialogRef.current?.showModal()}>
           Exportera
         </button>
+        {form && isWebShareSupported() && (
+          <button type="button" onClick={() => shareDialogRef.current?.showModal()}>
+            Dela
+          </button>
+        )}
         <button type="button" onClick={() => handleDelete(response)}>
           Ta bort
         </button>
@@ -129,13 +169,22 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
           CSV
         </button>
         {form && (
-          <button type="button" onClick={handleExportPdf}>
+          <button type="button" onClick={() => handleExportPdf(response, form)}>
             PDF
           </button>
         )}
       </ExportDialog>
 
-      {form && <ResponsePrintView schema={form.schema} answers={response.answers} filledInAt={responseTimestamp(response)} />}
+      {form && (
+        <ExportDialog dialogRef={shareDialogRef} title="Dela">
+          <button type="button" onClick={() => handleShareCsv(response, form)}>
+            CSV
+          </button>
+          <button type="button" onClick={() => handleSharePdf(response, form)}>
+            PDF
+          </button>
+        </ExportDialog>
+      )}
 
       {state.status === 'form-unavailable' && (
         <div>
