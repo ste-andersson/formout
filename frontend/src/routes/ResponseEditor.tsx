@@ -8,6 +8,7 @@ import { deleteResponse, getResponse, responseTimestamp, updateResponse } from '
 import { buildCsvFile, buildResponseCsv, buildResponseCsvFallback, downloadCsv } from '../lib/responseExport'
 import { buildResponsePdf, downloadPdf } from '../lib/responsePdf'
 import { isWebShareSupported, shareFiles } from '../lib/webShare'
+import { buildSharedResponseUrl } from '../lib/sharedResponseLink'
 import { useToast } from '../components/toastContext'
 import { FormFiller } from '../components/FormFiller'
 import { ExportDialog } from '../components/ExportDialog'
@@ -112,6 +113,17 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
     }
   }
 
+  function handleShareLink(linkUrl: string | null, formTitle: string) {
+    if (!linkUrl) {
+      showToast('Formuläret är för långt för att delas som länk. Använd Dela eller Exportera istället.', 'error')
+      return
+    }
+    const subject = encodeURIComponent(formTitle)
+    const body = encodeURIComponent(`Här är mitt ifyllda formulär:\n\n${linkUrl}`)
+    window.location.href = `mailto:?subject=${subject}&body=${body}`
+    shareDialogRef.current?.close()
+  }
+
   async function handleDelete(response: SavedResponse) {
     try {
       await deleteResponse(response.id)
@@ -147,6 +159,14 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
 
   const { response } = state
   const form = state.status === 'loaded' ? state.form : undefined
+  const linkUrl = form
+    ? buildSharedResponseUrl({
+        formSlug: response.formSlug,
+        formTitle: response.formTitle,
+        answers: response.answers,
+        filledInAt: responseTimestamp(response),
+      })
+    : null
 
   return (
     <div className="response-editor">
@@ -154,7 +174,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
         <button type="button" onClick={() => exportDialogRef.current?.showModal()}>
           Exportera
         </button>
-        {form && isWebShareSupported() && (
+        {form && (
           <button type="button" onClick={() => shareDialogRef.current?.showModal()}>
             Dela
           </button>
@@ -177,11 +197,23 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
 
       {form && (
         <ExportDialog dialogRef={shareDialogRef} title="Dela">
-          <button type="button" onClick={() => handleShareCsv(response, form)}>
-            CSV
-          </button>
-          <button type="button" onClick={() => handleSharePdf(response, form)}>
-            PDF
+          {isWebShareSupported() && (
+            <>
+              <button type="button" onClick={() => handleShareCsv(response, form)}>
+                CSV
+              </button>
+              <button type="button" onClick={() => handleSharePdf(response, form)}>
+                PDF
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className={linkUrl ? undefined : 'export-dialog__option--muted'}
+            title={linkUrl ? undefined : 'Formuläret är för långt för att delas som länk.'}
+            onClick={() => handleShareLink(linkUrl, response.formTitle)}
+          >
+            Länk
           </button>
         </ExportDialog>
       )}

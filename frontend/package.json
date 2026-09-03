@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "idb": "^8.0.3",
     "jspdf": "^4.2.1",
+    "lz-string": "^1.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.1"
