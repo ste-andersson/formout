@@ -105,6 +105,24 @@ function FormRendererField({
       )
     }
 
+    case 'DATE':
+    case 'TIME':
+    case 'DATETIME': {
+      const inputType = field.type === 'DATE' ? 'date' : field.type === 'TIME' ? 'time' : 'datetime-local'
+      const controlledProps = readOnly
+        ? { value: (answer as string) ?? '', disabled: true }
+        : onAnswerChange
+          ? { value: (answer as string) ?? '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, e.target.value) }
+          : {}
+      return (
+        <label className="form-renderer__field">
+          <FieldLabel field={field} />
+          <input type={inputType} {...controlledProps} />
+          <FieldError error={error} />
+        </label>
+      )
+    }
+
     case 'CHECKBOX': {
       const controlledProps = readOnly
         ? { checked: answer === true, disabled: true }

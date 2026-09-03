@@ -6,6 +6,9 @@ export type FieldType =
   | 'SINGLE_CHOICE'
   | 'MULTIPLE_CHOICE'
   | 'SCALE'
+  | 'DATE'
+  | 'TIME'
+  | 'DATETIME'
   | 'HEADING'
   | 'SUBHEADING'
   | 'PARAGRAPH'
@@ -42,7 +45,7 @@ export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
   { label: 'Innehåll', types: ['HEADING', 'SUBHEADING', 'PARAGRAPH', 'DIVIDER'] },
   {
     label: 'Svarstyper',
-    types: ['TEXT', 'TEXTAREA', 'NUMBER', 'CHECKBOX', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'SCALE'],
+    types: ['TEXT', 'TEXTAREA', 'NUMBER', 'CHECKBOX', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'SCALE', 'DATE', 'TIME', 'DATETIME'],
   },
 ]
 
@@ -70,6 +73,12 @@ export function fieldTypeLabel(type: FieldType): string {
       return 'Flera val'
     case 'SCALE':
       return 'Skala'
+    case 'DATE':
+      return 'Datum'
+    case 'TIME':
+      return 'Tid'
+    case 'DATETIME':
+      return 'Datum och tid'
   }
 }
 
@@ -101,6 +110,12 @@ function defaultLabelFor(type: FieldType): string {
       return 'Välj ett eller flera alternativ'
     case 'SCALE':
       return 'Välj en position på skalan'
+    case 'DATE':
+      return 'Välj ett datum'
+    case 'TIME':
+      return 'Välj en tid'
+    case 'DATETIME':
+      return 'Välj datum och tid'
   }
 }
 

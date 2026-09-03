@@ -24,6 +24,9 @@ export function isFieldAnswered(field: Field, answers: FormAnswers): boolean {
     case 'TEXTAREA':
     case 'NUMBER':
     case 'SINGLE_CHOICE':
+    case 'DATE':
+    case 'TIME':
+    case 'DATETIME':
       return typeof value === 'string' && value.trim().length > 0
   }
 }
