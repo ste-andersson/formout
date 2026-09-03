@@ -1,14 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { getFormBySlug } from '../lib/api'
 import type { FormDetail } from '../lib/api'
-import { defaultAnswersFor, validateRequiredFields } from '../lib/formAnswers'
-import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
-import { saveResponse } from '../lib/responseStorage'
-import { useToast } from '../components/toastContext'
-import { FormRenderer } from '../components/FormRenderer'
-import './FormViewer.css'
+import { defaultAnswersFor } from '../lib/formAnswers'
+import { createResponse } from '../lib/responseStorage'
+import { FormFiller } from '../components/FormFiller'
 
 type LoadState =
   | { status: 'loading' }
@@ -23,11 +19,6 @@ export function FormViewer() {
 
 function FormViewerContent({ slug }: { slug?: string }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
-  const [answers, setAnswers] = useState<FormAnswers>({})
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [submitted, setSubmitted] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const { showToast } = useToast()
 
   useEffect(() => {
     if (!slug) {
@@ -39,12 +30,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
     getFormBySlug(slug)
       .then((form) => {
         if (cancelled) return
-        if (form) {
-          setState({ status: 'loaded', form })
-          setAnswers(defaultAnswersFor(form.schema))
-        } else {
-          setState({ status: 'not-found' })
-        }
+        setState(form ? { status: 'loaded', form } : { status: 'not-found' })
       })
       .catch(() => {
         if (cancelled) return
@@ -55,37 +41,6 @@ function FormViewerContent({ slug }: { slug?: string }) {
       cancelled = true
     }
   }, [slug])
-
-  function handleAnswerChange(fieldId: string, value: FieldAnswerValue) {
-    setAnswers((prev) => ({ ...prev, [fieldId]: value }))
-  }
-
-  async function handleSubmit(event: FormEvent, form: FormDetail) {
-    event.preventDefault()
-    const validationErrors = validateRequiredFields(form.schema, answers)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) {
-      showToast('Fyll i de obligatoriska fälten', 'error')
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      await saveResponse({
-        formId: form.id,
-        formSlug: form.slug,
-        formTitle: form.title,
-        formVersion: form.currentVersion,
-        answers,
-      })
-      setSubmitted(true)
-      showToast('Formuläret är ifyllt', 'success')
-    } catch {
-      showToast('Kunde inte spara svaret lokalt', 'error')
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
   if (state.status === 'loading') {
     return <p>Laddar formulär…</p>
@@ -113,22 +68,24 @@ function FormViewerContent({ slug }: { slug?: string }) {
 
   const { form } = state
 
-  if (submitted) {
-    return (
-      <div className="form-viewer__confirmation">
-        <h1>Tack!</h1>
-        <p>Dina svar är sparade på den här enheten.</p>
-        <Link to="/">Till startsidan</Link>
-      </div>
-    )
-  }
-
   return (
-    <form onSubmit={(event) => handleSubmit(event, form)} className="form-viewer">
-      <FormRenderer schema={form.schema} answers={answers} errors={errors} onAnswerChange={handleAnswerChange} />
-      <button type="submit" className="form-viewer__submit" disabled={isSaving}>
-        {isSaving ? 'Sparar…' : 'Skicka in'}
-      </button>
-    </form>
+    <FormFiller
+      schema={form.schema}
+      initialAnswers={defaultAnswersFor(form.schema)}
+      submitLabel="Skicka in"
+      savingLabel="Sparar…"
+      successToast="Formuläret är ifyllt"
+      errorToast="Kunde inte spara svaret lokalt"
+      confirmation={{ title: 'Tack!', message: 'Dina svar är sparade på den här enheten.' }}
+      onSubmit={(answers) =>
+        createResponse({
+          formId: form.id,
+          formSlug: form.slug,
+          formTitle: form.title,
+          formVersion: form.currentVersion,
+          answers,
+        }).then(() => {})
+      }
+    />
   )
 }

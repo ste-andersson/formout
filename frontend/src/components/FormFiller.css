@@ -1,10 +1,10 @@
-.form-viewer {
+.form-filler {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.form-viewer__submit {
+.form-filler__submit {
   align-self: center;
   font-size: 1rem;
   padding: 0.75rem 2rem;
@@ -16,17 +16,17 @@
   cursor: pointer;
 }
 
-.form-viewer__submit:hover,
-.form-viewer__submit:focus-visible {
+.form-filler__submit:hover,
+.form-filler__submit:focus-visible {
   opacity: 0.9;
 }
 
-.form-viewer__submit:disabled {
+.form-filler__submit:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
-.form-viewer__confirmation {
+.form-filler__confirmation {
   max-width: 28rem;
   margin: 0 auto;
   text-align: center;
