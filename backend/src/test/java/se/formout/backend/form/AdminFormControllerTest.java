@@ -11,7 +11,6 @@ import se.formout.backend.form.schema.Field;
 import se.formout.backend.form.schema.FieldSettings;
 import se.formout.backend.form.schema.FieldType;
 import se.formout.backend.form.schema.FormSchema;
-import se.formout.backend.form.schema.Section;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -38,10 +37,8 @@ class AdminFormControllerTest {
 
     private FormSchema validSchema() {
         return new FormSchema(1, "Wellbeing form", "Example", List.of(
-                new Section("section-1", "General questions", List.of(
-                        new Field("field-1", FieldType.TEXT, "How are you today?", true,
-                                new FieldSettings(null, null, null, null, null))
-                ))
+                new Field("field-1", FieldType.TEXT, "How are you today?", true,
+                        new FieldSettings(null, null, null, null, null))
         ));
     }
 

@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import se.formout.backend.form.schema.Field;
 import se.formout.backend.form.schema.FieldSettings;
 import se.formout.backend.form.schema.FormSchema;
-import se.formout.backend.form.schema.Section;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -22,8 +21,8 @@ import java.util.UUID;
 /**
  * Sends an uploaded form image or PDF to OpenAI's Responses API and turns
  * the structured JSON it returns into a real {@link FormSchema}. The model
- * is not asked for ids for sections/fields — it has no meaningful way to
- * choose good ones, so fresh ids are generated here after parsing.
+ * is not asked for field ids — it has no meaningful way to choose good
+ * ones, so fresh ids are generated here after parsing.
  */
 @Service
 public class OpenAiFormInterpreter {
@@ -31,23 +30,25 @@ public class OpenAiFormInterpreter {
     private static final String PROMPT = """
             You are extracting the structure of a paper form from an image or PDF into a \
             structured JSON representation. Identify the form's title, an optional short \
-            description, and its sections. Each section has a title and a list of fields.
+            description, and its fields, listed in the order they appear on the form, top \
+            to bottom.
 
             Each field has:
             - type: TEXT (short single-line answer), TEXTAREA (longer multi-line answer), \
             NUMBER (numeric answer), CHECKBOX (a single yes/no checkbox), SINGLE_CHOICE \
             (choose exactly one option), MULTIPLE_CHOICE (choose one or more options), SCALE \
-            (a numeric rating scale), HEADING or SUBHEADING (a section-level heading that is \
-            not itself a question), PARAGRAPH (explanatory text that is not a question).
-            - label: the question text, or the heading/paragraph text.
+            (a numeric rating scale), HEADING or SUBHEADING (a heading-like line of text that \
+            is not itself a question), PARAGRAPH (explanatory text that is not a question), \
+            DIVIDER (a plain dividing line on the form with no text of its own).
+            - label: the question text, or the heading/paragraph text. Leave empty for DIVIDER.
             - required: whether the form marks the field as mandatory.
             - settings: for SINGLE_CHOICE/MULTIPLE_CHOICE, the list of options; for SCALE, \
             min, max, and optional labels for the two endpoints; otherwise leave every \
             settings field null.
 
-            Preserve the original language of the form's text. If the form has no explicit \
-            sections, put all fields into a single section. Do not invent content that is \
-            not present in the form.""";
+            Preserve the original language of the form's text. Do not invent content that is \
+            not present in the form, and do not invent headings or group fields under a \
+            heading that isn't actually printed on the form.""";
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -145,20 +146,16 @@ public class OpenAiFormInterpreter {
     }
 
     private FormSchema toFormSchema(AiInterpretedForm interpreted) {
-        List<Section> sections = interpreted.sections().stream().map(this::toSection).toList();
-        return new FormSchema(1, interpreted.title(), interpreted.description(), sections);
-    }
-
-    private Section toSection(AiInterpretedSection section) {
-        List<Field> fields = section.fields().stream().map(this::toField).toList();
-        return new Section(UUID.randomUUID().toString(), section.title(), fields);
+        List<Field> fields = interpreted.fields().stream().map(this::toField).toList();
+        return new FormSchema(1, interpreted.title(), interpreted.description(), fields);
     }
 
     private Field toField(AiInterpretedField field) {
         FieldSettings settings = field.settings() != null
                 ? field.settings()
                 : new FieldSettings(null, null, null, null, null);
-        return new Field(UUID.randomUUID().toString(), field.type(), field.label(), field.required(), settings);
+        String label = field.label() != null ? field.label() : "";
+        return new Field(UUID.randomUUID().toString(), field.type(), label, field.required(), settings);
     }
 
     private static Map<String, Object> buildResponseSchema() {
@@ -179,31 +176,23 @@ public class OpenAiFormInterpreter {
                                 "type", "string",
                                 "enum", List.of(
                                         "TEXT", "TEXTAREA", "NUMBER", "CHECKBOX", "SINGLE_CHOICE",
-                                        "MULTIPLE_CHOICE", "SCALE", "HEADING", "SUBHEADING", "PARAGRAPH"
+                                        "MULTIPLE_CHOICE", "SCALE", "HEADING", "SUBHEADING", "PARAGRAPH", "DIVIDER"
                                 )
                         ),
-                        "label", Map.of("type", "string"),
+                        "label", nullableType("string"),
                         "required", Map.of("type", "boolean"),
                         "settings", settingsSchema
                 ),
                 List.of("type", "label", "required", "settings")
         );
 
-        Map<String, Object> sectionSchema = objectSchema(
-                Map.of(
-                        "title", Map.of("type", "string"),
-                        "fields", Map.of("type", "array", "items", fieldSchema)
-                ),
-                List.of("title", "fields")
-        );
-
         return objectSchema(
                 Map.of(
                         "title", Map.of("type", "string"),
                         "description", nullableType("string"),
-                        "sections", Map.of("type", "array", "items", sectionSchema)
+                        "fields", Map.of("type", "array", "items", fieldSchema)
                 ),
-                List.of("title", "description", "sections")
+                List.of("title", "description", "fields")
         );
     }
 

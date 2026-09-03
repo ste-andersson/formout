@@ -10,5 +10,6 @@ public enum FieldType {
     SCALE,
     HEADING,
     SUBHEADING,
-    PARAGRAPH
+    PARAGRAPH,
+    DIVIDER
 }
