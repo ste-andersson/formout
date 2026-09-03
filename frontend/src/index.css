@@ -185,3 +185,60 @@ h1 {
 p {
   margin: 0 0 1rem;
 }
+
+.btn {
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn--primary {
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn--primary:hover,
+.btn--primary:focus-visible {
+  opacity: 0.9;
+}
+
+.btn--secondary {
+  border: 1px solid var(--accent);
+  background: none;
+  color: var(--accent);
+}
+
+.btn--secondary:hover,
+.btn--secondary:focus-visible {
+  background: var(--canvas-bg);
+}
+
+.btn--neutral {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: inherit;
+}
+
+.btn--neutral:hover,
+.btn--neutral:focus-visible {
+  background: var(--canvas-bg);
+}
+
+.btn--small {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}

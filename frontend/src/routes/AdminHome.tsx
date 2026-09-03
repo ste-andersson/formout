@@ -9,8 +9,8 @@ import './AdminHome.css'
 
 export function AdminHome() {
   return (
-    <div>
-      <h1>Admin</h1>
+    <div className="admin-home">
+      <h1>Skapa ett formulär</h1>
       <SignedOut>
         <p>Du måste logga in för att komma åt admin.</p>
         <SignInButton mode="modal" />
@@ -38,7 +38,7 @@ function PhotoUploadButton() {
     <>
       <button
         type="button"
-        className="my-forms__action my-forms__action--primary"
+        className="btn btn--primary"
         onClick={() => inputRef.current?.click()}
       >
         {isMobile ? 'Formulär från foto' : 'Formulär från fil'}
@@ -92,44 +92,47 @@ function MyForms() {
     <div className="my-forms">
       <div className="my-forms__actions">
         <PhotoUploadButton />
-        <Link to="/admin/forms/new" className="my-forms__action my-forms__action--secondary">
+        <Link to="/admin/forms/new" className="btn btn--secondary">
           Bygg formulär
         </Link>
       </div>
 
-      {state.status === 'loading' && <p>Laddar…</p>}
-      {state.status === 'error' && <p>Kunde inte hämta dina formulär.</p>}
-      {state.status === 'loaded' && (
-        <>
-          {state.forms.length === 0 ? (
-            <p>Du har inga formulär än.</p>
-          ) : (
-            <ul className="my-forms__list">
-              {state.forms.map((form) => (
-                <li key={form.id} className="my-forms__item">
-                  <div className="my-forms__info">
-                    <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
-                      {form.title}
-                    </Link>
-                    <span className="my-forms__slug">{form.slug}</span>
-                  </div>
-                  <div className="my-forms__item-actions">
-                    <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
-                      {form.status}
-                    </span>
-                    <ShareFormLink
-                      slug={form.slug}
-                      title={form.title}
-                      disabled={form.status !== 'PUBLISHED'}
-                      triggerClassName="my-forms__share-button"
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
+      <div className="my-forms__list-section">
+        <h2 className="my-forms__list-heading">Mina skapade formulär</h2>
+        {state.status === 'loading' && <p>Laddar…</p>}
+        {state.status === 'error' && <p>Kunde inte hämta dina formulär.</p>}
+        {state.status === 'loaded' && (
+          <>
+            {state.forms.length === 0 ? (
+              <p>Du har inga formulär än.</p>
+            ) : (
+              <ul className="my-forms__list">
+                {state.forms.map((form) => (
+                  <li key={form.id} className="my-forms__item">
+                    <div className="my-forms__info">
+                      <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
+                        {form.title}
+                      </Link>
+                      <span className="my-forms__slug">{form.slug}</span>
+                    </div>
+                    <div className="my-forms__item-actions">
+                      <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
+                        {form.status}
+                      </span>
+                      <ShareFormLink
+                        slug={form.slug}
+                        title={form.title}
+                        disabled={form.status !== 'PUBLISHED'}
+                        triggerClassName="btn btn--neutral btn--small"
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

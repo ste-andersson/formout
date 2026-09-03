@@ -1,3 +1,8 @@
+.admin-home {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
 .my-forms__actions {
   display: flex;
   flex-wrap: wrap;
@@ -5,27 +10,17 @@
   margin-bottom: 1rem;
 }
 
-.my-forms__action {
-  display: inline-flex;
-  align-items: center;
-  font: inherit;
-  min-height: 44px;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  text-decoration: none;
-  cursor: pointer;
+.my-forms__list-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
 }
 
-.my-forms__action--primary {
-  border: none;
-  background: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.my-forms__action--secondary {
-  border: 1px solid var(--accent);
-  background: none;
-  color: var(--accent);
+.my-forms__list-heading {
+  font-family: var(--heading-font);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin: 0 0 1rem;
 }
 
 .my-forms__list {
@@ -40,12 +35,12 @@
 .my-forms__item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 0.375rem;
+  background: var(--bg);
 }
 
 .my-forms__info {
@@ -72,18 +67,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.my-forms__share-button {
-  font: inherit;
-  font-size: 0.85rem;
-  min-height: 44px;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.375rem;
-  background: var(--bg);
-  color: inherit;
-  cursor: pointer;
+  margin-inline-start: auto;
 }
 
 .my-forms__status {

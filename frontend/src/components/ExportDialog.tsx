@@ -12,7 +12,7 @@ export function ExportDialog({ dialogRef, title, children }: ExportDialogProps) 
     <dialog ref={dialogRef} className="export-dialog">
       <h2>{title}</h2>
       <div className="export-dialog__options">{children}</div>
-      <button type="button" onClick={() => dialogRef.current?.close()}>
+      <button type="button" className="btn btn--neutral" onClick={() => dialogRef.current?.close()}>
         Avbryt
       </button>
     </dialog>

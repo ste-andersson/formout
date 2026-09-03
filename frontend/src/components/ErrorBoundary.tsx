@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <h1>Något gick fel</h1>
           <p>Sidan kraschade oväntat. Ladda om för att försöka igen.</p>
           <pre className="error-boundary__details">{this.state.error.message}</pre>
-          <button type="button" onClick={() => window.location.reload()}>
+          <button type="button" className="btn btn--primary" onClick={() => window.location.reload()}>
             Ladda om
           </button>
         </div>

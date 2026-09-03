@@ -309,6 +309,7 @@ function FormEditorContent() {
             </span>
             <button
               type="button"
+              className="btn btn--neutral btn--small"
               onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
             >
               Generera ny kod
@@ -350,7 +351,7 @@ function FormEditorContent() {
               {interpretState.status === 'error' && (
                 <div className="form-editor__image-status form-editor__image-status--error">
                   <p>{interpretState.message}</p>
-                  <button type="button" onClick={() => interpretUploadedImage()}>
+                  <button type="button" className="btn btn--neutral btn--small" onClick={() => interpretUploadedImage()}>
                     Försök igen
                   </button>
                 </div>
@@ -390,18 +391,18 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__actions">
-          <button type="button" onClick={handleSave} disabled={saveState.status === 'loading'}>
+          <button type="button" className="btn btn--primary" onClick={handleSave} disabled={saveState.status === 'loading'}>
             Spara
           </button>
           {isEditMode && (
             <>
-              <button type="button" onClick={() => handleStatusAction('publish')}>
+              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('publish')}>
                 Publicera
               </button>
-              <button type="button" onClick={() => handleStatusAction('archive')}>
+              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('archive')}>
                 Arkivera
               </button>
-              <button type="button" onClick={() => handleStatusAction('delete')}>
+              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('delete')}>
                 Radera
               </button>
               <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />

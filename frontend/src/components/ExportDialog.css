@@ -21,17 +21,6 @@
   margin-bottom: 1rem;
 }
 
-.export-dialog button {
-  font: inherit;
-  min-height: 44px;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.375rem;
-  background: var(--bg);
-  color: inherit;
-  cursor: pointer;
-}
-
 /* Looks disabled but stays a real, clickable button -- a native `disabled`
    button never fires on mobile taps, so a tooltip explaining why would never
    be reachable there. Clicking this shows the explanation instead. */

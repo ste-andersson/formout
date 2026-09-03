@@ -73,7 +73,7 @@ export function FormFiller({
   return (
     <form onSubmit={handleSubmit} className="form-filler">
       <FormRenderer schema={schema} answers={answers} errors={errors} onAnswerChange={handleAnswerChange} />
-      <button type="submit" className="form-filler__submit" disabled={isSaving}>
+      <button type="submit" className="btn btn--primary form-filler__submit" disabled={isSaving}>
         {isSaving ? savingLabel : submitLabel}
       </button>
     </form>

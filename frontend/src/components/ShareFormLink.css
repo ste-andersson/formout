@@ -37,12 +37,4 @@
 
 .share-form-link__link-copy button {
   flex-shrink: 0;
-  font: inherit;
-  min-height: 44px;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.375rem;
-  background: var(--bg);
-  color: inherit;
-  cursor: pointer;
 }
