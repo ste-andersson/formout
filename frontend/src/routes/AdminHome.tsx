@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { isTouchDevice } from '../lib/device'
 import { listMyForms } from '../lib/adminApi'
 import type { AdminFormSummary } from '../lib/adminApi'
+import { ShareFormLink } from '../components/ShareFormLink'
 import './AdminHome.css'
 
 export function AdminHome() {
@@ -102,12 +103,23 @@ function MyForms() {
             <ul className="my-forms__list">
               {state.forms.map((form) => (
                 <li key={form.id} className="my-forms__item">
-                  <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
-                    {form.title}
-                  </Link>
-                  <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
-                    {form.status}
-                  </span>
+                  <div className="my-forms__info">
+                    <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
+                      {form.title}
+                    </Link>
+                    <span className="my-forms__slug">{form.slug}</span>
+                  </div>
+                  <div className="my-forms__item-actions">
+                    <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
+                      {form.status}
+                    </span>
+                    <ShareFormLink
+                      slug={form.slug}
+                      title={form.title}
+                      disabled={form.status !== 'PUBLISHED'}
+                      triggerClassName="my-forms__share-button"
+                    />
+                  </div>
                 </li>
               ))}
             </ul>

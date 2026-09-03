@@ -9,6 +9,7 @@ import { resizeImageForUpload } from '../lib/imageResize'
 import type { FieldType, Section } from '../lib/formSchema'
 import { useToast } from '../components/toastContext'
 import { FormRenderer } from '../components/FormRenderer'
+import { ShareFormLink } from '../components/ShareFormLink'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
@@ -63,6 +64,7 @@ function FormEditorContent() {
   const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview' | 'json'>(
     uploadedImage ? 'image' : 'build',
   )
+  const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
 
   useEffect(() => {
     return () => {
@@ -92,6 +94,7 @@ function FormEditorContent() {
           slug: form.slug,
           sections: form.schema.sections,
         })
+        setFormStatus(form.status)
         setLoadState({ status: 'ready' })
       })
       .catch(() => {
@@ -425,6 +428,7 @@ function FormEditorContent() {
               <button type="button" onClick={() => handleStatusAction('delete')}>
                 Radera
               </button>
+              <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
             </>
           )}
         </div>
