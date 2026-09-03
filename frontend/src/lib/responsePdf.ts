@@ -174,6 +174,9 @@ function drawField(cursor: PdfCursor, field: Field, answer: FieldAnswerValue | u
 
     case 'TEXT':
     case 'NUMBER':
+    case 'DATE':
+    case 'TIME':
+    case 'DATETIME':
       drawBox(cursor, field.label, typeof answer === 'string' ? answer : '')
       return
 

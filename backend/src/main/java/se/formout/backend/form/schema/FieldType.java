@@ -11,5 +11,8 @@ public enum FieldType {
     HEADING,
     SUBHEADING,
     PARAGRAPH,
-    DIVIDER
+    DIVIDER,
+    DATE,
+    TIME,
+    DATETIME
 }

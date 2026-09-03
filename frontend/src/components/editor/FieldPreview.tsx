@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { isTouchDevice } from '../../lib/device'
-import type { Field, FieldSettings } from '../../lib/formSchema'
+import type { Field, FieldSettings, FieldType } from '../../lib/formSchema'
 import { isContentBlock } from '../../lib/formSchema'
 import './FieldPreview.css'
 
@@ -84,7 +84,7 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
         />
       )}
 
-      {(field.type === 'TEXT' || field.type === 'NUMBER') && (
+      {(field.type === 'TEXT' || field.type === 'NUMBER' || field.type === 'DATE' || field.type === 'TIME' || field.type === 'DATETIME') && (
         <label className="field-preview__label">
           <input
             ref={primaryRef}
@@ -93,7 +93,7 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
             value={field.label}
             onChange={(e) => onChange({ label: e.target.value })}
           />
-          <input type={field.type === 'NUMBER' ? 'number' : 'text'} disabled />
+          <input type={answerInputType(field.type)} disabled />
         </label>
       )}
 
@@ -213,4 +213,19 @@ function numberOrNull(value: string): number | null {
   if (value === '') return null
   const parsed = Number(value)
   return Number.isNaN(parsed) ? null : parsed
+}
+
+function answerInputType(type: FieldType): string {
+  switch (type) {
+    case 'NUMBER':
+      return 'number'
+    case 'DATE':
+      return 'date'
+    case 'TIME':
+      return 'time'
+    case 'DATETIME':
+      return 'datetime-local'
+    default:
+      return 'text'
+  }
 }

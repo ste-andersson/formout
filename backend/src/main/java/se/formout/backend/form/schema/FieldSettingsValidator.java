@@ -33,7 +33,7 @@ public class FieldSettingsValidator implements ConstraintValidator<ValidFieldSet
         return switch (field.type()) {
             case SCALE -> settings.min() != null && settings.max() != null && settings.min() < settings.max();
             case SINGLE_CHOICE, MULTIPLE_CHOICE -> settings.options() != null && !settings.options().isEmpty();
-            case TEXT, TEXTAREA, NUMBER, CHECKBOX, HEADING, SUBHEADING, PARAGRAPH, DIVIDER -> true;
+            case TEXT, TEXTAREA, NUMBER, CHECKBOX, HEADING, SUBHEADING, PARAGRAPH, DIVIDER, DATE, TIME, DATETIME -> true;
         };
     }
 }

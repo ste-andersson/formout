@@ -37,9 +37,11 @@ public class OpenAiFormInterpreter {
             - type: TEXT (short single-line answer), TEXTAREA (longer multi-line answer), \
             NUMBER (numeric answer), CHECKBOX (a single yes/no checkbox), SINGLE_CHOICE \
             (choose exactly one option), MULTIPLE_CHOICE (choose one or more options), SCALE \
-            (a numeric rating scale), HEADING or SUBHEADING (a heading-like line of text that \
-            is not itself a question), PARAGRAPH (explanatory text that is not a question), \
-            DIVIDER (a plain dividing line on the form with no text of its own).
+            (a numeric rating scale), DATE (a date-only answer, e.g. a field labelled "Date" \
+            or "Born" with a blank to write a date on), TIME (a time-only answer), DATETIME \
+            (an answer that is both a date and a time), HEADING or SUBHEADING (a heading-like \
+            line of text that is not itself a question), PARAGRAPH (explanatory text that is \
+            not a question), DIVIDER (a plain dividing line on the form with no text of its own).
             - label: the question text, or the heading/paragraph text. Leave empty for DIVIDER.
             - required: whether the form marks the field as mandatory.
             - settings: for SINGLE_CHOICE/MULTIPLE_CHOICE, the list of options; for SCALE, \
@@ -176,7 +178,8 @@ public class OpenAiFormInterpreter {
                                 "type", "string",
                                 "enum", List.of(
                                         "TEXT", "TEXTAREA", "NUMBER", "CHECKBOX", "SINGLE_CHOICE",
-                                        "MULTIPLE_CHOICE", "SCALE", "HEADING", "SUBHEADING", "PARAGRAPH", "DIVIDER"
+                                        "MULTIPLE_CHOICE", "SCALE", "DATE", "TIME", "DATETIME",
+                                        "HEADING", "SUBHEADING", "PARAGRAPH", "DIVIDER"
                                 )
                         ),
                         "label", nullableType("string"),
