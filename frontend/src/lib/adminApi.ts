@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './apiBaseUrl'
 import type { FormSchema } from './formSchema'
 
 export type FormStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
@@ -48,7 +49,7 @@ export class AdminApiError extends Error {
 }
 
 async function adminFetch(token: string, path: string, init?: RequestInit): Promise<Response> {
-  const response = await fetch(`/api/admin/forms${path}`, {
+  const response = await fetch(`${API_BASE_URL}/api/admin/forms${path}`, {
     ...init,
     headers: {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
@@ -126,7 +127,7 @@ export async function interpretImage(token: string, file: File): Promise<FormSch
 
   // Not routed through adminFetch: it always sets Content-Type: application/json,
   // but a multipart body needs the browser to set its own boundary-aware header.
-  const response = await fetch('/api/admin/forms/interpret', {
+  const response = await fetch(`${API_BASE_URL}/api/admin/forms/interpret`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
