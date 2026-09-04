@@ -171,7 +171,7 @@ export function RespondentHome() {
           autoCapitalize="off"
           autoCorrect="off"
         />
-        <button type="submit" className="respondent-home__submit">
+        <button type="submit" className="btn btn--primary">
           Ladda formulär
         </button>
       </form>
@@ -194,14 +194,14 @@ export function RespondentHome() {
               <div className="respondent-home__group-actions">
                 <button
                   type="button"
-                  className="respondent-home__group-action"
+                  className="btn btn--neutral btn--small"
                   onClick={() => navigate(`/forms/${encodeURIComponent(group.responses[0].formSlug)}`)}
                 >
                   Fyll i igen
                 </button>
                 <button
                   type="button"
-                  className="respondent-home__group-action"
+                  className="btn btn--neutral btn--small"
                   onClick={() => handleOpenExportAll(group)}
                 >
                   Exportera alla
@@ -209,7 +209,7 @@ export function RespondentHome() {
                 {isWebShareSupported() && (
                   <button
                     type="button"
-                    className="respondent-home__group-action"
+                    className="btn btn--neutral btn--small"
                     onClick={() => handleOpenShareAll(group)}
                   >
                     Dela alla
@@ -226,10 +226,10 @@ export function RespondentHome() {
         {exportLoadState === 'error' && <p>Kunde inte hämta formuläret.</p>}
         {exportLoadState === 'idle' && exportForm && (
           <>
-            <button type="button" onClick={handleExportAllCsv}>
+            <button type="button" className="btn btn--neutral" onClick={handleExportAllCsv}>
               CSV
             </button>
-            <button type="button" onClick={handleExportAllPdf}>
+            <button type="button" className="btn btn--neutral" onClick={handleExportAllPdf}>
               PDF
             </button>
           </>
@@ -241,10 +241,10 @@ export function RespondentHome() {
         {exportLoadState === 'error' && <p>Kunde inte hämta formuläret.</p>}
         {exportLoadState === 'idle' && exportForm && (
           <>
-            <button type="button" onClick={handleShareAllCsv}>
+            <button type="button" className="btn btn--neutral" onClick={handleShareAllCsv}>
               CSV
             </button>
-            <button type="button" onClick={handleShareAllPdf}>
+            <button type="button" className="btn btn--neutral" onClick={handleShareAllPdf}>
               PDF
             </button>
           </>

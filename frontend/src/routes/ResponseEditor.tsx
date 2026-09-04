@@ -182,25 +182,25 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   return (
     <div className="response-editor">
       <div className="response-editor__actions">
-        <button type="button" onClick={() => exportDialogRef.current?.showModal()}>
+        <button type="button" className="btn btn--neutral" onClick={() => exportDialogRef.current?.showModal()}>
           Exportera
         </button>
         {form && (
-          <button type="button" onClick={() => shareDialogRef.current?.showModal()}>
+          <button type="button" className="btn btn--neutral" onClick={() => shareDialogRef.current?.showModal()}>
             Dela
           </button>
         )}
-        <button type="button" onClick={() => handleDelete(response)}>
+        <button type="button" className="btn btn--neutral" onClick={() => handleDelete(response)}>
           Ta bort
         </button>
       </div>
 
       <ExportDialog dialogRef={exportDialogRef} title="Exportera">
-        <button type="button" onClick={() => handleExportCsv(response, form)}>
+        <button type="button" className="btn btn--neutral" onClick={() => handleExportCsv(response, form)}>
           CSV
         </button>
         {form && (
-          <button type="button" onClick={() => handleExportPdf(response, form)}>
+          <button type="button" className="btn btn--neutral" onClick={() => handleExportPdf(response, form)}>
             PDF
           </button>
         )}
@@ -210,17 +210,17 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
         <ExportDialog dialogRef={shareDialogRef} title="Dela">
           {isWebShareSupported() && (
             <>
-              <button type="button" onClick={() => handleShareCsv(response, form)}>
+              <button type="button" className="btn btn--neutral" onClick={() => handleShareCsv(response, form)}>
                 CSV
               </button>
-              <button type="button" onClick={() => handleSharePdf(response, form)}>
+              <button type="button" className="btn btn--neutral" onClick={() => handleSharePdf(response, form)}>
                 PDF
               </button>
             </>
           )}
           <button
             type="button"
-            className={linkUrl ? undefined : 'export-dialog__option--muted'}
+            className={linkUrl ? 'btn btn--neutral' : 'btn btn--neutral export-dialog__option--muted'}
             title={linkUrl ? undefined : 'Formuläret är för långt för att delas som länk.'}
             onClick={() => handleShareLink(linkUrl, response.formTitle)}
           >
@@ -228,7 +228,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
           </button>
           <button
             type="button"
-            className={linkUrl ? undefined : 'export-dialog__option--muted'}
+            className={linkUrl ? 'btn btn--neutral' : 'btn btn--neutral export-dialog__option--muted'}
             title={linkUrl ? undefined : 'Formuläret är för långt för att visas som QR-kod/länk.'}
             onClick={() => {
               if (!linkUrl) {
@@ -236,7 +236,10 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
                 return
               }
               shareDialogRef.current?.close()
-              qrDialogRef.current?.showModal()
+              // Öppna nästa dialog i en ny frame -- att göra det i samma tick som
+              // close() lämnar webbläsaren i ett inkonsekvent tillstånd på vissa
+              // mobila webbläsare, där den nya dialogens första klick "äts upp".
+              requestAnimationFrame(() => qrDialogRef.current?.showModal())
             }}
           >
             Visa QR-kod/länk
@@ -258,7 +261,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
                 onFocus={(e) => e.target.select()}
                 className="response-editor__link-input"
               />
-              <button type="button" onClick={() => handleCopyLink(linkUrl)}>
+              <button type="button" className="btn btn--neutral btn--small" onClick={() => handleCopyLink(linkUrl)}>
                 Kopiera länk
               </button>
             </div>

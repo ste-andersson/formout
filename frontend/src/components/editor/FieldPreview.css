@@ -54,11 +54,13 @@
 }
 
 .field-preview__heading {
+  font-family: var(--heading-font);
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .field-preview__subheading {
+  font-family: var(--heading-font);
   font-size: 1.05rem;
   font-weight: 600;
 }

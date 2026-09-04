@@ -197,19 +197,33 @@ function FormRendererField({
     case 'SCALE': {
       const min = field.settings.min ?? 1
       const max = field.settings.max ?? 5
+      const defaultValue = Math.round((min + max) / 2)
+      const currentValue = readOnly || onAnswerChange ? ((answer as number) ?? defaultValue) : defaultValue
+      const rangePercent = (currentValue - min) / (max - min)
       const controlledProps = readOnly
-        ? { value: (answer as number) ?? Math.round((min + max) / 2), disabled: true }
+        ? { value: currentValue, disabled: true }
         : onAnswerChange
           ? {
-              value: (answer as number) ?? Math.round((min + max) / 2),
+              value: currentValue,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => onAnswerChange(field.id, Number(e.target.value)),
             }
-          : { defaultValue: Math.round((min + max) / 2) }
+          : { defaultValue }
       return (
         <div className="form-renderer__field">
           <FieldLabel field={field} />
           <div className="form-renderer__scale-track">
-            <input type="range" min={min} max={max} {...controlledProps} />
+            <input
+              type="range"
+              min={min}
+              max={max}
+              className="form-renderer__scale-input"
+              style={{ '--range-percent': rangePercent } as React.CSSProperties}
+              onInput={(e) => {
+                const percent = (Number(e.currentTarget.value) - min) / (max - min)
+                e.currentTarget.style.setProperty('--range-percent', String(percent))
+              }}
+              {...controlledProps}
+            />
           </div>
           <div className="form-renderer__scale-labels">
             <span>{field.settings.minLabel ?? min}</span>

@@ -26,23 +26,17 @@
   flex: 1;
   min-width: 0;
   font: inherit;
-  font-size: 0.85rem;
+  /* Minst 16px -- annars zoomar iOS Safari in när dialogen auto-fokuserar
+     fältet vid showModal(). */
+  font-size: 1rem;
   min-height: 44px;
   padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: 0.375rem;
-  background: var(--bg);
+  background: var(--field-bg);
   color: var(--text-secondary);
 }
 
 .share-form-link__link-copy button {
   flex-shrink: 0;
-  font: inherit;
-  min-height: 44px;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.375rem;
-  background: var(--bg);
-  color: inherit;
-  cursor: pointer;
 }

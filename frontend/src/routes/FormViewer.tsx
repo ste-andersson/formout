@@ -72,7 +72,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
     <FormFiller
       schema={form.schema}
       initialAnswers={defaultAnswersFor(form.schema)}
-      submitLabel="Skicka in"
+      submitLabel="Spara på enheten"
       savingLabel="Sparar…"
       successToast="Formuläret är ifyllt"
       errorToast="Kunde inte spara svaret lokalt"

@@ -33,7 +33,7 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
     }
   }
 
-  const triggerClasses = [triggerClassName, disabled ? 'export-dialog__option--muted' : undefined]
+  const triggerClasses = [triggerClassName ?? 'btn btn--neutral', disabled ? 'export-dialog__option--muted' : undefined]
     .filter(Boolean)
     .join(' ')
 
@@ -55,14 +55,18 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
       </button>
 
       <ExportDialog dialogRef={shareDialogRef} title="Dela formulär">
-        <button type="button" onClick={handleMailLink}>
+        <button type="button" className="btn btn--neutral" onClick={handleMailLink}>
           Maila länk
         </button>
         <button
           type="button"
+          className="btn btn--neutral"
           onClick={() => {
             shareDialogRef.current?.close()
-            qrDialogRef.current?.showModal()
+            // Öppna nästa dialog i en ny frame -- att göra det i samma tick som
+            // close() lämnar webbläsaren i ett inkonsekvent tillstånd på vissa
+            // mobila webbläsare, där den nya dialogens första klick "äts upp".
+            requestAnimationFrame(() => qrDialogRef.current?.showModal())
           }}
         >
           Visa QR-kod/länk
@@ -82,7 +86,7 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
               onFocus={(e) => e.target.select()}
               className="share-form-link__link-input"
             />
-            <button type="button" onClick={handleCopyLink}>
+            <button type="button" className="btn btn--neutral btn--small" onClick={handleCopyLink}>
               Kopiera länk
             </button>
           </div>
