@@ -20,11 +20,13 @@ export function ExportDialog({ dialogRef, title, children }: ExportDialogProps) 
         }
       }}
     >
-      <h2>{title}</h2>
-      <div className="export-dialog__options">{children}</div>
-      <button type="button" className="btn btn--neutral" onClick={() => dialogRef.current?.close()}>
-        Avbryt
-      </button>
+      <div className="export-dialog__panel">
+        <h2>{title}</h2>
+        <div className="export-dialog__options">{children}</div>
+        <button type="button" className="btn btn--neutral" onClick={() => dialogRef.current?.close()}>
+          Avbryt
+        </button>
+      </div>
     </dialog>
   )
 }

@@ -1,13 +1,82 @@
 .export-dialog {
+  /* Explicit, scroll-independent centering instead of the browser's own
+     built-in <dialog> auto-centering -- Safari recomputes that internally at
+     some point during the close transition on a tall/scrolled page, which is
+     what caused the jump on the ResponseEditor page specifically (it's the
+     one page long enough to actually be scrolled when Dela/Exportera is
+     reachable). position:fixed + inset:0 + margin:auto centers in the
+     viewport regardless of document scroll, so there's nothing left for
+     Safari to recompute. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  border: none;
+  padding: 0;
+  max-width: 24rem;
+  width: 90%;
+  background: transparent;
+  overflow: visible;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    display 0.2s allow-discrete,
+    overlay 0.2s allow-discrete;
+}
+
+.export-dialog[open] {
+  opacity: 1;
+}
+
+/* Startläget för öppningsanimationen -- utan denna hoppar dialogen direkt
+   till sitt slutläge eftersom en display-övergång annars inte kan animeras. */
+@starting-style {
+  .export-dialog[open] {
+    opacity: 0;
+  }
+}
+
+/* Skalningen/förskjutningen sker på en inre panel, inte på <dialog> själv --
+   Safari räknar om sin inbyggda auto-centrering av <dialog> mitt i
+   stängningsövergången om elementet som centreras även har en transform,
+   vilket syns som att rutan hoppar till en annan position precis innan den
+   tonar bort. En oanimerad <dialog>-box håller centreringen stabil. */
+.export-dialog__panel {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 1.5rem;
-  max-width: 24rem;
-  width: 90%;
+  background: var(--bg);
+  transform: scale(0.96) translateY(0.5rem);
+  transition: transform 0.2s ease;
+}
+
+.export-dialog[open] .export-dialog__panel {
+  transform: scale(1) translateY(0);
+}
+
+@starting-style {
+  .export-dialog[open] .export-dialog__panel {
+    transform: scale(0.96) translateY(0.5rem);
+  }
 }
 
 .export-dialog::backdrop {
   background: rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    display 0.2s allow-discrete,
+    overlay 0.2s allow-discrete;
+}
+
+.export-dialog[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .export-dialog[open]::backdrop {
+    opacity: 0;
+  }
 }
 
 .export-dialog h2 {
