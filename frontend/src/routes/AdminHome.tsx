@@ -1,37 +1,47 @@
-import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/clerk-react'
-import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { isTouchDevice } from '../lib/device'
-import { listMyForms } from '../lib/adminApi'
-import type { AdminFormSummary } from '../lib/adminApi'
-import { ShareFormLink } from '../components/ShareFormLink'
-import './AdminHome.css'
+import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { isTouchDevice } from "../lib/device";
+import { listMyForms } from "../lib/adminApi";
+import type { AdminFormSummary } from "../lib/adminApi";
+import { ShareFormLink } from "../components/ShareFormLink";
+import "./AdminHome.css";
 
 export function AdminHome() {
+  const isMobile = isTouchDevice();
   return (
     <div className="admin-home">
       <h1>Skapa ett formulär</h1>
+      <p>
+        {isMobile
+          ? "Fotografera ett befintligt formulär eller bygg det från grunden."
+          : "Ladda upp en fil med ett befintligt formulär eller bygg det från grunden."}
+      </p>
       <SignedOut>
         <p>Du måste logga in för att komma åt admin.</p>
-        <SignInButton mode="modal" />
+        <SignInButton mode="modal">
+          <button type="button" className="btn btn--primary">
+            Logga in
+          </button>
+        </SignInButton>
       </SignedOut>
       <SignedIn>
         <MyForms />
       </SignedIn>
     </div>
-  )
+  );
 }
 
 function PhotoUploadButton() {
-  const navigate = useNavigate()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const isMobile = isTouchDevice()
+  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = isTouchDevice();
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    navigate('/admin/forms/new', { state: { uploadedFile: file } })
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    navigate("/admin/forms/new", { state: { uploadedFile: file } });
   }
 
   return (
@@ -41,52 +51,52 @@ function PhotoUploadButton() {
         className="btn btn--primary"
         onClick={() => inputRef.current?.click()}
       >
-        {isMobile ? 'Formulär från foto' : 'Formulär från fil'}
+        {isMobile ? "Formulär från foto" : "Formulär från fil"}
       </button>
       <input
         ref={inputRef}
         type="file"
         accept="image/*,application/pdf"
-        capture={isMobile ? 'environment' : undefined}
+        capture={isMobile ? "environment" : undefined}
         onChange={handleFileChange}
         hidden
       />
     </>
-  )
+  );
 }
 
 type LoadState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | { status: 'loaded'; forms: AdminFormSummary[] }
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "loaded"; forms: AdminFormSummary[] };
 
 function MyForms() {
-  const { getToken } = useAuth()
-  const [state, setState] = useState<LoadState>({ status: 'loading' })
+  const { getToken } = useAuth();
+  const [state, setState] = useState<LoadState>({ status: "loading" });
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     getToken()
       .then((token) => {
         if (!token) {
-          throw new Error('Not signed in')
+          throw new Error("Not signed in");
         }
-        return listMyForms(token)
+        return listMyForms(token);
       })
       .then((forms) => {
-        if (cancelled) return
-        setState({ status: 'loaded', forms })
+        if (cancelled) return;
+        setState({ status: "loaded", forms });
       })
       .catch(() => {
-        if (cancelled) return
-        setState({ status: 'error' })
-      })
+        if (cancelled) return;
+        setState({ status: "error" });
+      });
 
     return () => {
-      cancelled = true
-    }
-  }, [getToken])
+      cancelled = true;
+    };
+  }, [getToken]);
 
   return (
     <div className="my-forms">
@@ -99,9 +109,9 @@ function MyForms() {
 
       <div className="my-forms__list-section">
         <h2 className="my-forms__list-heading">Mina skapade formulär</h2>
-        {state.status === 'loading' && <p>Laddar…</p>}
-        {state.status === 'error' && <p>Kunde inte hämta dina formulär.</p>}
-        {state.status === 'loaded' && (
+        {state.status === "loading" && <p>Laddar…</p>}
+        {state.status === "error" && <p>Kunde inte hämta dina formulär.</p>}
+        {state.status === "loaded" && (
           <>
             {state.forms.length === 0 ? (
               <p>Du har inga formulär än.</p>
@@ -110,19 +120,24 @@ function MyForms() {
                 {state.forms.map((form) => (
                   <li key={form.id} className="my-forms__item">
                     <div className="my-forms__info">
-                      <Link to={`/admin/forms/${form.id}/edit`} className="my-forms__title">
+                      <Link
+                        to={`/admin/forms/${form.id}/edit`}
+                        className="my-forms__title"
+                      >
                         {form.title}
                       </Link>
                       <span className="my-forms__slug">{form.slug}</span>
                     </div>
                     <div className="my-forms__item-actions">
-                      <span className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}>
+                      <span
+                        className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}
+                      >
                         {form.status}
                       </span>
                       <ShareFormLink
                         slug={form.slug}
                         title={form.title}
-                        disabled={form.status !== 'PUBLISHED'}
+                        disabled={form.status !== "PUBLISHED"}
                         triggerClassName="btn btn--neutral btn--small"
                       />
                     </div>
@@ -134,5 +149,5 @@ function MyForms() {
         )}
       </div>
     </div>
-  )
+  );
 }

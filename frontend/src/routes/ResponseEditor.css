@@ -12,6 +12,8 @@
   max-width: 36rem;
   margin: 0 auto;
   width: 100%;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .response-editor__qr {
