@@ -23,6 +23,11 @@
   flex-shrink: 0;
 }
 
+.app-header__logo-stack {
+  position: relative;
+  display: inline-flex;
+}
+
 .app-header__logo {
   display: block;
   height: 1.25rem;
@@ -39,6 +44,22 @@
    syns mot den mörka bakgrunden istället för att försvinna i den. */
 :root[data-theme='dark'] .app-header__logo {
   filter: invert(1);
+}
+
+/* Det första "o":et i "Formout" målas separat ovanpå (logo-wide-no-o.webp
+   saknar just den ringen) med logo-wide-o.webp som mask, färgad i temats
+   accentfärg -- ingen invertering behövs här, färgen kommer helt från
+   background och följer redan schema/mörkt läge. */
+.app-header__logo-o {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  mask-image: url('/logo-wide-o.webp');
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  -webkit-mask-image: url('/logo-wide-o.webp');
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
 }
 
 .app-header__tabs {
