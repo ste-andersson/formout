@@ -63,7 +63,10 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
           className="btn btn--neutral"
           onClick={() => {
             shareDialogRef.current?.close()
-            qrDialogRef.current?.showModal()
+            // Öppna nästa dialog i en ny frame -- att göra det i samma tick som
+            // close() lämnar webbläsaren i ett inkonsekvent tillstånd på vissa
+            // mobila webbläsare, där den nya dialogens första klick "äts upp".
+            requestAnimationFrame(() => qrDialogRef.current?.showModal())
           }}
         >
           Visa QR-kod/länk
