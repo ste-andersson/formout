@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './apiBaseUrl'
 import type { FormSchema } from './formSchema'
 
 export interface FormDetail {
@@ -11,7 +12,7 @@ export interface FormDetail {
 }
 
 export async function getFormBySlug(slug: string): Promise<FormDetail | null> {
-  const response = await fetch(`/api/forms/${encodeURIComponent(slug)}`)
+  const response = await fetch(`${API_BASE_URL}/api/forms/${encodeURIComponent(slug)}`)
 
   if (response.status === 404) {
     return null
