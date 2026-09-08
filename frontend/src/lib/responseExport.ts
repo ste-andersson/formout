@@ -82,7 +82,7 @@ const CP1252_HIGH_RANGE: Record<number, number> = {
 // only matters for the shortcut-open path -- but that's the one people hit by
 // default, so we match what that path actually expects. Characters outside
 // Windows-1252 (emoji, non-Latin scripts) fall back to '?'.
-function encodeWindows1252(text: string): Uint8Array {
+function encodeWindows1252(text: string): Uint8Array<ArrayBuffer> {
   const bytes: number[] = []
   for (const char of text) {
     const codePoint = char.codePointAt(0) ?? 0x3f
@@ -92,7 +92,10 @@ function encodeWindows1252(text: string): Uint8Array {
       bytes.push(CP1252_HIGH_RANGE[codePoint] ?? 0x3f)
     }
   }
-  return new Uint8Array(bytes)
+  // Plain array-length constructor overload always backs onto a fresh
+  // (non-shared) ArrayBuffer -- the cast just tells TS what it can't infer,
+  // since BlobPart rejects the wider Uint8Array<ArrayBufferLike> default.
+  return new Uint8Array(bytes) as Uint8Array<ArrayBuffer>
 }
 
 export function downloadCsv(filename: string, content: string): void {
