@@ -18,10 +18,10 @@ export function AdminHome() {
           : "Ladda upp en fil med ett befintligt formulär eller bygg det från grunden."}
       </p>
       <SignedOut>
-        <p>Du måste logga in för att komma åt admin.</p>
+        <p>Du behöver ett konto för att skapa formulär.</p>
         <SignInButton mode="modal">
           <button type="button" className="btn btn--primary">
-            Logga in
+            Logga in eller skapa konto
           </button>
         </SignInButton>
       </SignedOut>
