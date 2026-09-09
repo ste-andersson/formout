@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import { SignedIn, UserButton } from '@clerk/clerk-react'
 import { Link, useLocation } from 'react-router'
 import { AppearancePicker } from './AppearancePicker'
 import './Header.css'
@@ -20,18 +20,9 @@ export function Header() {
           <Link to="/" className="app-header__tab" data-active={!isAdminSection || undefined}>
             Fyll i
           </Link>
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button type="button" className="app-header__tab">
-                Skapa
-              </button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <Link to="/admin" className="app-header__tab" data-active={isAdminSection || undefined}>
-              Skapa
-            </Link>
-          </SignedIn>
+          <Link to="/admin" className="app-header__tab" data-active={isAdminSection || undefined}>
+            Skapa
+          </Link>
         </nav>
       </div>
       <div className="app-header__actions">
