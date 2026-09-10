@@ -62,3 +62,13 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* Brett läge (≥1440px): .form-editor__build blir ett 1fr/36rem/1fr-rutnät
+   (se FormEditor.css) -- paletten flyttar till den vänstra marginalkolumnen
+   och kramar canvasens kant istället för att stå i en gemensam rad med den. */
+@media (min-width: 1440px) {
+  .element-palette {
+    grid-column: 1;
+    justify-self: end;
+  }
+}
