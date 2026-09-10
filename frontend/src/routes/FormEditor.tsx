@@ -13,6 +13,7 @@ import { ShareFormLink } from '../components/ShareFormLink'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
+import { InterpretationModal } from '../components/editor/InterpretationModal'
 import { JsonPreview } from '../components/editor/JsonPreview'
 import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
@@ -357,9 +358,6 @@ function FormEditorContent() {
         <div className="form-editor__body">
           {uploadedImage && uploadedImageUrl && (
             <div className="form-editor__image" data-hidden={activeTab !== 'image' || undefined}>
-              {interpretState.status === 'loading' && (
-                <p className="form-editor__image-status">Tolkar formuläret med AI…</p>
-              )}
               {interpretState.status === 'error' && (
                 <div className="form-editor__image-status form-editor__image-status--error">
                   <p>{interpretState.message}</p>
@@ -401,6 +399,8 @@ function FormEditorContent() {
             <JsonPreview schema={schema} />
           </div>
         </div>
+
+        <InterpretationModal open={interpretState.status === 'loading'} />
 
         <div className="form-editor__actions">
           <button type="button" className="btn btn--primary" onClick={handleSave} disabled={saveState.status === 'loading'}>

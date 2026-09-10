@@ -125,15 +125,28 @@ export async function interpretImage(token: string, file: File): Promise<FormSch
   const formData = new FormData()
   formData.append('file', file)
 
+  // Backend has its own 90s read timeout on the OpenAI call, which should
+  // always produce a proper error response first. This is just a fallback so
+  // the "tolkar formuläret"-modal can never hang forever even if the stall
+  // happens somewhere between the browser and the backend instead.
+  const timeoutController = new AbortController()
+  const timeoutId = setTimeout(() => timeoutController.abort(), 100_000)
+
   // Not routed through adminFetch: it always sets Content-Type: application/json,
   // but a multipart body needs the browser to set its own boundary-aware header.
-  const response = await fetch(`${API_BASE_URL}/api/admin/forms/interpret`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}/api/admin/forms/interpret`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+      signal: timeoutController.signal,
+    })
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
     throw new AdminApiError(response.status)
