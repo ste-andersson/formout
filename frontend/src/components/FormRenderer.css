@@ -10,15 +10,6 @@
   gap: 1.25rem;
 }
 
-.form-renderer h1 {
-  margin: 0;
-}
-
-.form-renderer__description {
-  margin: -0.75rem 0 0;
-  color: var(--text-secondary);
-}
-
 .form-renderer__heading {
   font-family: var(--heading-font);
   font-weight: 600;

@@ -29,9 +29,18 @@ public class OpenAiFormInterpreter {
 
     private static final String PROMPT = """
             You are extracting the structure of a paper form from an image or PDF into a \
-            structured JSON representation. Identify the form's title, an optional short \
-            description, and its fields, listed in the order they appear on the form, top \
-            to bottom.
+            structured JSON representation. First write a short internal title and an \
+            optional short internal description for the form -- these are only used to \
+            identify the form later in an admin list and are never shown to the person \
+            filling in the form. Then list the form's fields, in the order they appear on \
+            the form, top to bottom.
+
+            Because the title and description are internal-only, any heading, title, or \
+            introductory text that is visibly printed on the form itself -- text someone \
+            filling in the form would actually read -- must ALSO be captured as its own \
+            HEADING, SUBHEADING, or PARAGRAPH field at the right position in the fields \
+            list. Do not rely on the internal title/description alone to carry that text: \
+            if it only lives there, it will never be shown to whoever fills in the form.
 
             Each field has:
             - type: TEXT (short single-line answer), TEXTAREA (longer multi-line answer), \
