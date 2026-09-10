@@ -9,19 +9,22 @@ export type ActiveDragItem =
 
 interface DragPreviewProps {
   item: ActiveDragItem
+  // Storleken på elementet som faktiskt dras (mätt vid drag-start) -- så
+  // spöket matchar exakt det man drar, istället för en fast standardstorlek.
+  size: { width: number; height: number } | null
 }
 
-export function DragPreview({ item }: DragPreviewProps) {
+export function DragPreview({ item, size }: DragPreviewProps) {
   if (item.source === 'palette') {
     return (
-      <div className="drag-preview drag-preview--chip">
-        <FieldTypeIcon type={item.fieldType} />
+      <div className="drag-preview drag-preview--chip" style={size ? { width: size.width, height: size.height } : undefined}>
+        <FieldTypeIcon type={item.fieldType} size={size ? Math.round(size.width * 0.6) : 26} />
       </div>
     )
   }
 
   return (
-    <div className="drag-preview">
+    <div className="drag-preview" style={size ? { width: size.width } : undefined}>
       <FieldPreview field={item.field} autoFocus={false} onChange={() => {}} onFocused={() => {}} />
     </div>
   )

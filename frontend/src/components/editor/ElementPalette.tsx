@@ -38,6 +38,7 @@ function PaletteItem({ fieldType }: { fieldType: FieldType }) {
       aria-label={label}
       title={label}
       data-dragging={isDragging || undefined}
+      data-drag-source
       onPointerDownCapture={(e) => {
         if (blurActiveFieldIfKeyboardOpen()) {
           e.stopPropagation()

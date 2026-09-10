@@ -18,15 +18,20 @@
   margin: 0 0 0.5rem;
 }
 
+/* Fast antal kolumner istället för fast pixelbredd per ikon -- annars
+   delar 44px-knapparna sällan jämnt på bredden och lämnar ett tomt
+   spillutrymme i kortets högerkant. Med grid + 1fr-kolumner fyller
+   knapparna alltid ut hela raden, oavsett hur bred paletten råkar vara. */
 .element-palette__items {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.5rem;
 }
 
 .element-palette__item {
-  width: 44px;
-  height: 44px;
+  aspect-ratio: 1;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -51,5 +56,9 @@
        till samma höjd som canvasen (flex-radens standardbeteende) -- sticky
        behöver den marginalen för att kunna "resa" nedåt alls. */
     align-self: flex-start;
+  }
+
+  .element-palette__items {
+    grid-template-columns: repeat(3, 1fr);
   }
 }

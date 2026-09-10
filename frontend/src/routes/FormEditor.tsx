@@ -73,6 +73,7 @@ function FormEditorContent() {
     }
   }, [uploadedImageUrl])
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
+  const [activeDragSize, setActiveDragSize] = useState<{ width: number; height: number } | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
 
   useEffect(() => {
@@ -158,6 +159,15 @@ function FormEditorContent() {
     const data = event.active.data.current as PaletteDragData | FieldDragData | undefined
     if (!data) return
 
+    // event.active.rect.current.initial is populated by an effect that only
+    // runs *after* onDragStart fires, so it's still null/stale here -- measure
+    // the real source element directly instead, via the event that actually
+    // triggered the drag.
+    const activatorTarget = event.activatorEvent.target
+    const sourceElement = activatorTarget instanceof Element ? activatorTarget.closest('[data-drag-source]') : null
+    const measuredRect = sourceElement?.getBoundingClientRect() ?? null
+    setActiveDragSize(measuredRect ? { width: measuredRect.width, height: measuredRect.height } : null)
+
     if (data.source === 'palette') {
       setActiveDragItem({ source: 'palette', fieldType: data.fieldType })
       return
@@ -177,6 +187,7 @@ function FormEditorContent() {
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveDragItem(null)
+    setActiveDragSize(null)
     setDropIndicatorIndex(null)
 
     const { active, over } = event
@@ -197,6 +208,7 @@ function FormEditorContent() {
 
   function handleDragCancel() {
     setActiveDragItem(null)
+    setActiveDragSize(null)
     setDropIndicatorIndex(null)
   }
 
@@ -410,7 +422,9 @@ function FormEditorContent() {
           )}
         </div>
       </div>
-      <DragOverlay dropAnimation={null}>{activeDragItem && <DragPreview item={activeDragItem} />}</DragOverlay>
+      <DragOverlay dropAnimation={null}>
+        {activeDragItem && <DragPreview item={activeDragItem} size={activeDragSize} />}
+      </DragOverlay>
     </DndContext>
   )
 }
