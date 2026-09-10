@@ -26,7 +26,13 @@ export function SortableFieldItem({ field, autoFocus, onChange, onFocused, onRem
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="sortable-field-item" data-dragging={isDragging || undefined}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="sortable-field-item"
+      data-dragging={isDragging || undefined}
+      data-drag-source
+    >
       <button
         type="button"
         className="sortable-field-item__handle"

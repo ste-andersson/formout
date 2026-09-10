@@ -217,7 +217,8 @@ function drawField(cursor: PdfCursor, field: Field, answer: FieldAnswerValue | u
 }
 
 function drawResponseContent(cursor: PdfCursor, schema: FormSchema, answers: FormAnswers, filledInAt: string) {
-  drawText(cursor, schema.title || 'Namnlöst formulär', { fontSize: 16, bold: true, gapAfter: 1 })
+  // schema.title är internt (används bara för att identifiera formuläret i adminlistan
+  // och i filnamnet) -- skrivs medvetet inte ut här, av samma skäl som i FormRenderer.
   drawText(cursor, `Ifyllt: ${formatResponseDateTime(filledInAt)}`, { fontSize: 9, color: 110, gapAfter: 6 })
 
   for (const field of schema.fields) {

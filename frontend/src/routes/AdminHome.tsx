@@ -2,7 +2,7 @@ import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { isTouchDevice } from "../lib/device";
-import { listMyForms } from "../lib/adminApi";
+import { formStatusLabel, listMyForms } from "../lib/adminApi";
 import type { AdminFormSummary } from "../lib/adminApi";
 import { ShareFormLink } from "../components/ShareFormLink";
 import "./AdminHome.css";
@@ -130,9 +130,9 @@ function MyForms() {
                     </div>
                     <div className="my-forms__item-actions">
                       <span
-                        className={`my-forms__status my-forms__status--${form.status.toLowerCase()}`}
+                        className={`status-badge status-badge--${form.status.toLowerCase()}`}
                       >
-                        {form.status}
+                        {formStatusLabel(form.status)}
                       </span>
                       <ShareFormLink
                         slug={form.slug}

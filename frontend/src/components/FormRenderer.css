@@ -1,6 +1,10 @@
 .form-renderer {
   max-width: 36rem;
   margin: 0 auto;
+  /* Utan det här krymper kortet till nästan inget (bara paddingen) när
+     formuläret är tomt -- inget innehåll ger flex-kolumnen något att sträcka
+     sig efter på egen hand. */
+  width: 100%;
   padding: 1.5rem;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -10,13 +14,13 @@
   gap: 1.25rem;
 }
 
-.form-renderer h1 {
-  margin: 0;
-}
-
-.form-renderer__description {
-  margin: -0.75rem 0 0;
+.form-renderer__empty {
   color: var(--text-secondary);
+  text-align: center;
+  padding: 1.5rem 0.75rem;
+  margin: 0;
+  border: 1px dashed var(--border);
+  border-radius: 0.375rem;
 }
 
 .form-renderer__heading {

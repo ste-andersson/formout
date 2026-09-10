@@ -4,6 +4,11 @@
   flex-direction: column;
   min-width: 0;
   min-height: 24rem;
+  /* Matchar formulärets faktiska renderade bredd (samma 36rem som
+     .form-renderer/.form-editor__actions) -- annars sträcker sig ytan man
+     drar element till hela vägen ut på en bred skärm, mycket bredare än
+     formuläret någonsin faktiskt kommer att visas. */
+  max-width: 36rem;
 }
 
 .field-canvas {
@@ -41,4 +46,10 @@
   margin: 0;
   border: 1px dashed var(--border);
   border-radius: 0.375rem;
+}
+
+@media (min-width: 1440px) {
+  .field-canvas-wrapper {
+    grid-column: 2;
+  }
 }

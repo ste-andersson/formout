@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import type { FieldType } from '../../lib/formSchema'
 import { FIELD_TYPE_GROUPS, fieldTypeLabel } from '../../lib/formSchema'
 import { blurActiveFieldIfKeyboardOpen } from '../../lib/device'
+import { FieldTypeIcon } from './fieldTypeIcons'
 import './ElementPalette.css'
 
 export function ElementPalette() {
@@ -27,12 +28,17 @@ function PaletteItem({ fieldType }: { fieldType: FieldType }) {
     data: { source: 'palette', fieldType },
   })
 
+  const label = fieldTypeLabel(fieldType)
+
   return (
     <button
       type="button"
       ref={setNodeRef}
       className="element-palette__item"
+      aria-label={label}
+      title={label}
       data-dragging={isDragging || undefined}
+      data-drag-source
       onPointerDownCapture={(e) => {
         if (blurActiveFieldIfKeyboardOpen()) {
           e.stopPropagation()
@@ -41,7 +47,7 @@ function PaletteItem({ fieldType }: { fieldType: FieldType }) {
       {...listeners}
       {...attributes}
     >
-      {fieldTypeLabel(fieldType)}
+      <FieldTypeIcon type={fieldType} />
     </button>
   )
 }

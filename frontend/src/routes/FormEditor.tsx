@@ -13,7 +13,7 @@ import { ShareFormLink } from '../components/ShareFormLink'
 import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
-import { JsonPreview } from '../components/editor/JsonPreview'
+import { InterpretationModal } from '../components/editor/InterpretationModal'
 import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
 import './FormEditor.css'
@@ -60,7 +60,7 @@ function FormEditorContent() {
   const [interpretState, setInterpretState] = useState<LoadState>(
     uploadedImage ? { status: 'loading' } : { status: 'ready' },
   )
-  const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview' | 'json'>(
+  const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview'>(
     uploadedImage ? 'image' : 'build',
   )
   const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
@@ -73,6 +73,7 @@ function FormEditorContent() {
     }
   }, [uploadedImageUrl])
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
+  const [activeDragSize, setActiveDragSize] = useState<{ width: number; height: number } | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
 
   useEffect(() => {
@@ -158,6 +159,15 @@ function FormEditorContent() {
     const data = event.active.data.current as PaletteDragData | FieldDragData | undefined
     if (!data) return
 
+    // event.active.rect.current.initial is populated by an effect that only
+    // runs *after* onDragStart fires, so it's still null/stale here -- measure
+    // the real source element directly instead, via the event that actually
+    // triggered the drag.
+    const activatorTarget = event.activatorEvent.target
+    const sourceElement = activatorTarget instanceof Element ? activatorTarget.closest('[data-drag-source]') : null
+    const measuredRect = sourceElement?.getBoundingClientRect() ?? null
+    setActiveDragSize(measuredRect ? { width: measuredRect.width, height: measuredRect.height } : null)
+
     if (data.source === 'palette') {
       setActiveDragItem({ source: 'palette', fieldType: data.fieldType })
       return
@@ -177,6 +187,7 @@ function FormEditorContent() {
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveDragItem(null)
+    setActiveDragSize(null)
     setDropIndicatorIndex(null)
 
     const { active, over } = event
@@ -197,6 +208,7 @@ function FormEditorContent() {
 
   function handleDragCancel() {
     setActiveDragItem(null)
+    setActiveDragSize(null)
     setDropIndicatorIndex(null)
   }
 
@@ -256,17 +268,18 @@ function FormEditorContent() {
       if (!token) throw new Error('Not signed in')
 
       if (action === 'publish') {
-        await adminApi.publish(token, id)
+        const updated = await adminApi.publish(token, id)
+        setFormStatus(updated.status)
         showToast('Formuläret är publicerat', 'success')
       } else if (action === 'archive') {
-        await adminApi.archive(token, id)
+        const updated = await adminApi.archive(token, id)
+        setFormStatus(updated.status)
         showToast('Formuläret är arkiverat', 'success')
       } else {
         await adminApi.deleteForm(token, id)
         showToast('Formuläret är raderat', 'success')
+        navigate('/admin')
       }
-
-      navigate('/admin')
     } catch {
       showToast('Något gick fel, försök igen', 'error')
     }
@@ -291,6 +304,14 @@ function FormEditorContent() {
       onDragCancel={handleDragCancel}
     >
       <div className="form-editor">
+        <div className="form-editor__intro">
+          <h1>Bygg eller redigera formulär</h1>
+          <p>
+            Dra in element från paletten och släpp dem där du vill ha dem. Du kan när som helst flytta ett element
+            till en ny plats genom att dra det dit.
+          </p>
+        </div>
+
         <div className="form-editor__meta">
           <label>
             Titel
@@ -303,17 +324,34 @@ function FormEditorContent() {
               onChange={(e) => dispatch({ type: 'SET_DESCRIPTION', description: e.target.value })}
             />
           </label>
-          <div className="form-editor__code">
-            <span>
-              Kod: <strong>{state.slug}</strong>
-            </span>
-            <button
-              type="button"
-              className="btn btn--neutral btn--small"
-              onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
-            >
-              Generera ny kod
-            </button>
+          <div className="form-editor__meta-rows">
+            <div className="form-editor__code">
+              <span>Kod:</span>
+              <strong>{state.slug}</strong>
+              <button
+                type="button"
+                className="btn btn--neutral btn--small"
+                onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
+              >
+                Generera ny kod
+              </button>
+            </div>
+            {isEditMode && formStatus && (
+              <div className="form-editor__status">
+                <span>Status:</span>
+                <strong>{adminApi.formStatusLabel(formStatus)}</strong>
+                {formStatus === 'DRAFT' && (
+                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('publish')}>
+                    Publicera
+                  </button>
+                )}
+                {formStatus === 'PUBLISHED' && (
+                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('archive')}>
+                    Arkivera
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -337,17 +375,11 @@ function FormEditorContent() {
           >
             Förhandsvisning
           </button>
-          <button type="button" onClick={() => setActiveTab('json')} data-active={activeTab === 'json' || undefined}>
-            JSON
-          </button>
         </div>
 
         <div className="form-editor__body">
           {uploadedImage && uploadedImageUrl && (
             <div className="form-editor__image" data-hidden={activeTab !== 'image' || undefined}>
-              {interpretState.status === 'loading' && (
-                <p className="form-editor__image-status">Tolkar formuläret med AI…</p>
-              )}
               {interpretState.status === 'error' && (
                 <div className="form-editor__image-status form-editor__image-status--error">
                   <p>{interpretState.message}</p>
@@ -385,10 +417,9 @@ function FormEditorContent() {
           <div className="form-editor__preview" data-hidden={activeTab !== 'preview' || undefined}>
             <FormRenderer schema={schema} />
           </div>
-          <div className="form-editor__json" data-hidden={activeTab !== 'json' || undefined}>
-            <JsonPreview schema={schema} />
-          </div>
         </div>
+
+        <InterpretationModal open={interpretState.status === 'loading'} />
 
         <div className="form-editor__actions">
           <button type="button" className="btn btn--primary" onClick={handleSave} disabled={saveState.status === 'loading'}>
@@ -396,21 +427,17 @@ function FormEditorContent() {
           </button>
           {isEditMode && (
             <>
-              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('publish')}>
-                Publicera
-              </button>
-              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('archive')}>
-                Arkivera
-              </button>
+              <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
               <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('delete')}>
                 Radera
               </button>
-              <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
             </>
           )}
         </div>
       </div>
-      <DragOverlay dropAnimation={null}>{activeDragItem && <DragPreview item={activeDragItem} />}</DragOverlay>
+      <DragOverlay dropAnimation={null}>
+        {activeDragItem && <DragPreview item={activeDragItem} size={activeDragSize} />}
+      </DragOverlay>
     </DndContext>
   )
 }
