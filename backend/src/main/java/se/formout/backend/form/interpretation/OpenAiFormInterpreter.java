@@ -50,7 +50,8 @@ public class OpenAiFormInterpreter {
             or "Born" with a blank to write a date on), TIME (a time-only answer), DATETIME \
             (an answer that is both a date and a time), HEADING or SUBHEADING (a heading-like \
             line of text that is not itself a question), PARAGRAPH (explanatory text that is \
-            not a question), DIVIDER (a plain dividing line on the form with no text of its own).
+            not a question), DIVIDER (a plain dividing line that should be used to separate \
+            sections or groups of questions).
             - label: the question text, or the heading/paragraph text. Leave empty for DIVIDER.
             - required: whether the form marks the field as mandatory.
             - settings: for SINGLE_CHOICE/MULTIPLE_CHOICE, the list of options; for SCALE, \
