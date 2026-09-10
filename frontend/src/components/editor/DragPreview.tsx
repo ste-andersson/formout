@@ -1,5 +1,5 @@
 import type { Field, FieldType } from '../../lib/formSchema'
-import { fieldTypeLabel } from '../../lib/formSchema'
+import { FieldTypeIcon } from './fieldTypeIcons'
 import { FieldPreview } from './FieldPreview'
 import './DragPreview.css'
 
@@ -13,7 +13,11 @@ interface DragPreviewProps {
 
 export function DragPreview({ item }: DragPreviewProps) {
   if (item.source === 'palette') {
-    return <div className="drag-preview drag-preview--chip">{fieldTypeLabel(item.fieldType)}</div>
+    return (
+      <div className="drag-preview drag-preview--chip">
+        <FieldTypeIcon type={item.fieldType} />
+      </div>
+    )
   }
 
   return (
