@@ -73,8 +73,7 @@
 
 .form-editor__build,
 .form-editor__image,
-.form-editor__preview,
-.form-editor__json {
+.form-editor__preview {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -82,8 +81,7 @@
 
 .form-editor__build[data-hidden],
 .form-editor__image[data-hidden],
-.form-editor__preview[data-hidden],
-.form-editor__json[data-hidden] {
+.form-editor__preview[data-hidden] {
   display: none;
 }
 

@@ -14,7 +14,6 @@ import type { ActiveDragItem } from '../components/editor/DragPreview'
 import { DragPreview } from '../components/editor/DragPreview'
 import { ElementPalette } from '../components/editor/ElementPalette'
 import { InterpretationModal } from '../components/editor/InterpretationModal'
-import { JsonPreview } from '../components/editor/JsonPreview'
 import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
 import './FormEditor.css'
@@ -61,7 +60,7 @@ function FormEditorContent() {
   const [interpretState, setInterpretState] = useState<LoadState>(
     uploadedImage ? { status: 'loading' } : { status: 'ready' },
   )
-  const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview' | 'json'>(
+  const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview'>(
     uploadedImage ? 'image' : 'build',
   )
   const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
@@ -350,9 +349,6 @@ function FormEditorContent() {
           >
             Förhandsvisning
           </button>
-          <button type="button" onClick={() => setActiveTab('json')} data-active={activeTab === 'json' || undefined}>
-            JSON
-          </button>
         </div>
 
         <div className="form-editor__body">
@@ -394,9 +390,6 @@ function FormEditorContent() {
           </div>
           <div className="form-editor__preview" data-hidden={activeTab !== 'preview' || undefined}>
             <FormRenderer schema={schema} />
-          </div>
-          <div className="form-editor__json" data-hidden={activeTab !== 'json' || undefined}>
-            <JsonPreview schema={schema} />
           </div>
         </div>
 
