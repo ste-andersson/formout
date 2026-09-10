@@ -268,17 +268,18 @@ function FormEditorContent() {
       if (!token) throw new Error('Not signed in')
 
       if (action === 'publish') {
-        await adminApi.publish(token, id)
+        const updated = await adminApi.publish(token, id)
+        setFormStatus(updated.status)
         showToast('Formuläret är publicerat', 'success')
       } else if (action === 'archive') {
-        await adminApi.archive(token, id)
+        const updated = await adminApi.archive(token, id)
+        setFormStatus(updated.status)
         showToast('Formuläret är arkiverat', 'success')
       } else {
         await adminApi.deleteForm(token, id)
         showToast('Formuläret är raderat', 'success')
+        navigate('/admin')
       }
-
-      navigate('/admin')
     } catch {
       showToast('Något gick fel, försök igen', 'error')
     }
@@ -303,6 +304,14 @@ function FormEditorContent() {
       onDragCancel={handleDragCancel}
     >
       <div className="form-editor">
+        <div className="form-editor__intro">
+          <h1>Bygg eller redigera formulär</h1>
+          <p>
+            Dra in element från paletten och släpp dem där du vill ha dem. Du kan när som helst flytta ett element
+            till en ny plats genom att dra det dit.
+          </p>
+        </div>
+
         <div className="form-editor__meta">
           <label>
             Titel
@@ -315,17 +324,34 @@ function FormEditorContent() {
               onChange={(e) => dispatch({ type: 'SET_DESCRIPTION', description: e.target.value })}
             />
           </label>
-          <div className="form-editor__code">
-            <span>
-              Kod: <strong>{state.slug}</strong>
-            </span>
-            <button
-              type="button"
-              className="btn btn--neutral btn--small"
-              onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
-            >
-              Generera ny kod
-            </button>
+          <div className="form-editor__meta-rows">
+            <div className="form-editor__code">
+              <span>Kod:</span>
+              <strong>{state.slug}</strong>
+              <button
+                type="button"
+                className="btn btn--neutral btn--small"
+                onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
+              >
+                Generera ny kod
+              </button>
+            </div>
+            {isEditMode && formStatus && (
+              <div className="form-editor__status">
+                <span>Status:</span>
+                <strong>{adminApi.formStatusLabel(formStatus)}</strong>
+                {formStatus === 'DRAFT' && (
+                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('publish')}>
+                    Publicera
+                  </button>
+                )}
+                {formStatus === 'PUBLISHED' && (
+                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('archive')}>
+                    Arkivera
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -401,16 +427,10 @@ function FormEditorContent() {
           </button>
           {isEditMode && (
             <>
-              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('publish')}>
-                Publicera
-              </button>
-              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('archive')}>
-                Arkivera
-              </button>
+              <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
               <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('delete')}>
                 Radera
               </button>
-              <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
             </>
           )}
         </div>

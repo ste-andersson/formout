@@ -192,7 +192,11 @@ p {
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  min-height: 44px;
+  /* Fast height, inte min-height -- garanterar exakt samma höjd på alla
+     varianter oavsett eventuella små skillnader i hur webbläsaren beräknar
+     kant/padding per variant. Säkert eftersom white-space:nowrap redan
+     garanterar att innehållet aldrig radbryts till mer än en rad. */
+  height: 44px;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   text-decoration: none;
@@ -206,7 +210,10 @@ p {
 }
 
 .btn--primary {
-  border: none;
+  /* Samma kantbredd som de andra varianterna (bara osynlig) -- annars kan
+     olika box-sizing-avrundning ge den här varianten en knapp pixel eller två
+     annorlunda höjd än en kantad variant, trots samma min-height. */
+  border: 1px solid transparent;
   background: var(--accent);
   color: var(--accent-contrast);
 }
@@ -228,7 +235,11 @@ p {
 }
 
 .btn--neutral {
-  border: 1px solid var(--border);
+  /* var(--border) i sig är nästan samma nyans som --page-bg -- kanten
+     "försvinner" mot sidbakgrunden och knappen läses som mindre/svagare än
+     .btn--primary trots identiska mått. Blanda in text-secondary för en kant
+     som faktiskt syns. */
+  border: 1px solid color-mix(in srgb, var(--border) 40%, var(--text-secondary) 60%);
   background: var(--bg);
   color: inherit;
 }
@@ -241,4 +252,31 @@ p {
 .btn--small {
   font-size: 0.85rem;
   padding: 0.5rem 0.75rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  background: var(--canvas-bg);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.status-badge--published {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg));
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--bg));
+}
+
+/* Arkiverad ser ut som standardläget (utkast) -- båda är "inte live", bara
+   publicerad ska sticka ut i accentfärgen. Egen regel ändå, så det inte ser
+   ut som en glömd stil om någon letar efter den. */
+.status-badge--archived {
+  background: var(--canvas-bg);
+  color: var(--text-secondary);
+  border-color: var(--border);
 }

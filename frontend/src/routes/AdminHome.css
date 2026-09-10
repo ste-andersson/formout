@@ -70,27 +70,3 @@
   margin-inline-start: auto;
 }
 
-.my-forms__status {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  border: 1px solid var(--border);
-  background: var(--canvas-bg);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.my-forms__status--published {
-  background: color-mix(in srgb, var(--accent) 16%, var(--bg));
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--bg));
-}
-
-/* Arkiverad ser ut som standardläget (utkast) -- båda är "inte live", bara
-   publicerad ska sticka ut i accentfärgen. Egen regel ändå, så det inte ser
-   ut som en glömd stil om någon letar efter den. */
-.my-forms__status--archived {
-  background: var(--canvas-bg);
-  color: var(--text-secondary);
-  border-color: var(--border);
-}

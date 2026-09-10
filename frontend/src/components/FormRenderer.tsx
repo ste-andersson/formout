@@ -16,16 +16,20 @@ export function FormRenderer({ schema, answers, errors, onAnswerChange, readOnly
       {/* schema.title/description är enbart interna (identifierar formuläret i adminlistan
           m.m.) och visas medvetet inte här -- det som visas är precis det som finns i
           fields, inklusive ev. HEADING/PARAGRAPH-element som byggaren själv lagt till. */}
-      {schema.fields.map((field) => (
-        <FormRendererField
-          key={field.id}
-          field={field}
-          answer={answers?.[field.id]}
-          error={errors?.[field.id]}
-          onAnswerChange={onAnswerChange}
-          readOnly={readOnly}
-        />
-      ))}
+      {schema.fields.length === 0 ? (
+        <p className="form-renderer__empty">Formuläret har inga fält ännu.</p>
+      ) : (
+        schema.fields.map((field) => (
+          <FormRendererField
+            key={field.id}
+            field={field}
+            answer={answers?.[field.id]}
+            error={errors?.[field.id]}
+            onAnswerChange={onAnswerChange}
+            readOnly={readOnly}
+          />
+        ))
+      )}
     </div>
   )
 }

@@ -70,5 +70,9 @@
   .element-palette {
     grid-column: 1;
     justify-self: end;
+    /* Samma anledning som align-self: flex-start i 1024px-läget ovan -- egen
+       naturlig höjd istället för att sträckas till radens/rutnätets höjd, så
+       sticky har utrymme att "resa" i. */
+    align-self: start;
   }
 }

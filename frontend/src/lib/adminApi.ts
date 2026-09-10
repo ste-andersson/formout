@@ -3,6 +3,17 @@ import type { FormSchema } from './formSchema'
 
 export type FormStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 
+export function formStatusLabel(status: FormStatus): string {
+  switch (status) {
+    case 'DRAFT':
+      return 'Utkast'
+    case 'PUBLISHED':
+      return 'Publicerad'
+    case 'ARCHIVED':
+      return 'Arkiverad'
+  }
+}
+
 export interface AdminFormSummary {
   id: string
   title: string
