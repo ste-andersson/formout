@@ -12,6 +12,11 @@
   --accent-contrast: #ffffff;
   --code-bg: #f0eadb;
   --canvas-bg: #f0ebe5;
+  /* Färgen på det accentfärgade "O":et i header-loggan. Skiljer sig från
+     --accent bara i scheman där accentfärgen är för mörk/nära loggans
+     ordbild (som annars är svart/mörk) för att sticka ut -- se forest och
+     navy nedan. */
+  --logo-accent: var(--accent);
   color-scheme: light;
 
   --sans: 'Public Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -74,7 +79,10 @@
   --page-bg: #ebe5d0;
   --border: #e5ddc2;
   --accent: #8c6a1e;
-  --accent-contrast: #1e1912;
+  /* Accentfärgen är mörk nog att vit text ger bättre kontrast än mörk text
+     på knappar (ljust läge bara -- mörkt lägets ljusare accent behåller
+     mörk text). */
+  --accent-contrast: #ffffff;
   --code-bg: #efecde;
   --canvas-bg: #efede8;
 }
@@ -102,6 +110,9 @@
   --accent-contrast: #ffffff;
   --code-bg: #ebece2;
   --canvas-bg: #ebedec;
+  /* --accent är för nära loggans mörka ordbild i ljust läge -- använd samma
+     ljusare, grönare ton som redan finns i schemats mörka läge nedan. */
+  --logo-accent: #4f8058;
 }
 
 :root[data-scheme='forest'][data-theme='dark'] {
@@ -115,6 +126,9 @@
   --accent-contrast: #ffffff;
   --code-bg: #191d19;
   --canvas-bg: #161a15;
+  /* Loggan är ljus (inverterad, se Header.css) i mörkt läge -- ingen
+     särskild logga-ton behövs här, bara den vanliga accentfärgen. */
+  --logo-accent: var(--accent);
 }
 
 :root[data-scheme='navy'] {
@@ -127,6 +141,9 @@
   --accent-contrast: #ffffff;
   --code-bg: #eaebe7;
   --canvas-bg: #eaecf1;
+  /* --accent är för nära loggans mörka ordbild i ljust läge -- använd samma
+     ljusare, blåare ton som redan finns i schemats mörka läge nedan. */
+  --logo-accent: #4a6fa5;
 }
 
 :root[data-scheme='navy'][data-theme='dark'] {
@@ -140,6 +157,9 @@
   --accent-contrast: #ffffff;
   --code-bg: #171d2b;
   --canvas-bg: #141a27;
+  /* Loggan är ljus (inverterad, se Header.css) i mörkt läge -- ingen
+     särskild logga-ton behövs här, bara den vanliga accentfärgen. */
+  --logo-accent: var(--accent);
 }
 
 *,
