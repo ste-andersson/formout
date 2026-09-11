@@ -50,7 +50,13 @@ public class LangChain4jConfig {
     }
 
     @Bean
-    public ChatModelListener chatModelListener(ObservationRegistry observationRegistry, MeterRegistry meterRegistry) {
+    public LangfuseContentChatModelListener langfuseContentChatModelListener() {
+        return new LangfuseContentChatModelListener();
+    }
+
+    @Bean
+    public ObservationChatModelListener observationChatModelListener(
+            ObservationRegistry observationRegistry, MeterRegistry meterRegistry) {
         return new ObservationChatModelListener(observationRegistry, meterRegistry);
     }
 
@@ -58,13 +64,19 @@ public class LangChain4jConfig {
     public ChatModel formInterpretationChatModel(
             @Value("${app.openai.api-key}") String apiKey,
             @Value("${app.openai.model}") String model,
-            ChatModelListener chatModelListener) {
+            LangfuseContentChatModelListener langfuseContentChatModelListener,
+            ObservationChatModelListener observationChatModelListener) {
         return OpenAiResponsesChatModel.builder()
                 .apiKey(apiKey)
                 .modelName(model)
                 .reasoningEffort("low")
                 .strictJsonSchema(true)
-                .listeners(List.of(chatModelListener))
+                // langfuseContentChatModelListener must run first: LangChain4j
+                // invokes listeners in list order for both onRequest and
+                // onResponse, and ObservationChatModelListener.onResponse
+                // removes the observation scope and stops the observation --
+                // so the content listener has to read it before that happens.
+                .listeners(List.of(langfuseContentChatModelListener, observationChatModelListener))
                 .httpClientBuilder(new JdkHttpClientBuilder()
                         .connectTimeout(Duration.ofSeconds(10))
                         .readTimeout(Duration.ofSeconds(90)))
