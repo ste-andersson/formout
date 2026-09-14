@@ -18,7 +18,9 @@ public class FormInterpretationController {
     }
 
     @PostMapping("/interpret")
-    public FormSchema interpret(@RequestParam("file") MultipartFile file) {
-        return interpreter.interpret(file);
+    public FormSchema interpret(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "context", required = false) String context) {
+        return interpreter.interpret(file, context);
     }
 }

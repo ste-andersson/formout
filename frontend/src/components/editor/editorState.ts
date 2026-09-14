@@ -13,6 +13,7 @@ export interface EditorState {
 export type EditorAction =
   | { type: 'LOAD'; title: string; description: string; slug: string; fields: Field[] }
   | { type: 'LOAD_INTERPRETED'; title: string; description: string; fields: Field[] }
+  | { type: 'APPEND_INTERPRETED_FIELDS'; fields: Field[] }
   | { type: 'SET_TITLE'; title: string }
   | { type: 'SET_DESCRIPTION'; description: string }
   | { type: 'SET_SLUG'; slug: string }
@@ -49,6 +50,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         title: action.title,
         description: action.description,
         fields: action.fields,
+        lastAddedFieldId: null,
+      }
+
+    // Adding a later page never touches fields already interpreted from
+    // earlier pages -- only appends what the new page produced.
+    case 'APPEND_INTERPRETED_FIELDS':
+      return {
+        ...state,
+        fields: [...state.fields, ...action.fields],
         lastAddedFieldId: null,
       }
 

@@ -1,5 +1,5 @@
 import { API_BASE_URL } from './apiBaseUrl'
-import type { FormSchema } from './formSchema'
+import type { Field, FormSchema } from './formSchema'
 
 export type FormStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 
@@ -132,9 +132,23 @@ export async function deleteForm(token: string, id: string): Promise<void> {
   await adminFetch(token, `/${id}`, { method: 'DELETE' })
 }
 
-export async function interpretImage(token: string, file: File): Promise<FormSchema> {
+export async function interpretImage(token: string, file: File, previousFields?: Field[]): Promise<FormSchema> {
   const formData = new FormData()
   formData.append('file', file)
+
+  // previousFields (if given) are fields already interpreted from earlier
+  // pages of this same multi-page form -- sent as context only, so the AI
+  // can avoid repeating them and can follow an established pattern. The id
+  // is dropped: it's an internal, random value with no meaning to the model.
+  if (previousFields && previousFields.length > 0) {
+    const context = previousFields.map(({ type, label, required, settings }) => ({
+      type,
+      label,
+      required,
+      settings,
+    }))
+    formData.append('context', JSON.stringify(context))
+  }
 
   // Backend has its own 90s read timeout on the OpenAI call, which should
   // always produce a proper error response first. This is just a fallback so

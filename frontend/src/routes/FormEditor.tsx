@@ -46,32 +46,41 @@ function FormEditorContent() {
   const location = useLocation()
   const { showToast } = useToast()
 
-  const [uploadedImage] = useState<File | null>(() => {
-    const state = location.state as { uploadedFile?: File } | null
-    return state?.uploadedFile ?? null
+  const [uploadedImages, setUploadedImages] = useState<File[]>(() => {
+    const navState = location.state as { uploadedFiles?: File[] } | null
+    return navState?.uploadedFiles ?? []
   })
-  const [uploadedImageUrl] = useState<string | null>(() =>
-    uploadedImage ? URL.createObjectURL(uploadedImage) : null,
-  )
+  // Object URLs are cached per File (by reference) so re-renders never create
+  // duplicates; all of them are revoked together when the editor unmounts.
+  const [imageUrls] = useState<Map<File, string>>(() => new Map())
+  function getImageUrl(file: File): string {
+    let url = imageUrls.get(file)
+    if (!url) {
+      url = URL.createObjectURL(file)
+      imageUrls.set(file, url)
+    }
+    return url
+  }
+  useEffect(() => {
+    return () => {
+      imageUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [imageUrls])
 
   const [state, dispatch] = useReducer(editorReducer, initialEditorState())
   const [loadState, setLoadState] = useState<LoadState>(isEditMode ? { status: 'loading' } : { status: 'ready' })
   const [saveState, setSaveState] = useState<LoadState>({ status: 'ready' })
   const [interpretState, setInterpretState] = useState<LoadState>(
-    uploadedImage ? { status: 'loading' } : { status: 'ready' },
+    uploadedImages.length > 0 ? { status: 'loading' } : { status: 'ready' },
   )
   const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview'>(
-    uploadedImage ? 'image' : 'build',
+    uploadedImages.length > 0 ? 'image' : 'build',
   )
   const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
+  const addPageInputRef = useRef<HTMLInputElement>(null)
+  const lightboxRef = useRef<HTMLDialogElement>(null)
+  const [enlargedImageUrl, setEnlargedImageUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    return () => {
-      if (uploadedImageUrl) {
-        URL.revokeObjectURL(uploadedImageUrl)
-      }
-    }
-  }, [uploadedImageUrl])
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null)
   const [activeDragSize, setActiveDragSize] = useState<{ width: number; height: number } | null>(null)
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
@@ -107,41 +116,117 @@ function FormEditorContent() {
     }
   }, [isEditMode, id, getToken])
 
-  const interpretUploadedImage = useCallback(async () => {
-    if (!uploadedImage) return
+  // The first page interpreted replaces title/description/fields (as before);
+  // every page after that is interpreted independently and only APPENDS its
+  // fields -- it never touches what an earlier page already produced, even
+  // if the admin has since edited those fields by hand. The already-tolkade
+  // fields (minus their internal ids) are sent along as read-only context so
+  // the AI can avoid repeating a running header and can follow a repeating
+  // pattern, but the response is still only ever used for the new page.
+  const isFirstPageRef = useRef(true)
+  const fieldsSoFarRef = useRef<Field[]>([])
+  const lastAttemptedFileRef = useRef<File | null>(null)
 
-    setInterpretState({ status: 'loading' })
-    try {
-      const token = await getToken()
-      if (!token) throw new Error('Not signed in')
+  const interpretPage = useCallback(
+    async (file: File): Promise<boolean> => {
+      lastAttemptedFileRef.current = file
+      try {
+        const token = await getToken()
+        if (!token) throw new Error('Not signed in')
+        const fileToSend = await resizeImageForUpload(file)
 
-      const fileToSend = await resizeImageForUpload(uploadedImage)
-      const schema = await adminApi.interpretImage(token, fileToSend)
-      dispatch({
-        type: 'LOAD_INTERPRETED',
-        title: schema.title,
-        description: schema.description ?? '',
-        fields: schema.fields,
-      })
+        if (isFirstPageRef.current) {
+          const schema = await adminApi.interpretImage(token, fileToSend)
+          dispatch({
+            type: 'LOAD_INTERPRETED',
+            title: schema.title,
+            description: schema.description ?? '',
+            fields: schema.fields,
+          })
+          fieldsSoFarRef.current = schema.fields
+          isFirstPageRef.current = false
+        } else {
+          const schema = await adminApi.interpretImage(token, fileToSend, fieldsSoFarRef.current)
+          dispatch({ type: 'APPEND_INTERPRETED_FIELDS', fields: schema.fields })
+          fieldsSoFarRef.current = [...fieldsSoFarRef.current, ...schema.fields]
+        }
+        return true
+      } catch {
+        return false
+      }
+    },
+    [getToken],
+  )
+
+  const attemptPage = useCallback(
+    async (file: File) => {
+      const wasFirstPage = isFirstPageRef.current
+      setInterpretState({ status: 'loading' })
+      const ok = await interpretPage(file)
+      if (ok) {
+        setInterpretState({ status: 'ready' })
+        showToast(wasFirstPage ? 'Formuläret är tolkat' : 'Sidan är tolkad', 'success')
+        if (wasFirstPage) setActiveTab('preview')
+      } else {
+        setInterpretState({
+          status: 'error',
+          message: wasFirstPage ? 'Kunde inte tolka formuläret.' : 'Kunde inte tolka den nya sidan.',
+        })
+        showToast(wasFirstPage ? 'Kunde inte tolka formuläret' : 'Kunde inte tolka den nya sidan', 'error')
+      }
+    },
+    [interpretPage, showToast],
+  )
+
+  const runInitialInterpretation = useCallback(
+    async (files: File[]) => {
+      for (const file of files) {
+        const wasFirstPage = isFirstPageRef.current
+        setInterpretState({ status: 'loading' })
+        const ok = await interpretPage(file)
+        if (!ok) {
+          setInterpretState({
+            status: 'error',
+            message: wasFirstPage ? 'Kunde inte tolka formuläret.' : 'Kunde inte tolka den nya sidan.',
+          })
+          showToast(wasFirstPage ? 'Kunde inte tolka formuläret' : 'Kunde inte tolka den nya sidan', 'error')
+          return
+        }
+      }
       setInterpretState({ status: 'ready' })
       showToast('Formuläret är tolkat', 'success')
       setActiveTab('preview')
-    } catch {
-      setInterpretState({ status: 'error', message: 'Kunde inte tolka formuläret.' })
-      showToast('Kunde inte tolka formuläret', 'error')
-    }
-  }, [uploadedImage, getToken, showToast])
+    },
+    [interpretPage, showToast],
+  )
 
-  // Auto-run once per mounted editor instance. Guarded with a ref (not just
-  // the effect dependency array) so React StrictMode's dev-only double-invoke
-  // of effects can't trigger two real OpenAI calls.
+  const handleAddPage = useCallback(
+    (file: File) => {
+      setUploadedImages((prev) => [...prev, file])
+      attemptPage(file)
+    },
+    [attemptPage],
+  )
+
+  const retryInterpretation = useCallback(() => {
+    const file = lastAttemptedFileRef.current
+    if (file) attemptPage(file)
+  }, [attemptPage])
+
+  // Auto-run once per mounted editor instance, over the initial batch of
+  // uploaded pages. Guarded with a ref (not just the effect dependency
+  // array) so React StrictMode's dev-only double-invoke of effects can't
+  // trigger duplicate real OpenAI calls.
   const hasStartedInterpretation = useRef(false)
   useEffect(() => {
-    if (uploadedImage && !hasStartedInterpretation.current) {
+    if (uploadedImages.length > 0 && !hasStartedInterpretation.current) {
       hasStartedInterpretation.current = true
-      interpretUploadedImage()
+      runInitialInterpretation(uploadedImages)
     }
-  }, [uploadedImage, interpretUploadedImage])
+    // Only the initial batch (captured at mount) should auto-run; pages added
+    // later go through handleAddPage instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
@@ -356,7 +441,7 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__tabs">
-          {uploadedImage && (
+          {uploadedImages.length > 0 && (
             <button
               type="button"
               onClick={() => setActiveTab('image')}
@@ -378,29 +463,65 @@ function FormEditorContent() {
         </div>
 
         <div className="form-editor__body">
-          {uploadedImage && uploadedImageUrl && (
+          {uploadedImages.length > 0 && (
             <div className="form-editor__image" data-hidden={activeTab !== 'image' || undefined}>
               {interpretState.status === 'error' && (
                 <div className="form-editor__image-status form-editor__image-status--error">
                   <p>{interpretState.message}</p>
-                  <button type="button" className="btn btn--neutral btn--small" onClick={() => interpretUploadedImage()}>
+                  <button type="button" className="btn btn--neutral btn--small" onClick={retryInterpretation}>
                     Försök igen
                   </button>
                 </div>
               )}
-              {uploadedImage.type === 'application/pdf' ? (
-                <object data={uploadedImageUrl} type="application/pdf" className="form-editor__image-pdf">
-                  <p>
-                    Kunde inte visa PDF:en i webbläsaren.{' '}
-                    <a href={uploadedImageUrl} download={uploadedImage.name}>
-                      Ladda ner filen
-                    </a>
-                    .
-                  </p>
-                </object>
-              ) : (
-                <img src={uploadedImageUrl} alt="Uppladdat formulär" className="form-editor__image-preview" />
-              )}
+              <div className="form-editor__image-gallery">
+                {uploadedImages.map((file, index) => {
+                  const url = getImageUrl(file)
+                  return (
+                    <div className="form-editor__image-page" key={index}>
+                      <button
+                        type="button"
+                        className="form-editor__image-page-remove"
+                        aria-label="Ta bort sidan"
+                        title="Ta bort sidan"
+                        onClick={() => setUploadedImages((prev) => prev.filter((f) => f !== file))}
+                      >
+                        ×
+                      </button>
+                      {file.type === 'application/pdf' ? (
+                        <a href={url} download={file.name} className="form-editor__image-page-pdf">
+                          <span>PDF</span>
+                          <span className="form-editor__image-page-filename">{file.name}</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          className="form-editor__image-page-enlarge"
+                          onClick={() => {
+                            setEnlargedImageUrl(url)
+                            lightboxRef.current?.showModal()
+                          }}
+                        >
+                          <img src={url} alt={`Sida ${index + 1}`} className="form-editor__image-preview" />
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <button type="button" className="btn btn--neutral" onClick={() => addPageInputRef.current?.click()}>
+                + Lägg till sida
+              </button>
+              <input
+                ref={addPageInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (file) handleAddPage(file)
+                }}
+                hidden
+              />
             </div>
           )}
           <div className="form-editor__build" data-hidden={activeTab !== 'build' || undefined}>
@@ -420,6 +541,25 @@ function FormEditorContent() {
         </div>
 
         <InterpretationModal open={interpretState.status === 'loading'} />
+
+        <dialog
+          ref={lightboxRef}
+          className="form-editor__lightbox"
+          onClick={(e) => {
+            // Klick på ::backdrop bubblar som ett klick på <dialog> själv.
+            if (e.target === lightboxRef.current) lightboxRef.current?.close()
+          }}
+        >
+          {enlargedImageUrl && <img src={enlargedImageUrl} alt="Förstorad sida" />}
+          <button
+            type="button"
+            className="form-editor__lightbox-close"
+            aria-label="Stäng"
+            onClick={() => lightboxRef.current?.close()}
+          >
+            ×
+          </button>
+        </dialog>
 
         <div className="form-editor__actions">
           <button type="button" className="btn btn--primary" onClick={handleSave} disabled={saveState.status === 'loading'}>
