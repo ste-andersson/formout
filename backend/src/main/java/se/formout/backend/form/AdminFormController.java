@@ -61,9 +61,9 @@ public class AdminFormController {
         return adminFormService.publish(jwt.getSubject(), id);
     }
 
-    @PostMapping("/{id}/archive")
-    public AdminFormDetailDto archive(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
-        return adminFormService.archive(jwt.getSubject(), id);
+    @PostMapping("/{id}/unpublish")
+    public AdminFormDetailDto unpublish(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return adminFormService.unpublish(jwt.getSubject(), id);
     }
 
     @DeleteMapping("/{id}")

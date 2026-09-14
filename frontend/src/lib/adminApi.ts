@@ -1,7 +1,7 @@
 import { API_BASE_URL } from './apiBaseUrl'
 import type { Field, FormSchema } from './formSchema'
 
-export type FormStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+export type FormStatus = 'DRAFT' | 'PUBLISHED'
 
 export function formStatusLabel(status: FormStatus): string {
   switch (status) {
@@ -9,8 +9,6 @@ export function formStatusLabel(status: FormStatus): string {
       return 'Utkast'
     case 'PUBLISHED':
       return 'Publicerad'
-    case 'ARCHIVED':
-      return 'Arkiverad'
   }
 }
 
@@ -123,8 +121,8 @@ export async function publish(token: string, id: string): Promise<AdminFormDetai
   return (await response.json()) as AdminFormDetail
 }
 
-export async function archive(token: string, id: string): Promise<AdminFormDetail> {
-  const response = await adminFetch(token, `/${id}/archive`, { method: 'POST' })
+export async function unpublish(token: string, id: string): Promise<AdminFormDetail> {
+  const response = await adminFetch(token, `/${id}/unpublish`, { method: 'POST' })
   return (await response.json()) as AdminFormDetail
 }
 

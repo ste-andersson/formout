@@ -84,9 +84,9 @@ public class AdminFormService {
         return toDetailDto(form);
     }
 
-    public AdminFormDetailDto archive(String userId, UUID formId) {
+    public AdminFormDetailDto unpublish(String userId, UUID formId) {
         Form form = requireOwnedForm(userId, formId);
-        form.setStatus(FormStatus.ARCHIVED);
+        form.setStatus(FormStatus.DRAFT);
         form.setUpdatedAt(Instant.now());
         formRepository.save(form);
         return toDetailDto(form);

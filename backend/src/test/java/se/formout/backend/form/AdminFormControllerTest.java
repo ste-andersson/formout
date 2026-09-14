@@ -111,7 +111,7 @@ class AdminFormControllerTest {
     }
 
     @Test
-    void ownerCanUpdatePublishArchiveAndDeleteWhileOthersAreRejected() throws Exception {
+    void ownerCanUpdatePublishUnpublishAndDeleteWhileOthersAreRejected() throws Exception {
         String slug = "lifecycle-" + UUID.randomUUID();
         String body = mockMvc.perform(post("/api/admin/forms")
                         .with(jwt().jwt(j -> j.subject("owner")))
@@ -149,10 +149,10 @@ class AdminFormControllerTest {
         mockMvc.perform(get("/api/forms/{slug}", slug))
                 .andExpect(status().isOk());
 
-        // The owner can archive it, after which it is no longer publicly visible.
-        mockMvc.perform(post("/api/admin/forms/{id}/archive", id).with(jwt().jwt(j -> j.subject("owner"))))
+        // The owner can unpublish it, after which it is no longer publicly visible.
+        mockMvc.perform(post("/api/admin/forms/{id}/unpublish", id).with(jwt().jwt(j -> j.subject("owner"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(jsonPath("$.status").value("DRAFT"));
         mockMvc.perform(get("/api/forms/{slug}", slug))
                 .andExpect(status().isNotFound());
 

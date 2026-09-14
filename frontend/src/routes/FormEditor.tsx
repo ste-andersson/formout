@@ -301,7 +301,12 @@ function FormEditorContent() {
     dispatch({ type: 'CLEAR_LAST_ADDED' })
   }, [])
 
-  async function handleSave() {
+  // The one place "publish" actually happens -- used by both the bottom
+  // action button and the status row's "Publicera" button, so the two can
+  // never mean different things (one only publishing whatever was last
+  // saved, the other saving-then-publishing) -- that mismatch is exactly the
+  // kind of status confusion this whole change is meant to remove.
+  async function handlePublish() {
     setSaveState({ status: 'loading' })
     try {
       const token = await getToken()
@@ -312,8 +317,10 @@ function FormEditorContent() {
       if (isEditMode && id) {
         await adminApi.updateMetadata(token, id, { title: state.title, description: state.description || null })
         await adminApi.addVersion(token, id, { schema })
+        const updated = await adminApi.publish(token, id)
+        setFormStatus(updated.status)
         setSaveState({ status: 'ready' })
-        showToast('Formuläret är sparat', 'success')
+        showToast('Formuläret är publicerat', 'success')
       } else {
         let slug = state.slug
         let created: adminApi.AdminFormDetail | undefined
@@ -337,29 +344,26 @@ function FormEditorContent() {
         }
 
         if (!created) throw new Error('Could not generate a unique code')
-        showToast('Formuläret är skapat', 'success')
+        await adminApi.publish(token, created.id)
+        showToast('Formuläret är publicerat', 'success')
         navigate(`/admin/forms/${created.id}/edit`)
       }
     } catch {
-      setSaveState({ status: 'error', message: 'Kunde inte spara formuläret.' })
-      showToast('Kunde inte spara formuläret', 'error')
+      setSaveState({ status: 'error', message: 'Kunde inte publicera formuläret.' })
+      showToast('Kunde inte publicera formuläret', 'error')
     }
   }
 
-  async function handleStatusAction(action: 'publish' | 'archive' | 'delete') {
+  async function handleStatusAction(action: 'unpublish' | 'delete') {
     if (!id) return
     try {
       const token = await getToken()
       if (!token) throw new Error('Not signed in')
 
-      if (action === 'publish') {
-        const updated = await adminApi.publish(token, id)
+      if (action === 'unpublish') {
+        const updated = await adminApi.unpublish(token, id)
         setFormStatus(updated.status)
-        showToast('Formuläret är publicerat', 'success')
-      } else if (action === 'archive') {
-        const updated = await adminApi.archive(token, id)
-        setFormStatus(updated.status)
-        showToast('Formuläret är arkiverat', 'success')
+        showToast('Formuläret är avpublicerat', 'success')
       } else {
         await adminApi.deleteForm(token, id)
         showToast('Formuläret är raderat', 'success')
@@ -426,13 +430,13 @@ function FormEditorContent() {
                 <span>Status:</span>
                 <strong>{adminApi.formStatusLabel(formStatus)}</strong>
                 {formStatus === 'DRAFT' && (
-                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('publish')}>
+                  <button type="button" className="btn btn--neutral btn--small" onClick={handlePublish}>
                     Publicera
                   </button>
                 )}
                 {formStatus === 'PUBLISHED' && (
-                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('archive')}>
-                    Arkivera
+                  <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('unpublish')}>
+                    Avpublicera
                   </button>
                 )}
               </div>
@@ -562,8 +566,8 @@ function FormEditorContent() {
         </dialog>
 
         <div className="form-editor__actions">
-          <button type="button" className="btn btn--primary" onClick={handleSave} disabled={saveState.status === 'loading'}>
-            Spara
+          <button type="button" className="btn btn--primary" onClick={handlePublish} disabled={saveState.status === 'loading'}>
+            Publicera
           </button>
           {isEditMode && (
             <>
