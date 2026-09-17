@@ -27,7 +27,7 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(link)
-      showToast('Länk kopierad', 'success')
+      showToast('Länken är kopierad', 'success')
     } catch {
       showToast('Kunde inte kopiera länken', 'error')
     }
@@ -36,7 +36,7 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
   async function handleCopyCode() {
     try {
       await navigator.clipboard.writeText(slug)
-      showToast('Formulär-kod kopierad', 'success')
+      showToast('Formulär-koden är kopierad', 'success')
     } catch {
       showToast('Kunde inte kopiera formulär-koden', 'error')
     }
@@ -54,7 +54,7 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
         title={disabled ? 'Publicera formuläret innan du kan dela det.' : undefined}
         onClick={() => {
           if (disabled) {
-            showToast('Publicera formuläret innan du kan dela det.', 'error')
+            showToast('Publicera formuläret innan du kan dela det', 'error')
             return
           }
           shareDialogRef.current?.showModal()
