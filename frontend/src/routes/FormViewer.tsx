@@ -3,9 +3,11 @@ import { Link, useParams } from 'react-router'
 import { getFormBySlug } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor } from '../lib/formAnswers'
+import type { SavedResponse } from '../lib/responseStorage'
 import { createResponse } from '../lib/responseStorage'
 import { recordFormVisit } from '../lib/visitedForms'
 import { FormFiller } from '../components/FormFiller'
+import { ResponseActions } from '../components/ResponseActions'
 
 type LoadState =
   | { status: 'loading' }
@@ -20,6 +22,9 @@ export function FormViewer() {
 
 function FormViewerContent({ slug }: { slug?: string }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+  // Captured on submit so the confirmation screen can offer Dela/Exportera/
+  // Ändra for the response that was just saved.
+  const [savedResponse, setSavedResponse] = useState<SavedResponse | null>(null)
 
   useEffect(() => {
     if (!slug) {
@@ -84,7 +89,20 @@ function FormViewerContent({ slug }: { slug?: string }) {
       savingLabel="Sparar…"
       successToast="Formuläret är ifyllt"
       errorToast="Kunde inte spara svaret lokalt"
-      confirmation={{ title: 'Tack!', message: 'Dina svar är sparade på den här enheten.' }}
+      confirmation={{
+        title: 'Sparat!',
+        message: 'Dina svar har nu sparats på den här enheten.',
+        actions: savedResponse ? (
+          <ResponseActions response={savedResponse} form={form} className="form-filler__confirmation-actions">
+            <Link to={`/responses/${savedResponse.id}`} className="btn btn--neutral">
+              Ändra
+            </Link>
+            <Link to="/" className="btn btn--neutral">
+              Tillbaka
+            </Link>
+          </ResponseActions>
+        ) : undefined,
+      }}
       onSubmit={(answers) =>
         createResponse({
           formId: form.id,
@@ -92,7 +110,9 @@ function FormViewerContent({ slug }: { slug?: string }) {
           formTitle: form.title,
           formVersion: form.currentVersion,
           answers,
-        }).then(() => {})
+        }).then((saved) => {
+          setSavedResponse(saved)
+        })
       }
     />
   )
