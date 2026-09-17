@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { COLOR_SCHEMES, getStoredScheme, setScheme } from '../lib/colorScheme'
 import { applyTheme, getStoredTheme, setTheme, type ThemePreference } from '../lib/theme'
-import './AppearancePicker.css'
+import { useOfflineMode } from './offlineModeContext'
+import { GearIcon } from './icons'
+import './SettingsMenu.css'
 
 const THEME_OPTIONS: { id: ThemePreference; label: string }[] = [
   { id: 'light', label: 'Ljust' },
@@ -9,9 +11,10 @@ const THEME_OPTIONS: { id: ThemePreference; label: string }[] = [
   { id: 'system', label: 'System' },
 ]
 
-export function AppearancePicker() {
+export function SettingsMenu() {
   const [currentScheme, setCurrentScheme] = useState(() => getStoredScheme())
   const [currentTheme, setCurrentTheme] = useState(() => getStoredTheme())
+  const { offlineMode, setOfflineMode } = useOfflineMode()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -33,26 +36,59 @@ export function AppearancePicker() {
   }, [open])
 
   return (
-    <div className="appearance-picker" ref={rootRef}>
+    <div className="settings-menu" ref={rootRef}>
       <button
         type="button"
-        className="appearance-picker__trigger"
-        aria-label="Utseende"
+        className="settings-menu__trigger"
+        aria-label="Inställningar"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="appearance-picker__dot" />
+        <GearIcon />
       </button>
       {open && (
-        <div className="appearance-picker__menu" role="menu">
-          <div className="appearance-picker__theme-row" role="group" aria-label="Ljust eller mörkt läge">
+        <div className="settings-menu__menu" role="menu">
+          <div className="settings-menu__section-label">Språk</div>
+          <div className="settings-menu__theme-row" role="group" aria-label="Språk">
+            <button type="button" role="menuitemradio" aria-checked="true" className="settings-menu__theme-option">
+              Svenska
+            </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked="false"
+              className="settings-menu__theme-option"
+              disabled
+              title="Kommer snart"
+            >
+              English
+            </button>
+          </div>
+
+          <div className="settings-menu__divider" />
+
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={offlineMode}
+            className="settings-menu__option settings-menu__option--checkbox"
+            onClick={() => setOfflineMode(!offlineMode)}
+          >
+            <span className="settings-menu__checkbox" aria-hidden="true" />
+            Offline-läge
+          </button>
+
+          <div className="settings-menu__divider" />
+
+          <div className="settings-menu__section-label">Läge</div>
+          <div className="settings-menu__theme-row" role="group" aria-label="Ljust eller mörkt läge">
             {THEME_OPTIONS.map((option) => (
               <button
                 key={option.id}
                 type="button"
                 role="menuitemradio"
                 aria-checked={option.id === currentTheme}
-                className="appearance-picker__theme-option"
+                className="settings-menu__theme-option"
                 onClick={() => {
                   setTheme(option.id)
                   setCurrentTheme(option.id)
@@ -62,21 +98,24 @@ export function AppearancePicker() {
               </button>
             ))}
           </div>
-          <div className="appearance-picker__divider" />
+
+          <div className="settings-menu__divider" />
+
+          <div className="settings-menu__section-label">Färgschema</div>
           {COLOR_SCHEMES.map((scheme) => (
             <button
               key={scheme.id}
               type="button"
               role="menuitemradio"
               aria-checked={scheme.id === currentScheme}
-              className="appearance-picker__option"
+              className="settings-menu__option"
               onClick={() => {
                 setScheme(scheme.id)
                 setCurrentScheme(scheme.id)
                 setOpen(false)
               }}
             >
-              <span className="appearance-picker__option-dot" style={{ background: scheme.swatch }} />
+              <span className="settings-menu__option-dot" style={{ background: scheme.swatch }} />
               {scheme.label}
             </button>
           ))}
