@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { FormSchema } from '../lib/formSchema'
 import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
@@ -15,7 +15,9 @@ interface FormFillerProps {
   savingLabel: string
   successToast: string
   errorToast: string
-  confirmation: { title: string; message: string }
+  // actions replaces the default "Till startsidan" link -- e.g. Dela/
+  // Exportera/Ändra/Tillbaka right after a fresh submission.
+  confirmation: { title: string; message: string; actions?: ReactNode }
   onSubmit: (answers: FormAnswers) => Promise<void>
 }
 
@@ -65,7 +67,7 @@ export function FormFiller({
       <div className="form-filler__confirmation">
         <h1>{confirmation.title}</h1>
         <p>{confirmation.message}</p>
-        <Link to="/">Till startsidan</Link>
+        {confirmation.actions ?? <Link to="/">Till startsidan</Link>}
       </div>
     )
   }

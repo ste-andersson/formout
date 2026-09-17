@@ -14,3 +14,14 @@
   margin: 0 auto;
   text-align: center;
 }
+
+.form-filler__confirmation-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.form-filler__confirmation-actions .btn {
+  width: 100%;
+}
