@@ -2,26 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <script>
-      // Sätter färgschema och ljust/mörkt läge innan CSS:n målas upp, så sidan
-      // inte flimrar till fel utseende vid laddning. Nyckelnamnen och logiken
-      // speglar src/lib/colorScheme.ts (data-scheme) och src/lib/theme.ts
-      // (data-theme) -- håll dem i synk.
-      ;(function () {
-        try {
-          var scheme = localStorage.getItem('formout:color-scheme')
-          if (scheme) document.documentElement.setAttribute('data-scheme', scheme)
-        } catch (e) {}
-        try {
-          var theme = localStorage.getItem('formout:theme') || 'system'
-          var effective =
-            theme === 'system'
-              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-              : theme
-          document.documentElement.setAttribute('data-theme', effective)
-        } catch (e) {}
-      })()
-    </script>
+    <!--
+      connect-src only allowlists 'self' and Clerk here. If the frontend is
+      deployed cross-origin from the backend (VITE_API_BASE_URL points at a
+      different origin, e.g. separate Railway services), add that backend
+      origin to connect-src below or API calls will be blocked by the browser.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' https://concrete-grouse-746.clerk.accounts.dev https://challenges.cloudflare.com https://*.protect.clerk.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: blob: https://img.clerk.com;
+        connect-src 'self' https://concrete-grouse-746.clerk.accounts.dev https://*.protect.clerk.com:*;
+        frame-src https://concrete-grouse-746.clerk.accounts.dev https://challenges.cloudflare.com https://*.protect.clerk.com;
+        worker-src 'self' blob:;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+      "
+    />
+    <script src="/theme-init.js"></script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

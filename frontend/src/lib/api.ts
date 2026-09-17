@@ -6,6 +6,10 @@ export interface FormDetail {
   title: string
   description: string | null
   slug: string
+  // Owner-set relevance flag ("aktuell"/"inaktuell") -- purely a listing
+  // hint for respondents, never an access restriction: an inactive form is
+  // still fully served here.
+  active: boolean
   currentVersion: number
   schema: FormSchema
   updatedAt: string

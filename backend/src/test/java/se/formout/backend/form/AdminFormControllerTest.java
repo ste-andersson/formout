@@ -111,7 +111,7 @@ class AdminFormControllerTest {
     }
 
     @Test
-    void ownerCanUpdatePublishArchiveAndDeleteWhileOthersAreRejected() throws Exception {
+    void ownerCanUpdatePublishUnpublishAndDeleteWhileOthersAreRejected() throws Exception {
         String slug = "lifecycle-" + UUID.randomUUID();
         String body = mockMvc.perform(post("/api/admin/forms")
                         .with(jwt().jwt(j -> j.subject("owner")))
@@ -149,10 +149,10 @@ class AdminFormControllerTest {
         mockMvc.perform(get("/api/forms/{slug}", slug))
                 .andExpect(status().isOk());
 
-        // The owner can archive it, after which it is no longer publicly visible.
-        mockMvc.perform(post("/api/admin/forms/{id}/archive", id).with(jwt().jwt(j -> j.subject("owner"))))
+        // The owner can unpublish it, after which it is no longer publicly visible.
+        mockMvc.perform(post("/api/admin/forms/{id}/unpublish", id).with(jwt().jwt(j -> j.subject("owner"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(jsonPath("$.status").value("DRAFT"));
         mockMvc.perform(get("/api/forms/{slug}", slug))
                 .andExpect(status().isNotFound());
 
@@ -160,6 +160,39 @@ class AdminFormControllerTest {
         mockMvc.perform(delete("/api/admin/forms/{id}", id).with(jwt().jwt(j -> j.subject("owner"))))
                 .andExpect(status().isNoContent());
         mockMvc.perform(get("/api/admin/forms/{id}", id).with(jwt().jwt(j -> j.subject("owner"))))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void ownerCanMarkAFormOutdatedAndCurrentWithoutAffectingPublicAccess() throws Exception {
+        String slug = "relevance-" + UUID.randomUUID();
+        String body = mockMvc.perform(post("/api/admin/forms")
+                        .with(jwt().jwt(j -> j.subject("owner")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest(slug))))
+                .andExpect(jsonPath("$.active").value(true))
+                .andReturn().getResponse().getContentAsString();
+        String id = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(post("/api/admin/forms/{id}/publish", id).with(jwt().jwt(j -> j.subject("owner"))))
+                .andExpect(status().isOk());
+
+        // Marking it outdated doesn't unpublish it -- it stays fully reachable.
+        mockMvc.perform(post("/api/admin/forms/{id}/mark-outdated", id).with(jwt().jwt(j -> j.subject("owner"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false))
+                .andExpect(jsonPath("$.status").value("PUBLISHED"));
+        mockMvc.perform(get("/api/forms/{slug}", slug))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        // Marking it current again flips it back.
+        mockMvc.perform(post("/api/admin/forms/{id}/mark-current", id).with(jwt().jwt(j -> j.subject("owner"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+
+        // A non-owner cannot change it.
+        mockMvc.perform(post("/api/admin/forms/{id}/mark-outdated", id).with(jwt().jwt(j -> j.subject("someone-else"))))
                 .andExpect(status().isNotFound());
     }
 }

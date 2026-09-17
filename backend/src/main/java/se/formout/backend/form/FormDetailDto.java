@@ -10,6 +10,7 @@ public record FormDetailDto(
         String title,
         String description,
         String slug,
+        boolean active,
         int currentVersion,
         @JsonRawValue String schema,
         Instant updatedAt

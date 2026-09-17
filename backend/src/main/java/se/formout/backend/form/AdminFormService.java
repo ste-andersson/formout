@@ -31,7 +31,7 @@ public class AdminFormService {
         UUID formId = UUID.randomUUID();
 
         Form form = new Form(formId, userId, request.title(), request.description(), request.slug(),
-                FormStatus.DRAFT, 1, now, now);
+                FormStatus.DRAFT, true, 1, now, now);
         formRepository.save(form);
 
         FormVersion version = new FormVersion(UUID.randomUUID(), formId, 1, writeSchema(request.schema()), now);
@@ -43,7 +43,7 @@ public class AdminFormService {
     public List<AdminFormSummaryDto> listMyForms(String userId) {
         return formRepository.findByUserIdOrderByUpdatedAtDesc(userId).stream()
                 .map(form -> new AdminFormSummaryDto(form.getId(), form.getTitle(), form.getSlug(),
-                        form.getStatus(), form.getCurrentVersion(), form.getUpdatedAt()))
+                        form.getStatus(), form.isActive(), form.getCurrentVersion(), form.getUpdatedAt()))
                 .toList();
     }
 
@@ -84,9 +84,31 @@ public class AdminFormService {
         return toDetailDto(form);
     }
 
-    public AdminFormDetailDto archive(String userId, UUID formId) {
+    public AdminFormDetailDto unpublish(String userId, UUID formId) {
         Form form = requireOwnedForm(userId, formId);
-        form.setStatus(FormStatus.ARCHIVED);
+        form.setStatus(FormStatus.DRAFT);
+        form.setUpdatedAt(Instant.now());
+        formRepository.save(form);
+        return toDetailDto(form);
+    }
+
+    /**
+     * Owner-set relevance flag -- deliberately separate from
+     * {@link #publish}/{@link #unpublish}: a form stays fully published and
+     * fillable regardless of this flag, it only affects how respondents see
+     * it listed on their home page.
+     */
+    public AdminFormDetailDto markCurrent(String userId, UUID formId) {
+        Form form = requireOwnedForm(userId, formId);
+        form.setActive(true);
+        form.setUpdatedAt(Instant.now());
+        formRepository.save(form);
+        return toDetailDto(form);
+    }
+
+    public AdminFormDetailDto markOutdated(String userId, UUID formId) {
+        Form form = requireOwnedForm(userId, formId);
+        form.setActive(false);
         form.setUpdatedAt(Instant.now());
         formRepository.save(form);
         return toDetailDto(form);
@@ -111,7 +133,8 @@ public class AdminFormService {
                         "Missing current version for form " + form.getId()));
 
         return new AdminFormDetailDto(form.getId(), form.getTitle(), form.getDescription(), form.getSlug(),
-                form.getStatus(), form.getCurrentVersion(), readSchema(version.getSchemaJson()), form.getUpdatedAt());
+                form.getStatus(), form.isActive(), form.getCurrentVersion(), readSchema(version.getSchemaJson()),
+                form.getUpdatedAt());
     }
 
     private String writeSchema(FormSchema schema) {

@@ -61,9 +61,19 @@ public class AdminFormController {
         return adminFormService.publish(jwt.getSubject(), id);
     }
 
-    @PostMapping("/{id}/archive")
-    public AdminFormDetailDto archive(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
-        return adminFormService.archive(jwt.getSubject(), id);
+    @PostMapping("/{id}/unpublish")
+    public AdminFormDetailDto unpublish(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return adminFormService.unpublish(jwt.getSubject(), id);
+    }
+
+    @PostMapping("/{id}/mark-current")
+    public AdminFormDetailDto markCurrent(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return adminFormService.markCurrent(jwt.getSubject(), id);
+    }
+
+    @PostMapping("/{id}/mark-outdated")
+    public AdminFormDetailDto markOutdated(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return adminFormService.markOutdated(jwt.getSubject(), id);
     }
 
     @DeleteMapping("/{id}")

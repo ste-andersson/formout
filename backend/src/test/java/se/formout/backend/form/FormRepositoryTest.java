@@ -23,7 +23,7 @@ class FormRepositoryTest {
     void savesAndReloadsAForm() {
         Instant now = Instant.now();
         Form form = new Form(UUID.randomUUID(), "user-1", "Wellbeing form", "Example form",
-                "wellbeing-form-" + UUID.randomUUID(), FormStatus.DRAFT, 1, now, now);
+                "wellbeing-form-" + UUID.randomUUID(), FormStatus.DRAFT, true, 1, now, now);
 
         Form saved = formRepository.save(form);
 

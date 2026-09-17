@@ -32,9 +32,9 @@ class FormControllerTest {
     void listsOnlyPublishedForms() throws Exception {
         Instant now = Instant.now();
         formRepository.save(new Form(UUID.randomUUID(), "user-1", "Published form", "desc",
-                "published-form-" + UUID.randomUUID(), FormStatus.PUBLISHED, 1, now, now));
+                "published-form-" + UUID.randomUUID(), FormStatus.PUBLISHED, true, 1, now, now));
         formRepository.save(new Form(UUID.randomUUID(), "user-1", "Draft form", "desc",
-                "draft-form-" + UUID.randomUUID(), FormStatus.DRAFT, 1, now, now));
+                "draft-form-" + UUID.randomUUID(), FormStatus.DRAFT, true, 1, now, now));
 
         mockMvc.perform(get("/api/forms"))
                 .andExpect(status().isOk())
@@ -47,7 +47,7 @@ class FormControllerTest {
         Instant now = Instant.now();
         String slug = "wellbeing-form-" + UUID.randomUUID();
         Form form = formRepository.save(new Form(UUID.randomUUID(), "user-1", "Wellbeing form", "desc",
-                slug, FormStatus.PUBLISHED, 1, now, now));
+                slug, FormStatus.PUBLISHED, true, 1, now, now));
         formVersionRepository.save(new FormVersion(UUID.randomUUID(), form.getId(), 1,
                 "{\"schemaVersion\":1}", now));
 
@@ -62,7 +62,7 @@ class FormControllerTest {
         Instant now = Instant.now();
         String slug = "draft-form-" + UUID.randomUUID();
         formRepository.save(new Form(UUID.randomUUID(), "user-1", "Draft form", "desc",
-                slug, FormStatus.DRAFT, 1, now, now));
+                slug, FormStatus.DRAFT, true, 1, now, now));
 
         mockMvc.perform(get("/api/forms/{slug}", slug))
                 .andExpect(status().isNotFound());

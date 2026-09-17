@@ -291,12 +291,3 @@ p {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 35%, var(--bg));
 }
-
-/* Arkiverad ser ut som standardläget (utkast) -- båda är "inte live", bara
-   publicerad ska sticka ut i accentfärgen. Egen regel ändå, så det inte ser
-   ut som en glömd stil om någon letar efter den. */
-.status-badge--archived {
-  background: var(--canvas-bg);
-  color: var(--text-secondary);
-  border-color: var(--border);
-}

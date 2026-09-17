@@ -8,6 +8,7 @@ public record AdminFormSummaryDto(
         String title,
         String slug,
         FormStatus status,
+        boolean active,
         int currentVersion,
         Instant updatedAt
 ) {
