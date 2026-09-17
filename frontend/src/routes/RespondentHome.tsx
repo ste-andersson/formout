@@ -161,7 +161,12 @@ export function RespondentHome() {
 
   function handleRemove(card: FormCard) {
     if (card.responses.length > 0) return
-    setHiddenLocally(card.formId, true).then(reloadFromCache)
+    setHiddenLocally(card.formId, true)
+      .then(reloadFromCache)
+      .catch((error: unknown) => {
+        console.error('Kunde inte ta bort formuläret lokalt', error)
+        showToast('Kunde inte ta bort formuläret', 'error')
+      })
   }
 
   function beginExportFetch(card: FormCard) {

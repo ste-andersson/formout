@@ -393,7 +393,7 @@ function FormEditorContent() {
         navigate('/admin')
       }
     } catch {
-      showToast('Något gick fel, försök igen', 'error')
+      showToast(action === 'unpublish' ? 'Kunde inte avpublicera formuläret' : 'Kunde inte radera formuläret', 'error')
     }
   }
 
@@ -408,7 +408,12 @@ function FormEditorContent() {
       setFormActive(updated.active)
       showToast(action === 'mark-current' ? 'Formuläret är markerat som aktuellt' : 'Formuläret är markerat som inaktuellt', 'success')
     } catch {
-      showToast('Något gick fel, försök igen', 'error')
+      showToast(
+        action === 'mark-current'
+          ? 'Kunde inte markera formuläret som aktuellt'
+          : 'Kunde inte markera formuläret som inaktuellt',
+        'error',
+      )
     }
   }
 
