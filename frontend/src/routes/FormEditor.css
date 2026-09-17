@@ -20,6 +20,17 @@
   color: var(--text-secondary);
 }
 
+.form-editor__offline-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.form-editor__offline-notice p {
+  margin: 0;
+}
+
 .form-editor__meta {
   display: flex;
   flex-direction: column;

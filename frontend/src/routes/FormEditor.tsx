@@ -16,6 +16,7 @@ import { ElementPalette } from '../components/editor/ElementPalette'
 import { InterpretationModal } from '../components/editor/InterpretationModal'
 import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
+import { useOfflineMode } from '../components/offlineModeContext'
 import './FormEditor.css'
 
 export function FormEditor() {
@@ -45,6 +46,7 @@ function FormEditorContent() {
   const navigate = useNavigate()
   const location = useLocation()
   const { showToast } = useToast()
+  const { offlineMode, setOfflineMode } = useOfflineMode()
 
   const [uploadedImages, setUploadedImages] = useState<File[]>(() => {
     const navState = location.state as { uploadedFiles?: File[] } | null
@@ -76,6 +78,13 @@ function FormEditorContent() {
   const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview'>(
     uploadedImages.length > 0 ? 'image' : 'build',
   )
+  // The Bygg-tab is hidden entirely in offline mode (see the tabs row below)
+  // -- if offline mode gets switched on while it's already the active tab,
+  // this falls back to another tab for rendering purposes without needing a
+  // setState-in-effect (activeTab itself is untouched, so it's restored the
+  // moment offline mode is switched off again).
+  const displayedTab =
+    offlineMode && activeTab === 'build' ? (uploadedImages.length > 0 ? 'image' : 'preview') : activeTab
   const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
   // Owner-set relevance flag (aktuell/inaktuell), separate from formStatus --
   // see the "Relevans"-row below and adminApi.markCurrent/markOutdated.
@@ -438,46 +447,69 @@ function FormEditorContent() {
       <div className="form-editor">
         <div className="form-editor__intro">
           <h1>Bygg eller redigera formulär</h1>
-          <p>
-            Dra in element från paletten och släpp dem där du vill ha dem. Du kan när som helst flytta ett element
-            till en ny plats genom att dra det dit.
-          </p>
+          {offlineMode ? (
+            <div className="form-editor__offline-notice">
+              <p>Du är i offline-läge och kan därför inte redigera formuläret just nu.</p>
+              <button
+                type="button"
+                className="btn btn--neutral btn--small"
+                onClick={() => setOfflineMode(false)}
+              >
+                Stäng av offline-läge
+              </button>
+            </div>
+          ) : (
+            <p>
+              Dra in element från paletten och släpp dem där du vill ha dem. Du kan när som helst flytta ett element
+              till en ny plats genom att dra det dit.
+            </p>
+          )}
         </div>
 
         <div className="form-editor__meta">
           <label>
             Titel
-            <input value={state.title} onChange={(e) => dispatch({ type: 'SET_TITLE', title: e.target.value })} />
+            <input
+              value={state.title}
+              onChange={(e) => dispatch({ type: 'SET_TITLE', title: e.target.value })}
+              disabled={offlineMode}
+            />
           </label>
           <label>
             Beskrivning
             <input
               value={state.description}
               onChange={(e) => dispatch({ type: 'SET_DESCRIPTION', description: e.target.value })}
+              disabled={offlineMode}
             />
           </label>
           <div className="form-editor__meta-rows">
             <div className="form-editor__code">
               <span>Kod:</span>
               <strong>{state.slug}</strong>
-              <button
-                type="button"
-                className="btn btn--neutral btn--small"
-                onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
-              >
-                Generera ny kod
-              </button>
+              {offlineMode ? (
+                <span />
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn--neutral btn--small"
+                  onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
+                >
+                  Generera ny kod
+                </button>
+              )}
             </div>
             {isEditMode && formStatus && (
               <div className="form-editor__status">
                 <span>Status:</span>
                 <strong>{adminApi.formStatusLabel(formStatus)}</strong>
-                {formStatus === 'DRAFT' && (
+                {offlineMode ? (
+                  <span />
+                ) : formStatus === 'DRAFT' ? (
                   <button type="button" className="btn btn--neutral btn--small" onClick={handlePublish}>
                     Publicera
                   </button>
-                )}
-                {formStatus === 'PUBLISHED' && (
+                ) : (
                   <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('unpublish')}>
                     Avpublicera
                   </button>
@@ -488,7 +520,9 @@ function FormEditorContent() {
               <div className="form-editor__relevance">
                 <span>Relevans:</span>
                 <strong>{formActive ? 'Aktuell' : 'Inaktuell'}</strong>
-                {formActive ? (
+                {offlineMode ? (
+                  <span />
+                ) : formActive ? (
                   <button
                     type="button"
                     className="btn btn--neutral btn--small"
@@ -515,18 +549,24 @@ function FormEditorContent() {
             <button
               type="button"
               onClick={() => setActiveTab('image')}
-              data-active={activeTab === 'image' || undefined}
+              data-active={displayedTab === 'image' || undefined}
             >
               Bild
             </button>
           )}
-          <button type="button" onClick={() => setActiveTab('build')} data-active={activeTab === 'build' || undefined}>
-            Bygg
-          </button>
+          {!offlineMode && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('build')}
+              data-active={activeTab === 'build' || undefined}
+            >
+              Bygg
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setActiveTab('preview')}
-            data-active={activeTab === 'preview' || undefined}
+            data-active={displayedTab === 'preview' || undefined}
           >
             Förhandsvisning
           </button>
@@ -534,7 +574,7 @@ function FormEditorContent() {
 
         <div className="form-editor__body">
           {uploadedImages.length > 0 && (
-            <div className="form-editor__image" data-hidden={activeTab !== 'image' || undefined}>
+            <div className="form-editor__image" data-hidden={displayedTab !== 'image' || undefined}>
               {interpretState.status === 'error' && (
                 <div className="form-editor__image-status form-editor__image-status--error">
                   <p>{interpretState.message}</p>
@@ -578,23 +618,27 @@ function FormEditorContent() {
                   )
                 })}
               </div>
-              <button type="button" className="btn btn--neutral" onClick={() => addPageInputRef.current?.click()}>
-                + Lägg till sida
-              </button>
-              <input
-                ref={addPageInputRef}
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  e.target.value = ''
-                  if (file) handleAddPage(file)
-                }}
-                hidden
-              />
+              {!offlineMode && (
+                <>
+                  <button type="button" className="btn btn--neutral" onClick={() => addPageInputRef.current?.click()}>
+                    + Lägg till sida
+                  </button>
+                  <input
+                    ref={addPageInputRef}
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      e.target.value = ''
+                      if (file) handleAddPage(file)
+                    }}
+                    hidden
+                  />
+                </>
+              )}
             </div>
           )}
-          <div className="form-editor__build" data-hidden={activeTab !== 'build' || undefined}>
+          <div className="form-editor__build" data-hidden={displayedTab !== 'build' || undefined}>
             <ElementPalette />
             <FieldCanvas
               fields={state.fields}
@@ -605,7 +649,7 @@ function FormEditorContent() {
               onRemoveElement={(fieldId) => dispatch({ type: 'REMOVE_ELEMENT', fieldId })}
             />
           </div>
-          <div className="form-editor__preview" data-hidden={activeTab !== 'preview' || undefined}>
+          <div className="form-editor__preview" data-hidden={displayedTab !== 'preview' || undefined}>
             <FormRenderer schema={schema} />
           </div>
         </div>
@@ -632,15 +676,24 @@ function FormEditorContent() {
         </dialog>
 
         <div className="form-editor__actions">
-          <button type="button" className="btn btn--primary" onClick={handlePublish} disabled={saveState.status === 'loading'}>
-            Publicera
-          </button>
+          {!offlineMode && (
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={handlePublish}
+              disabled={saveState.status === 'loading'}
+            >
+              Publicera
+            </button>
+          )}
           {isEditMode && (
             <>
               <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
-              <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('delete')}>
-                Radera
-              </button>
+              {!offlineMode && (
+                <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('delete')}>
+                  Radera
+                </button>
+              )}
             </>
           )}
         </div>
