@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { getFormBySlug } from '../lib/api'
+import { getFormBySlugWithFallback } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { decodeSharedResponsePayload } from '../lib/sharedResponseLink'
 import type { SharedResponsePayload } from '../lib/sharedResponseLink'
 import { formatResponseDateTime } from '../lib/responseFormat'
 import { FormRenderer } from '../components/FormRenderer'
+import { useOfflineMode } from '../components/offlineModeContext'
 import './SharedResponse.css'
 
 type LoadState =
@@ -31,11 +32,12 @@ export function SharedResponse() {
 
 function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+  const { offlineMode } = useOfflineMode()
 
   useEffect(() => {
     let cancelled = false
 
-    getFormBySlug(payload.formSlug)
+    getFormBySlugWithFallback(payload.formSlug, offlineMode)
       .then((form) => {
         if (cancelled) return
         setState(form ? { status: 'loaded', form } : { status: 'not-found' })
@@ -48,7 +50,7 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
     return () => {
       cancelled = true
     }
-  }, [payload.formSlug])
+  }, [payload.formSlug, offlineMode])
 
   if (state.status === 'loading') {
     return <p>Laddar…</p>

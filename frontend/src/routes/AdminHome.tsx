@@ -4,19 +4,26 @@ import { Link, useNavigate } from "react-router";
 import { isTouchDevice } from "../lib/device";
 import { formStatusLabel, listMyForms } from "../lib/adminApi";
 import type { AdminFormSummary } from "../lib/adminApi";
+import { cacheMyForms, listCachedMyForms } from "../lib/myFormsCache";
 import { ShareFormLink } from "../components/ShareFormLink";
+import { useOfflineMode } from "../components/offlineModeContext";
 import "./AdminHome.css";
 
 export function AdminHome() {
   const isMobile = isTouchDevice();
+  const { offlineMode } = useOfflineMode();
   return (
     <div className="admin-home">
       <h1>Skapa ett formulär</h1>
-      <p>
-        {isMobile
-          ? "Fotografera ett befintligt formulär eller bygg det från grunden."
-          : "Ladda upp en fil med ett befintligt formulär eller bygg det från grunden."}
-      </p>
+      {offlineMode ? (
+        <p>Den här funktionen kräver internet och fungerar inte i offline-läge.</p>
+      ) : (
+        <p>
+          {isMobile
+            ? "Fotografera ett befintligt formulär eller bygg det från grunden."
+            : "Ladda upp en fil med ett befintligt formulär eller bygg det från grunden."}
+        </p>
+      )}
       <SignedOut>
         <p>Du behöver ett konto för att skapa formulär.</p>
         <SignInButton mode="modal">
@@ -74,9 +81,29 @@ type LoadState =
 function MyForms() {
   const { getToken } = useAuth();
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const { offlineMode } = useOfflineMode();
 
   useEffect(() => {
     let cancelled = false;
+
+    function loadFromCache() {
+      listCachedMyForms()
+        .then((forms) => {
+          if (cancelled) return;
+          setState({ status: "loaded", forms });
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setState({ status: "error" });
+        });
+    }
+
+    if (offlineMode) {
+      loadFromCache();
+      return () => {
+        cancelled = true;
+      };
+    }
 
     getToken()
       .then((token) => {
@@ -88,25 +115,35 @@ function MyForms() {
       .then((forms) => {
         if (cancelled) return;
         setState({ status: "loaded", forms });
+        // Best-effort -- keeps the offline fallback fresh, never blocks
+        // rendering the list that just loaded successfully.
+        cacheMyForms(forms).catch((error: unknown) => {
+          console.error("Kunde inte cacha formulärlistan lokalt", error);
+        });
       })
       .catch(() => {
+        // The live request failed (e.g. connectivity dropped even though
+        // offline mode wasn't switched on) -- fall back to whatever was
+        // cached last, instead of a hard error.
         if (cancelled) return;
-        setState({ status: "error" });
+        loadFromCache();
       });
 
     return () => {
       cancelled = true;
     };
-  }, [getToken]);
+  }, [getToken, offlineMode]);
 
   return (
     <div className="my-forms">
-      <div className="my-forms__actions">
-        <PhotoUploadButton />
-        <Link to="/admin/forms/new" className="btn btn--secondary">
-          Bygg formulär
-        </Link>
-      </div>
+      {!offlineMode && (
+        <div className="my-forms__actions">
+          <PhotoUploadButton />
+          <Link to="/admin/forms/new" className="btn btn--secondary">
+            Bygg formulär
+          </Link>
+        </div>
+      )}
 
       <div className="my-forms__list-section">
         <h2 className="my-forms__list-heading">Mina skapade formulär</h2>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { getFormBySlug } from '../lib/api'
+import { getFormBySlugWithFallback } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor } from '../lib/formAnswers'
 import type { SavedResponse } from '../lib/responseStorage'
@@ -8,6 +8,7 @@ import { createResponse } from '../lib/responseStorage'
 import { recordFormVisit } from '../lib/visitedForms'
 import { FormFiller } from '../components/FormFiller'
 import { ResponseActions } from '../components/ResponseActions'
+import { useOfflineMode } from '../components/offlineModeContext'
 
 type LoadState =
   | { status: 'loading' }
@@ -25,6 +26,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
   // Captured on submit so the confirmation screen can offer Dela/Exportera/
   // Ändra for the response that was just saved.
   const [savedResponse, setSavedResponse] = useState<SavedResponse | null>(null)
+  const { offlineMode } = useOfflineMode()
 
   useEffect(() => {
     if (!slug) {
@@ -33,7 +35,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
 
     let cancelled = false
 
-    getFormBySlug(slug)
+    getFormBySlugWithFallback(slug, offlineMode)
       .then((form) => {
         if (cancelled) return
         setState(form ? { status: 'loaded', form } : { status: 'not-found' })
@@ -53,7 +55,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
     return () => {
       cancelled = true
     }
-  }, [slug])
+  }, [slug, offlineMode])
 
   if (state.status === 'loading') {
     return <p>Laddar formulär…</p>

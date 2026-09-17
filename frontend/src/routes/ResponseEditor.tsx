@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { getFormBySlug } from '../lib/api'
+import { getFormBySlugWithFallback } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor } from '../lib/formAnswers'
 import type { SavedResponse } from '../lib/responseStorage'
@@ -8,6 +8,7 @@ import { deleteResponse, getResponse, updateResponse } from '../lib/responseStor
 import { useToast } from '../components/toastContext'
 import { FormFiller } from '../components/FormFiller'
 import { ResponseActions } from '../components/ResponseActions'
+import { useOfflineMode } from '../components/offlineModeContext'
 import './ResponseEditor.css'
 
 type LoadState =
@@ -29,6 +30,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   const [savedResponse, setSavedResponse] = useState<SavedResponse | null>(null)
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const { offlineMode } = useOfflineMode()
 
   useEffect(() => {
     if (!responseId) {
@@ -44,7 +46,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
           setState({ status: 'not-found' })
           return
         }
-        getFormBySlug(response.formSlug)
+        getFormBySlugWithFallback(response.formSlug, offlineMode)
           .then((form) => {
             if (cancelled) return
             setState(form ? { status: 'loaded', response, form } : { status: 'form-unavailable', response })
@@ -62,7 +64,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
     return () => {
       cancelled = true
     }
-  }, [responseId])
+  }, [responseId, offlineMode])
 
   async function handleDelete(response: SavedResponse) {
     try {
