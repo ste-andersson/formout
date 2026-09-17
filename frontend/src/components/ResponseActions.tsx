@@ -94,7 +94,7 @@ export function ResponseActions({ response, form, className, children }: Respons
 
   function handleShareLink() {
     if (!linkUrl) {
-      showToast('Formuläret är för långt för att delas som länk. Använd Dela eller Exportera istället.', 'error')
+      showToast('Formuläret är för långt för att delas som länk. Använd Dela eller Exportera istället', 'error')
       return
     }
     const subject = encodeURIComponent(response.formTitle)
@@ -105,7 +105,7 @@ export function ResponseActions({ response, form, className, children }: Respons
 
   function handleOpenQr() {
     if (!linkUrl) {
-      showToast('Formuläret är för långt för att visas som QR-kod/länk.', 'error')
+      showToast('Formuläret är för långt för att visas som QR-kod/länk', 'error')
       return
     }
     shareDialogRef.current?.close()
@@ -119,7 +119,7 @@ export function ResponseActions({ response, form, className, children }: Respons
     if (!linkUrl) return
     try {
       await navigator.clipboard.writeText(linkUrl)
-      showToast('Länk kopierad', 'success')
+      showToast('Länken är kopierad', 'success')
     } catch {
       showToast('Kunde inte kopiera länken', 'error')
     }

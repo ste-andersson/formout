@@ -17,17 +17,24 @@
   padding: 0.75rem 1rem;
   border-radius: 0.375rem;
   font-size: 0.9rem;
-  color: #fff;
-  background: #1f1f1f;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Same accent/contrast pair as .btn--primary and .status-badge--published --
+   success follows whichever color scheme is active instead of a fixed green,
+   and stays legible even against ochre's light gold accent in dark mode via
+   --accent-contrast. */
 .toast[data-type='success'] {
-  background: #15803d;
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
+/* Error deliberately stays a universal red regardless of theme -- unlike
+   success, it needs to read as "something's wrong" independent of the
+   current accent color. */
 .toast[data-type='error'] {
   background: #b91c1c;
+  color: #fff;
 }
 
 @media (min-width: 640px) {
