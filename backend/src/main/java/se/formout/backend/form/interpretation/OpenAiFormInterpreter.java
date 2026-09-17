@@ -78,6 +78,19 @@ public class OpenAiFormInterpreter {
             not present in the form, and do not invent headings or group fields under a \
             heading that isn't actually printed on the form.""";
 
+    private static final String CONTEXT_PREFIX = """
+            This form has multiple pages. The image below is the NEXT page, not the first. \
+            The following JSON array lists the fields already captured from the PREVIOUS \
+            page(s) of this same form, for context only -- do not repeat any of them in your \
+            answer. Only extract fields for content that is newly visible on the page shown \
+            below. If a heading, title, or instructional text is repeated on every page (e.g. \
+            a running header), do not add it again. If the form's structure repeats (e.g. the \
+            same block of questions appears once per page), continue that same pattern for \
+            the new page.
+
+            Previously captured fields (context only, do not repeat):
+            """;
+
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
     private final String apiKey;
@@ -89,11 +102,29 @@ public class OpenAiFormInterpreter {
     }
 
     public FormSchema interpret(MultipartFile file) {
+        return interpret(file, null);
+    }
+
+    /**
+     * Interprets a single page of a form. {@code previousFieldsJson}, when
+     * given, is the JSON array of fields already captured from earlier pages
+     * of this same multi-page form -- it is included in the prompt purely as
+     * context for the model to read (so it can avoid repeating a heading
+     * that appears on every page, and follow an established pattern such as
+     * a repeated question block). The response is still only ever used to
+     * produce the fields found on THIS page: the caller is responsible for
+     * appending them, never replacing what earlier pages already produced.
+     */
+    public FormSchema interpret(MultipartFile file, String previousFieldsJson) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("OPENAI_API_KEY is not configured");
         }
 
-        UserMessage userMessage = UserMessage.from(buildFileContent(file), TextContent.from(PROMPT));
+        String promptText = previousFieldsJson != null && !previousFieldsJson.isBlank()
+                ? PROMPT + "\n\n" + CONTEXT_PREFIX + previousFieldsJson
+                : PROMPT;
+
+        UserMessage userMessage = UserMessage.from(buildFileContent(file), TextContent.from(promptText));
         ChatRequest request = ChatRequest.builder()
                 .messages(userMessage)
                 .responseFormat(buildResponseFormat())

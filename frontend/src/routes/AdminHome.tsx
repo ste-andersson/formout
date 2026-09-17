@@ -38,10 +38,10 @@ function PhotoUploadButton() {
   const isMobile = isTouchDevice();
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!file) return;
-    navigate("/admin/forms/new", { state: { uploadedFile: file } });
+    if (files.length === 0) return;
+    navigate("/admin/forms/new", { state: { uploadedFiles: files } });
   }
 
   return (
@@ -58,6 +58,7 @@ function PhotoUploadButton() {
         type="file"
         accept="image/*,application/pdf"
         capture={isMobile ? "environment" : undefined}
+        multiple={!isMobile}
         onChange={handleFileChange}
         hidden
       />
