@@ -33,6 +33,15 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
     }
   }
 
+  async function handleCopyCode() {
+    try {
+      await navigator.clipboard.writeText(slug)
+      showToast('Formulär-kod kopierad', 'success')
+    } catch {
+      showToast('Kunde inte kopiera formulär-koden', 'error')
+    }
+  }
+
   const triggerClasses = [triggerClassName ?? 'btn btn--neutral', disabled ? 'export-dialog__option--muted' : undefined]
     .filter(Boolean)
     .join(' ')
@@ -55,6 +64,9 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
       </button>
 
       <ExportDialog dialogRef={shareDialogRef} title="Dela formulär">
+        <button type="button" className="btn btn--neutral" onClick={handleCopyCode}>
+          Kopiera formulär-kod - {slug}
+        </button>
         <button type="button" className="btn btn--neutral" onClick={handleMailLink}>
           Maila länk
         </button>
