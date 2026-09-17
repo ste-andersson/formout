@@ -17,6 +17,9 @@ export interface AdminFormSummary {
   title: string
   slug: string
   status: FormStatus
+  // Owner-set relevance flag ("aktuell"/"inaktuell"), shown to respondents on
+  // their home page -- independent of publish status, see markCurrent/markOutdated.
+  active: boolean
   currentVersion: number
   updatedAt: string
 }
@@ -27,6 +30,7 @@ export interface AdminFormDetail {
   description: string | null
   slug: string
   status: FormStatus
+  active: boolean
   currentVersion: number
   schema: FormSchema
   updatedAt: string
@@ -123,6 +127,19 @@ export async function publish(token: string, id: string): Promise<AdminFormDetai
 
 export async function unpublish(token: string, id: string): Promise<AdminFormDetail> {
   const response = await adminFetch(token, `/${id}/unpublish`, { method: 'POST' })
+  return (await response.json()) as AdminFormDetail
+}
+
+// Owner-set relevance flag -- deliberately separate from publish/unpublish:
+// a form stays fully published and fillable regardless of this flag, it only
+// affects how respondents see it listed on their home page.
+export async function markCurrent(token: string, id: string): Promise<AdminFormDetail> {
+  const response = await adminFetch(token, `/${id}/mark-current`, { method: 'POST' })
+  return (await response.json()) as AdminFormDetail
+}
+
+export async function markOutdated(token: string, id: string): Promise<AdminFormDetail> {
+  const response = await adminFetch(token, `/${id}/mark-outdated`, { method: 'POST' })
   return (await response.json()) as AdminFormDetail
 }
 

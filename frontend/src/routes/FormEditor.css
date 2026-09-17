@@ -71,12 +71,14 @@
 }
 
 .form-editor__code,
-.form-editor__status {
+.form-editor__status,
+.form-editor__relevance {
   display: contents;
 }
 
 .form-editor__code strong,
-.form-editor__status strong {
+.form-editor__status strong,
+.form-editor__relevance strong {
   font-size: 1rem;
   color: var(--text);
   letter-spacing: 0.05em;

@@ -77,6 +77,9 @@ function FormEditorContent() {
     uploadedImages.length > 0 ? 'image' : 'build',
   )
   const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
+  // Owner-set relevance flag (aktuell/inaktuell), separate from formStatus --
+  // see the "Relevans"-row below and adminApi.markCurrent/markOutdated.
+  const [formActive, setFormActive] = useState<boolean | null>(null)
   const addPageInputRef = useRef<HTMLInputElement>(null)
   const lightboxRef = useRef<HTMLDialogElement>(null)
   const [enlargedImageUrl, setEnlargedImageUrl] = useState<string | null>(null)
@@ -104,6 +107,7 @@ function FormEditorContent() {
           fields: form.schema.fields,
         })
         setFormStatus(form.status)
+        setFormActive(form.active)
         setLoadState({ status: 'ready' })
       })
       .catch(() => {
@@ -374,6 +378,21 @@ function FormEditorContent() {
     }
   }
 
+  async function handleRelevanceAction(action: 'mark-current' | 'mark-outdated') {
+    if (!id) return
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Not signed in')
+
+      const updated =
+        action === 'mark-current' ? await adminApi.markCurrent(token, id) : await adminApi.markOutdated(token, id)
+      setFormActive(updated.active)
+      showToast(action === 'mark-current' ? 'Formuläret är markerat som aktuellt' : 'Formuläret är markerat som inaktuellt', 'success')
+    } catch {
+      showToast('Något gick fel, försök igen', 'error')
+    }
+  }
+
   if (loadState.status === 'loading') {
     return <p>Laddar…</p>
   }
@@ -437,6 +456,29 @@ function FormEditorContent() {
                 {formStatus === 'PUBLISHED' && (
                   <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('unpublish')}>
                     Avpublicera
+                  </button>
+                )}
+              </div>
+            )}
+            {isEditMode && formActive !== null && (
+              <div className="form-editor__relevance">
+                <span>Relevans:</span>
+                <strong>{formActive ? 'Aktuell' : 'Inaktuell'}</strong>
+                {formActive ? (
+                  <button
+                    type="button"
+                    className="btn btn--neutral btn--small"
+                    onClick={() => handleRelevanceAction('mark-outdated')}
+                  >
+                    Markera som inaktuell
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn--neutral btn--small"
+                    onClick={() => handleRelevanceAction('mark-current')}
+                  >
+                    Markera som aktuell
                   </button>
                 )}
               </div>
