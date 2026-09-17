@@ -232,6 +232,25 @@ function FormEditorContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Publish automatically as soon as the initial upload has been interpreted
+  // -- feedback was that people upload a photo, see the preview, and assume
+  // that's the finished step, then forget the separate "Publicera" click and
+  // never notice the form was never actually reachable by respondents. Only
+  // for the brand-new-form flow (never in edit mode) and only once; further
+  // pages added afterwards (handleAddPage) still go through the normal
+  // manual "Publicera" save, unchanged.
+  const hasAutoPublishedRef = useRef(false)
+  useEffect(() => {
+    if (isEditMode || uploadedImages.length === 0 || interpretState.status !== 'ready') return
+    if (hasAutoPublishedRef.current) return
+    hasAutoPublishedRef.current = true
+    handlePublish()
+    // handlePublish reads the latest `state` when it runs, so it's
+    // deliberately not in the dependency array -- adding it would re-run
+    // this effect (and re-check the ref guard, harmlessly) on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, uploadedImages.length, interpretState])
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
   function resolveDropTarget(
