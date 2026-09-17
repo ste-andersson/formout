@@ -1,9 +1,9 @@
-.appearance-picker {
+.settings-menu {
   position: relative;
   display: flex;
 }
 
-.appearance-picker__trigger {
+.settings-menu__trigger {
   font: inherit;
   background: none;
   border: none;
@@ -14,23 +14,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--accent);
   cursor: pointer;
 }
 
-.appearance-picker__trigger:hover,
-.appearance-picker__trigger:focus-visible {
+.settings-menu__trigger:hover,
+.settings-menu__trigger:focus-visible {
   background: var(--canvas-bg);
 }
 
-.appearance-picker__dot {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 1px solid var(--border);
-}
-
-.appearance-picker__menu {
+.settings-menu__menu {
   position: absolute;
   margin: 0;
   top: calc(100% + 0.25rem);
@@ -45,15 +38,24 @@
   background: var(--bg);
   color: var(--text);
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
-  min-width: 10rem;
+  min-width: 11rem;
 }
 
-.appearance-picker__theme-row {
+.settings-menu__section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  padding: 0.375rem 0.625rem 0.125rem;
+}
+
+.settings-menu__theme-row {
   display: flex;
   gap: 0.125rem;
 }
 
-.appearance-picker__theme-option {
+.settings-menu__theme-option {
   font: inherit;
   font-size: 0.85rem;
   flex: 1;
@@ -66,23 +68,32 @@
   cursor: pointer;
 }
 
-.appearance-picker__theme-option:hover,
-.appearance-picker__theme-option:focus-visible {
+.settings-menu__theme-option:hover,
+.settings-menu__theme-option:focus-visible {
   background: var(--canvas-bg);
 }
 
-.appearance-picker__theme-option[aria-checked='true'] {
+.settings-menu__theme-option[aria-checked='true'] {
   background: var(--canvas-bg);
   font-weight: 600;
 }
 
-.appearance-picker__divider {
+.settings-menu__theme-option:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.settings-menu__theme-option:disabled:hover {
+  background: none;
+}
+
+.settings-menu__divider {
   height: 1px;
   margin: 0.25rem 0;
   background: var(--border);
 }
 
-.appearance-picker__option {
+.settings-menu__option {
   font: inherit;
   font-size: 0.9rem;
   display: flex;
@@ -90,6 +101,7 @@
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
   min-height: 40px;
+  width: 100%;
   border: none;
   border-radius: 0.375rem;
   background: none;
@@ -98,19 +110,32 @@
   cursor: pointer;
 }
 
-.appearance-picker__option:hover,
-.appearance-picker__option:focus-visible {
+.settings-menu__option:hover,
+.settings-menu__option:focus-visible {
   background: var(--canvas-bg);
 }
 
-.appearance-picker__option[aria-checked='true'] {
+.settings-menu__option[aria-checked='true'] {
   font-weight: 600;
 }
 
-.appearance-picker__option-dot {
+.settings-menu__option-dot {
   width: 0.85rem;
   height: 0.85rem;
   border-radius: 50%;
   border: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.settings-menu__checkbox {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.settings-menu__option--checkbox[aria-checked='true'] .settings-menu__checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
 }

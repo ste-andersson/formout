@@ -6,6 +6,7 @@ import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { ToastProvider } from './components/Toast.tsx'
+import { OfflineModeProvider } from './components/OfflineModeProvider.tsx'
 import { AdminHome } from './routes/AdminHome.tsx'
 import { FormEditor } from './routes/FormEditor.tsx'
 import { FormViewer } from './routes/FormViewer.tsx'
@@ -23,21 +24,23 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <ClerkProvider publishableKey={clerkPublishableKey}>
-        <ToastProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route element={<App />}>
-                <Route index element={<RespondentHome />} />
-                <Route path="forms/:slug" element={<FormViewer />} />
-                <Route path="responses/:responseId" element={<ResponseEditor />} />
-                <Route path="shared" element={<SharedResponse />} />
-                <Route path="admin" element={<AdminHome />} />
-                <Route path="admin/forms/new" element={<FormEditor />} />
-                <Route path="admin/forms/:id/edit" element={<FormEditor />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </ToastProvider>
+        <OfflineModeProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route element={<App />}>
+                  <Route index element={<RespondentHome />} />
+                  <Route path="forms/:slug" element={<FormViewer />} />
+                  <Route path="responses/:responseId" element={<ResponseEditor />} />
+                  <Route path="shared" element={<SharedResponse />} />
+                  <Route path="admin" element={<AdminHome />} />
+                  <Route path="admin/forms/new" element={<FormEditor />} />
+                  <Route path="admin/forms/:id/edit" element={<FormEditor />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
+        </OfflineModeProvider>
       </ClerkProvider>
     </ErrorBoundary>
   </StrictMode>,

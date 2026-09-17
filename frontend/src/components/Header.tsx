@@ -1,6 +1,6 @@
 import { SignedIn, UserButton } from '@clerk/clerk-react'
 import { Link, useLocation } from 'react-router'
-import { AppearancePicker } from './AppearancePicker'
+import { SettingsMenu } from './SettingsMenu'
 import './Header.css'
 
 export function Header() {
@@ -26,7 +26,7 @@ export function Header() {
         </nav>
       </div>
       <div className="app-header__actions">
-        <AppearancePicker />
+        <SettingsMenu />
         <SignedIn>
           <UserButton />
         </SignedIn>

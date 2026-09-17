@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { getFormBySlug } from '../lib/api'
+import { getFormBySlug, getFormBySlugWithFallback } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { listResponses, responseTimestamp } from '../lib/responseStorage'
 import type { SavedResponse } from '../lib/responseStorage'
@@ -12,6 +12,7 @@ import { buildBulkResponseCsv, buildCsvFile, downloadCsv } from '../lib/response
 import { buildBulkResponsePdf, downloadPdf } from '../lib/responsePdf'
 import { isWebShareSupported, shareFiles } from '../lib/webShare'
 import { useToast } from '../components/toastContext'
+import { useOfflineMode } from '../components/offlineModeContext'
 import { ExportDialog } from '../components/ExportDialog'
 import './RespondentHome.css'
 
@@ -84,6 +85,7 @@ export function RespondentHome() {
   const shareDialogRef = useRef<HTMLDialogElement>(null)
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const { offlineMode } = useOfflineMode()
 
   // Pure data loading, no setState -- kept separate from the effect/handlers
   // that call it so each caller decides for itself when/how to render.
@@ -99,7 +101,8 @@ export function RespondentHome() {
   // re-open that specific form via its code -- the cached flag only updates
   // on an active visit (see recordFormVisit), and the home page itself
   // never talked to the backend before. Returns whether anything changed,
-  // so the caller knows whether a re-render is worth it.
+  // so the caller knows whether a re-render is worth it. Not called at all
+  // in offline mode -- see the mount effect below.
   const refreshActiveStatusFromServer = useCallback(async (cards: FormCard[]): Promise<boolean> => {
     const results = await Promise.all(
       cards.map((card) =>
@@ -132,6 +135,9 @@ export function RespondentHome() {
       .then((cards) => {
         if (cancelled) return
         setCards(cards)
+        // No point attempting a doomed background refresh in offline mode --
+        // the cards already shown come straight from the local cache.
+        if (offlineMode) return
         return refreshActiveStatusFromServer(cards).then((changed) => {
           if (cancelled || !changed) return
           return loadCardsFromCache().then((refreshed) => {
@@ -148,7 +154,7 @@ export function RespondentHome() {
     return () => {
       cancelled = true
     }
-  }, [loadCardsFromCache, refreshActiveStatusFromServer])
+  }, [loadCardsFromCache, refreshActiveStatusFromServer, offlineMode])
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -174,7 +180,7 @@ export function RespondentHome() {
     setExportForm(null)
     setExportLoadState('loading')
 
-    getFormBySlug(card.formSlug)
+    getFormBySlugWithFallback(card.formSlug, offlineMode)
       .then((form) => {
         if (form) {
           setExportForm(form)
@@ -314,27 +320,37 @@ export function RespondentHome() {
   return (
     <div className="respondent-home">
       <h1>Fyll i ett formulär</h1>
-      <p>Ange koden du fått för formuläret.</p>
-      <form onSubmit={handleSubmit} className="respondent-home__form">
-        <label htmlFor="form-code" className="respondent-home__label">
-          Formulärkod
-        </label>
-        <input
-          id="form-code"
-          type="text"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-          className="respondent-home__input"
-          autoComplete="off"
-          autoCapitalize="off"
-          autoCorrect="off"
-        />
-        <button type="submit" className="btn btn--primary">
-          Ladda formulär
-        </button>
-      </form>
+      {offlineMode ? (
+        <p>Den här funktionen kräver internet och fungerar inte i offline-läge.</p>
+      ) : (
+        <>
+          <p>Ange koden du fått för formuläret.</p>
+          <form onSubmit={handleSubmit} className="respondent-home__form">
+            <label htmlFor="form-code" className="respondent-home__label">
+              Formulärkod
+            </label>
+            <input
+              id="form-code"
+              type="text"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              className="respondent-home__input"
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+            />
+            <button type="submit" className="btn btn--primary">
+              Ladda formulär
+            </button>
+          </form>
+        </>
+      )}
 
       {loadError && <p className="respondent-home__responses-error">Kunde inte hämta dina formulär.</p>}
+
+      {offlineMode && currentCards.length === 0 && outdatedCards.length === 0 && (
+        <p>Inga hämtade formulär att visa. Anslut till internet för att hämta ett formulär först.</p>
+      )}
 
       {(currentCards.length > 0 || outdatedCards.length > 0) && (
         <div className="respondent-home__responses">

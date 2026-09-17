@@ -45,13 +45,17 @@ interface FormoutResponsesDB extends DBSchema {
     key: string
     value: import('./visitedForms').VisitedForm
   }
+  myForms: {
+    key: string
+    value: import('./adminApi').AdminFormSummary
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<FormoutResponsesDB>> | null = null
 
 export function getFormoutDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<FormoutResponsesDB>('formout-responses', 3, {
+    dbPromise = openDB<FormoutResponsesDB>('formout-responses', 4, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const store = db.createObjectStore('responses', { keyPath: 'id' })
@@ -66,6 +70,9 @@ export function getFormoutDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
         }
         if (oldVersion < 3) {
           db.createObjectStore('visitedForms', { keyPath: 'formId' })
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore('myForms', { keyPath: 'id' })
         }
       },
     })
