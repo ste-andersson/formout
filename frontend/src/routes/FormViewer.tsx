@@ -4,6 +4,7 @@ import { getFormBySlug } from '../lib/api'
 import type { FormDetail } from '../lib/api'
 import { defaultAnswersFor } from '../lib/formAnswers'
 import { createResponse } from '../lib/responseStorage'
+import { recordFormVisit } from '../lib/visitedForms'
 import { FormFiller } from '../components/FormFiller'
 
 type LoadState =
@@ -31,6 +32,13 @@ function FormViewerContent({ slug }: { slug?: string }) {
       .then((form) => {
         if (cancelled) return
         setState(form ? { status: 'loaded', form } : { status: 'not-found' })
+        // Record the visit even if the component unmounts before this
+        // resolves -- it's a fire-and-forget local write, not tied to render.
+        if (form) {
+          recordFormVisit(form).catch((error: unknown) => {
+            console.error('Kunde inte spara besökt formulär lokalt', error)
+          })
+        }
       })
       .catch(() => {
         if (cancelled) return

@@ -25,6 +25,12 @@ interface StoredResponse extends Omit<SavedResponse, 'answers'> {
 
 const DEVICE_KEY_ID = 'device-key'
 
+// visitedForms lives in this same database (see visitedForms.ts) -- idb only
+// runs one `upgrade` callback per `openDB` call, so both stores' schemas are
+// defined here in one place and visitedForms.ts reuses this same connection
+// via getFormoutDb(), rather than opening a second, independent connection
+// that could race with this one and skip creating whichever store's owning
+// module happened to call openDB() second.
 interface FormoutResponsesDB extends DBSchema {
   responses: {
     key: string
@@ -35,13 +41,17 @@ interface FormoutResponsesDB extends DBSchema {
     key: string
     value: CryptoKey
   }
+  visitedForms: {
+    key: string
+    value: import('./visitedForms').VisitedForm
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<FormoutResponsesDB>> | null = null
 
-function getDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
+export function getFormoutDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<FormoutResponsesDB>('formout-responses', 2, {
+    dbPromise = openDB<FormoutResponsesDB>('formout-responses', 3, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const store = db.createObjectStore('responses', { keyPath: 'id' })
@@ -54,10 +64,17 @@ function getDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
           // transaction has completed.
           db.createObjectStore('keys')
         }
+        if (oldVersion < 3) {
+          db.createObjectStore('visitedForms', { keyPath: 'formId' })
+        }
       },
     })
   }
   return dbPromise
+}
+
+function getDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
+  return getFormoutDb()
 }
 
 let deviceKeyPromise: Promise<CryptoKey> | null = null
