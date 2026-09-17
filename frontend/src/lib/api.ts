@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './apiBaseUrl'
 import type { FormSchema } from './formSchema'
+import { getCachedFormBySlug } from './visitedForms'
 
 export interface FormDetail {
   id: string
@@ -27,4 +28,22 @@ export async function getFormBySlug(slug: string): Promise<FormDetail | null> {
   }
 
   return (await response.json()) as FormDetail
+}
+
+/**
+ * Same as getFormBySlug, but falls back to a previously-cached copy of the
+ * form (see visitedForms.ts) when the network request can't be made or
+ * fails -- skipNetwork (offline mode switched on) skips straight to the
+ * cache instead of waiting on a doomed fetch; otherwise a live fetch is
+ * always tried first, cache is only the fallback.
+ */
+export async function getFormBySlugWithFallback(slug: string, skipNetwork: boolean): Promise<FormDetail | null> {
+  if (skipNetwork) {
+    return getCachedFormBySlug(slug)
+  }
+  try {
+    return await getFormBySlug(slug)
+  } catch {
+    return getCachedFormBySlug(slug)
+  }
 }

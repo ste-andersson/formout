@@ -1,5 +1,6 @@
 import { getFormoutDb } from './responseStorage'
 import type { FormDetail } from './api'
+import type { FormSchema } from './formSchema'
 
 export interface VisitedForm {
   formId: string
@@ -8,6 +9,11 @@ export interface VisitedForm {
   formDescription: string | null
   // Owner's relevance flag, cached from the last time this form was loaded.
   active: boolean
+  // The form's fields and current version, cached so the form can still be
+  // filled in (and its answers saved) with no network at all -- see
+  // getCachedFormBySlug() and lib/api.ts's getFormBySlugWithFallback().
+  schema: FormSchema
+  currentVersion: number
   // Updated every time the form is loaded again.
   visitedAt: string
   // Respondent-local, never sent to the server -- drives the "Ta bort"-knapp.
@@ -16,14 +22,6 @@ export interface VisitedForm {
   hiddenLocally: boolean
 }
 
-/**
- * Upserts a visited-form record on every successful form load (not just on
- * submission) -- this is what makes a loaded-but-never-filled-in form show
- * up on the respondent's home page. Explicitly resets `hiddenLocally` to
- * false: a fresh, deliberate load (e.g. re-entering the form's code) is the
- * one case where a previously "removed" card should reappear -- otherwise
- * "Ta bort" would be permanent instead of just hiding the card.
- */
 export async function recordFormVisit(form: FormDetail): Promise<void> {
   const db = await getFormoutDb()
   const record: VisitedForm = {
@@ -32,6 +30,8 @@ export async function recordFormVisit(form: FormDetail): Promise<void> {
     formTitle: form.title,
     formDescription: form.description,
     active: form.active,
+    schema: form.schema,
+    currentVersion: form.currentVersion,
     visitedAt: new Date().toISOString(),
     hiddenLocally: false,
   }
@@ -44,17 +44,37 @@ export async function listVisitedForms(): Promise<VisitedForm[]> {
 }
 
 /**
- * Refreshes only the owner-controlled display metadata (title, description,
- * active flag) for an already-visited form, WITHOUT the side effects
- * `recordFormVisit` has -- doesn't touch `visitedAt` and, crucially, doesn't
- * reset `hiddenLocally`. This is for a passive background sync (so the
- * respondent's home page reflects the owner marking a form current/outdated
- * without requiring them to re-open that specific form first), not an
- * active visit. No-op if the form was never visited.
+ * Reconstructs a full FormDetail from a cached visit, for use when the form
+ * can't be fetched live (offline mode, or a failed network request). Only
+ * ever returns a form the respondent has actually opened at least once
+ * before -- there's no way to fill in a never-seen form without a network
+ * request no matter what's cached.
  */
+export async function getCachedFormBySlug(slug: string): Promise<FormDetail | null> {
+  const visited = await listVisitedForms()
+  const match = visited.find((v) => v.formSlug === slug)
+  if (!match) return null
+  return {
+    id: match.formId,
+    title: match.formTitle,
+    description: match.formDescription,
+    slug: match.formSlug,
+    active: match.active,
+    currentVersion: match.currentVersion,
+    schema: match.schema,
+    updatedAt: match.visitedAt,
+  }
+}
+
 export async function refreshVisitedFormMeta(
   formId: string,
-  meta: { title: string; description: string | null; active: boolean },
+  meta: {
+    title: string
+    description: string | null
+    active: boolean
+    schema: FormSchema
+    currentVersion: number
+  },
 ): Promise<void> {
   const db = await getFormoutDb()
   const existing = await db.get('visitedForms', formId)
@@ -64,6 +84,8 @@ export async function refreshVisitedFormMeta(
     formTitle: meta.title,
     formDescription: meta.description,
     active: meta.active,
+    schema: meta.schema,
+    currentVersion: meta.currentVersion,
   })
 }
 
