@@ -26,7 +26,7 @@ class FormVersionRepositoryTest {
     void savesAndReloadsAFormVersion() {
         Instant now = Instant.now();
         Form form = formRepository.save(new Form(UUID.randomUUID(), "user-1", "Wellbeing form",
-                "Example form", "wellbeing-form-" + UUID.randomUUID(), FormStatus.DRAFT, 1, now, now));
+                "Example form", "wellbeing-form-" + UUID.randomUUID(), FormStatus.DRAFT, true, 1, now, now));
 
         FormVersion version = new FormVersion(UUID.randomUUID(), form.getId(), 1,
                 "{\"schemaVersion\":1}", now);

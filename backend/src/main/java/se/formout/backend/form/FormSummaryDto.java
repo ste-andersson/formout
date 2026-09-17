@@ -8,6 +8,7 @@ public record FormSummaryDto(
         String title,
         String description,
         String slug,
+        boolean active,
         Instant updatedAt
 ) {
 }

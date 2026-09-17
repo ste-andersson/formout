@@ -23,6 +23,7 @@ public class FormService {
                         form.getTitle(),
                         form.getDescription(),
                         form.getSlug(),
+                        form.isActive(),
                         form.getUpdatedAt()))
                 .toList();
     }
@@ -37,6 +38,7 @@ public class FormService {
                                 form.getTitle(),
                                 form.getDescription(),
                                 form.getSlug(),
+                                form.isActive(),
                                 form.getCurrentVersion(),
                                 version.getSchemaJson(),
                                 form.getUpdatedAt())));

@@ -33,6 +33,13 @@ public class Form {
     @Column(nullable = false)
     private FormStatus status;
 
+    // Owner-set "still relevant" flag, shown to respondents on their home
+    // page (current vs. outdated forms) -- deliberately independent of
+    // `status`: an outdated form can still be PUBLISHED and fully fillable,
+    // this only affects how it's listed, never access.
+    @Column(nullable = false)
+    private boolean active;
+
     @Column(name = "current_version", nullable = false)
     private int currentVersion;
 
@@ -46,13 +53,14 @@ public class Form {
     }
 
     public Form(UUID id, String userId, String title, String description, String slug,
-                FormStatus status, int currentVersion, Instant createdAt, Instant updatedAt) {
+                FormStatus status, boolean active, int currentVersion, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.userId = userId;
         this.title = title;
         this.description = description;
         this.slug = slug;
         this.status = status;
+        this.active = active;
         this.currentVersion = currentVersion;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -82,6 +90,10 @@ public class Form {
         return status;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     public int getCurrentVersion() {
         return currentVersion;
     }
@@ -104,6 +116,10 @@ public class Form {
 
     public void setStatus(FormStatus status) {
         this.status = status;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public void setCurrentVersion(int currentVersion) {

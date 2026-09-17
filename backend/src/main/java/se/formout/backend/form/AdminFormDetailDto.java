@@ -11,6 +11,7 @@ public record AdminFormDetailDto(
         String description,
         String slug,
         FormStatus status,
+        boolean active,
         int currentVersion,
         FormSchema schema,
         Instant updatedAt
