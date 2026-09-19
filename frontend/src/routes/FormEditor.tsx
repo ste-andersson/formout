@@ -17,6 +17,7 @@ import { InterpretationModal } from '../components/editor/InterpretationModal'
 import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
 import { useOfflineMode } from '../components/offlineModeContext'
+import { recordFormVisit } from '../lib/visitedForms'
 import './FormEditor.css'
 
 export function FormEditor() {
@@ -118,6 +119,12 @@ function FormEditorContent() {
         setFormStatus(form.status)
         setFormActive(form.active)
         setLoadState({ status: 'ready' })
+        // Caches the owner's own form (with its full schema) the same way a
+        // respondent's visit does -- lets a shared response for this form
+        // still be viewed offline later, see SharedResponse.tsx.
+        recordFormVisit(form).catch((error: unknown) => {
+          console.error('Kunde inte spara besökt formulär lokalt', error)
+        })
       })
       .catch(() => {
         if (cancelled) return

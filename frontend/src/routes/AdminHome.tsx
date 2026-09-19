@@ -2,9 +2,10 @@ import { SignedIn, SignedOut, SignInButton, useAuth, useClerk } from "@clerk/cle
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { isTouchDevice } from "../lib/device";
-import { formStatusLabel, listMyForms } from "../lib/adminApi";
+import { formStatusLabel, getForm, listMyForms } from "../lib/adminApi";
 import type { AdminFormSummary } from "../lib/adminApi";
 import { cacheMyForms, listCachedMyForms } from "../lib/myFormsCache";
+import { listVisitedForms, recordFormVisit } from "../lib/visitedForms";
 import { ShareFormLink } from "../components/ShareFormLink";
 import { useOfflineMode } from "../components/offlineModeContext";
 import { OfflineAuthExceptionModal } from "../components/OfflineAuthExceptionModal";
@@ -105,6 +106,19 @@ type LoadState =
   | { status: "error" }
   | { status: "loaded"; forms: AdminFormSummary[] };
 
+// Backfills full-schema offline caching (see FormEditor.tsx) for any owned
+// form that hasn't been opened in the editor yet -- without this, a form
+// owner who never opens most of their own forms could turn on offline mode
+// and find their own forms' shared responses unviewable, which just reads as
+// "offline mode is broken" rather than "you haven't visited this one yet".
+// Skips forms already cached, so this is a no-op once everything's warm.
+async function cacheMissingFormSchemas(token: string, forms: AdminFormSummary[]): Promise<void> {
+  const visited = await listVisitedForms();
+  const cachedIds = new Set(visited.map((v) => v.formId));
+  const missing = forms.filter((form) => !cachedIds.has(form.id));
+  await Promise.all(missing.map((form) => getForm(token, form.id).then(recordFormVisit)));
+}
+
 function MyForms() {
   const { getToken } = useAuth();
   const [state, setState] = useState<LoadState>({ status: "loading" });
@@ -133,19 +147,22 @@ function MyForms() {
     }
 
     getToken()
-      .then((token) => {
+      .then(async (token) => {
         if (!token) {
           throw new Error("Not signed in");
         }
-        return listMyForms(token);
+        return { token, forms: await listMyForms(token) };
       })
-      .then((forms) => {
+      .then(({ token, forms }) => {
         if (cancelled) return;
         setState({ status: "loaded", forms });
         // Best-effort -- keeps the offline fallback fresh, never blocks
         // rendering the list that just loaded successfully.
         cacheMyForms(forms).catch((error: unknown) => {
           console.error("Kunde inte cacha formulärlistan lokalt", error);
+        });
+        cacheMissingFormSchemas(token, forms).catch((error: unknown) => {
+          console.error("Kunde inte cacha formulärinnehåll lokalt", error);
         });
       })
       .catch(() => {
