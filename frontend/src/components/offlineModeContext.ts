@@ -2,7 +2,12 @@ import { createContext, useContext } from 'react'
 
 export interface OfflineModeContextValue {
   offlineMode: boolean
-  setOfflineMode: (value: boolean) => void
+  authExceptionsAllowed: boolean
+  // authExceptionsAllowed here lets a caller turn offline mode on and grant
+  // the exception in one atomic write (see SettingsMenu.tsx) instead of two
+  // separate racing writes.
+  setOfflineMode: (value: boolean, authExceptionsAllowed?: boolean) => void
+  setAuthExceptionsAllowed: (value: boolean) => void
 }
 
 export const OfflineModeContext = createContext<OfflineModeContextValue | null>(null)
