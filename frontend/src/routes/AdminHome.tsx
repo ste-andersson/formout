@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, useAuth, useClerk } from "@clerk/clerk-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { isTouchDevice } from "../lib/device";
@@ -7,11 +7,19 @@ import type { AdminFormSummary } from "../lib/adminApi";
 import { cacheMyForms, listCachedMyForms } from "../lib/myFormsCache";
 import { ShareFormLink } from "../components/ShareFormLink";
 import { useOfflineMode } from "../components/offlineModeContext";
+import { OfflineAuthExceptionModal } from "../components/OfflineAuthExceptionModal";
 import "./AdminHome.css";
 
 export function AdminHome() {
   const isMobile = isTouchDevice();
-  const { offlineMode } = useOfflineMode();
+  const { offlineMode, authExceptionsAllowed, setAuthExceptionsAllowed } = useOfflineMode();
+  const { openSignIn } = useClerk();
+  const signInExceptionDialogRef = useRef<HTMLDialogElement>(null);
+  // Signing in needs Clerk's own network calls -- while offline, that's only
+  // possible once the auth exception has been granted (see SettingsMenu.tsx
+  // for the other place this same exception can be granted).
+  const signInNeedsException = offlineMode && !authExceptionsAllowed;
+
   return (
     <div className="admin-home">
       <h1>Skapa ett formulär</h1>
@@ -26,15 +34,34 @@ export function AdminHome() {
       )}
       <SignedOut>
         <p>Du behöver ett konto för att skapa formulär.</p>
-        <SignInButton mode="modal">
-          <button type="button" className="btn btn--primary">
+        {signInNeedsException ? (
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => signInExceptionDialogRef.current?.showModal()}
+          >
             Logga in eller skapa konto
           </button>
-        </SignInButton>
+        ) : (
+          <SignInButton mode="modal">
+            <button type="button" className="btn btn--primary">
+              Logga in eller skapa konto
+            </button>
+          </SignInButton>
+        )}
       </SignedOut>
       <SignedIn>
         <MyForms />
       </SignedIn>
+      <OfflineAuthExceptionModal
+        dialogRef={signInExceptionDialogRef}
+        variant="sign-in"
+        onAllow={() => {
+          setAuthExceptionsAllowed(true);
+          openSignIn();
+        }}
+        onCancel={() => {}}
+      />
     </div>
   );
 }

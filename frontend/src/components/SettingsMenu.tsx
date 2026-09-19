@@ -1,8 +1,10 @@
+import { useAuth } from '@clerk/clerk-react'
 import { useEffect, useRef, useState } from 'react'
 import { COLOR_SCHEMES, getStoredScheme, setScheme } from '../lib/colorScheme'
 import { applyTheme, getStoredTheme, setTheme, type ThemePreference } from '../lib/theme'
 import { useOfflineMode } from './offlineModeContext'
 import { GearIcon } from './icons'
+import { OfflineAuthExceptionModal } from './OfflineAuthExceptionModal'
 import './SettingsMenu.css'
 
 const THEME_OPTIONS: { id: ThemePreference; label: string }[] = [
@@ -14,9 +16,26 @@ const THEME_OPTIONS: { id: ThemePreference; label: string }[] = [
 export function SettingsMenu() {
   const [currentScheme, setCurrentScheme] = useState(() => getStoredScheme())
   const [currentTheme, setCurrentTheme] = useState(() => getStoredTheme())
-  const { offlineMode, setOfflineMode } = useOfflineMode()
+  const { offlineMode, authExceptionsAllowed, setOfflineMode } = useOfflineMode()
+  const { isSignedIn } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const exceptionDialogRef = useRef<HTMLDialogElement>(null)
+
+  function handleOfflineToggleClick() {
+    if (offlineMode) {
+      // Turning it off never needs confirmation -- only turning it on while
+      // signed in does, since that's the only case with a session to except.
+      setOfflineMode(false)
+      return
+    }
+    if (isSignedIn) {
+      setOpen(false)
+      exceptionDialogRef.current?.showModal()
+      return
+    }
+    setOfflineMode(true)
+  }
 
   useEffect(() => {
     // Sätter upp en live-lyssnare på OS-temat om preferensen är "system" --
@@ -72,10 +91,18 @@ export function SettingsMenu() {
             role="menuitemcheckbox"
             aria-checked={offlineMode}
             className="settings-menu__option settings-menu__option--checkbox"
-            onClick={() => setOfflineMode(!offlineMode)}
+            onClick={handleOfflineToggleClick}
+            title={
+              offlineMode && authExceptionsAllowed
+                ? 'Anrop till Clerk (inloggning) och Cloudflare (bot-skydd) är tillåtna för att hålla dig inloggad.'
+                : undefined
+            }
           >
             <span className="settings-menu__checkbox" aria-hidden="true" />
-            Offline-läge
+            <span>
+              Offline-läge
+              {offlineMode && authExceptionsAllowed && <span aria-hidden="true">*</span>}
+            </span>
           </button>
 
           <div className="settings-menu__divider" />
@@ -121,6 +148,12 @@ export function SettingsMenu() {
           ))}
         </div>
       )}
+      <OfflineAuthExceptionModal
+        dialogRef={exceptionDialogRef}
+        variant="enable-offline"
+        onAllow={() => setOfflineMode(true, true)}
+        onCancel={() => {}}
+      />
     </div>
   )
 }

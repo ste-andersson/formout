@@ -1,0 +1,10 @@
+.offline-auth-exception-modal__details {
+  margin-bottom: 1rem;
+}
+
+.offline-auth-exception-modal__details summary {
+  /* Native marker triangle is drawn in currentColor by default browser
+     styling, so this colors the arrow along with the text. */
+  color: var(--accent);
+  cursor: pointer;
+}

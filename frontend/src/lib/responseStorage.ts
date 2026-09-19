@@ -49,13 +49,17 @@ interface FormoutResponsesDB extends DBSchema {
     key: string
     value: import('./adminApi').AdminFormSummary
   }
+  settings: {
+    key: string
+    value: import('./offlineMode').OfflineModeSettings
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<FormoutResponsesDB>> | null = null
 
 export function getFormoutDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<FormoutResponsesDB>('formout-responses', 4, {
+    dbPromise = openDB<FormoutResponsesDB>('formout-responses', 5, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const store = db.createObjectStore('responses', { keyPath: 'id' })
@@ -73,6 +77,13 @@ export function getFormoutDb(): Promise<IDBPDatabase<FormoutResponsesDB>> {
         }
         if (oldVersion < 4) {
           db.createObjectStore('myForms', { keyPath: 'id' })
+        }
+        if (oldVersion < 5) {
+          // Single-record store: offline mode's on/off state and its
+          // auth-exception flag, keyed by a fixed id (see offlineMode.ts).
+          // Lives in IndexedDB rather than localStorage specifically so the
+          // service worker (which can't read localStorage) can read it too.
+          db.createObjectStore('settings', { keyPath: 'id' })
         }
       },
     })

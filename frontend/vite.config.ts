@@ -1,9 +1,44 @@
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      // injectManifest, not the default generateSW -- offline mode needs its
+      // own custom fetch logic (default-deny + a narrow, consent-gated
+      // allowlist, see src/sw.ts), not just Workbox's built-in cache
+      // strategies.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectRegister: 'auto',
+      manifest: {
+        name: 'Formout',
+        short_name: 'Formout',
+        description: 'Digitala formulär från fotograferade pappersformulär',
+        // Matches the default (terracotta) color scheme -- manifest colors
+        // are static and can't follow the in-app theme picker.
+        theme_color: '#ab4f2c',
+        background_color: '#fbf6ee',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          // Only source art available today is this 256x256 logo mark --
+          // declared at its real size rather than claiming a 512x512 that
+          // doesn't exist. Swap in a proper 512x512 asset if/when one exists.
+          { src: '/favicon.png', sizes: '256x256', type: 'image/png' },
+        ],
+      },
+      injectManifest: {
+        // The app shell itself is small; keep the default glob patterns but
+        // raise the per-file size limit slightly for the largest JS chunk.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
+    }),
+  ],
   server: {
     proxy: {
       '/api': 'http://localhost:8080',
