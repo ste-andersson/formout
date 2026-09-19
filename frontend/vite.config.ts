@@ -15,6 +15,12 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       injectRegister: 'auto',
+      // devOptions.enabled would in theory let the service worker run under
+      // `npm run dev` too -- tried it, but dev-mode registration depends on
+      // a Vite HMR round-trip (registerDevSW()) that didn't complete
+      // reliably here. Left disabled: `npm run build && npm run preview`
+      // (same build output as production) is the reliable way to test/demo
+      // offline mode's enforcement, not `npm run dev`.
       manifest: {
         name: 'Formout',
         short_name: 'Formout',
@@ -33,6 +39,12 @@ export default defineConfig({
         ],
       },
       injectManifest: {
+        // The default glob patterns missed .webp (the header logo images),
+        // which then got 503'd by the offline-mode gate in src/sw.ts like
+        // any other non-precached request -- explicit list of every
+        // extension actually present in the build output instead of relying
+        // on the default set.
+        globPatterns: ['**/*.{css,html,js,png,svg,webmanifest,webp}'],
         // The app shell itself is small; keep the default glob patterns but
         // raise the per-file size limit slightly for the largest JS chunk.
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
