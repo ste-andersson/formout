@@ -9,8 +9,9 @@ export type ActiveDragItem =
 
 interface DragPreviewProps {
   item: ActiveDragItem
-  // Storleken på elementet som faktiskt dras (mätt vid drag-start) -- så
-  // spöket matchar exakt det man drar, istället för en fast standardstorlek.
+  // The size of the element actually being dragged (measured at drag start)
+  // -- so the ghost matches exactly what's being dragged, instead of a fixed
+  // default size.
   size: { width: number; height: number } | null
 }
 

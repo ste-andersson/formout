@@ -1,7 +1,8 @@
 :root {
-  /* Terrakotta (default scheme) -- ljust läge.
-     Bar :root fungerar som både explicit default och fallback när inget
-     data-scheme-attribut är satt (t.ex. innan colorScheme.ts hunnit köra). */
+  /* Terracotta (default scheme) -- light mode.
+     Bare :root works as both explicit default and fallback when no
+     data-scheme attribute is set (e.g. before colorScheme.ts has had a
+     chance to run). */
   --text: #2c2018;
   --text-secondary: #7c6a57;
   --bg: #fbf6ee;
@@ -12,10 +13,10 @@
   --accent-contrast: #ffffff;
   --code-bg: #f0eadb;
   --canvas-bg: #f0ebe5;
-  /* Färgen på det accentfärgade "O":et i header-loggan. Skiljer sig från
-     --accent bara i scheman där accentfärgen är för mörk/nära loggans
-     ordbild (som annars är svart/mörk) för att sticka ut -- se forest och
-     navy nedan. */
+  /* The color of the accent-colored "O" in the header logo. Differs from
+     --accent only in schemes where the accent color is too dark/close to
+     the logo's wordmark (which is otherwise black/dark) to stand out --
+     see forest and navy below. */
   --logo-accent: var(--accent);
   color-scheme: light;
 
@@ -33,7 +34,7 @@
 }
 
 :root[data-theme='dark'] {
-  /* Terrakotta -- mörkt läge */
+  /* Terracotta -- dark mode */
   --text: #f3e7d9;
   --text-secondary: #b8a38c;
   --bg: #1a1410;
@@ -79,9 +80,9 @@
   --page-bg: #ebe5d0;
   --border: #e5ddc2;
   --accent: #8c6a1e;
-  /* Accentfärgen är mörk nog att vit text ger bättre kontrast än mörk text
-     på knappar (ljust läge bara -- mörkt lägets ljusare accent behåller
-     mörk text). */
+  /* The accent color is dark enough that white text gives better contrast
+     than dark text on buttons (light mode only -- dark mode's lighter
+     accent keeps dark text). */
   --accent-contrast: #ffffff;
   --code-bg: #efecde;
   --canvas-bg: #efede8;
@@ -110,8 +111,9 @@
   --accent-contrast: #ffffff;
   --code-bg: #ebece2;
   --canvas-bg: #ebedec;
-  /* --accent är för nära loggans mörka ordbild i ljust läge -- använd samma
-     ljusare, grönare ton som redan finns i schemats mörka läge nedan. */
+  /* --accent is too close to the logo's dark wordmark in light mode -- use
+     the same lighter, greener tone already used in this scheme's dark
+     mode below. */
   --logo-accent: #4f8058;
 }
 
@@ -126,8 +128,8 @@
   --accent-contrast: #ffffff;
   --code-bg: #191d19;
   --canvas-bg: #161a15;
-  /* Loggan är ljus (inverterad, se Header.css) i mörkt läge -- ingen
-     särskild logga-ton behövs här, bara den vanliga accentfärgen. */
+  /* The logo is light (inverted, see Header.css) in dark mode -- no
+     special logo tone needed here, just the regular accent color. */
   --logo-accent: var(--accent);
 }
 
@@ -141,8 +143,9 @@
   --accent-contrast: #ffffff;
   --code-bg: #eaebe7;
   --canvas-bg: #eaecf1;
-  /* --accent är för nära loggans mörka ordbild i ljust läge -- använd samma
-     ljusare, blåare ton som redan finns i schemats mörka läge nedan. */
+  /* --accent is too close to the logo's dark wordmark in light mode -- use
+     the same lighter, bluer tone already used in this scheme's dark mode
+     below. */
   --logo-accent: #4a6fa5;
 }
 
@@ -157,8 +160,8 @@
   --accent-contrast: #ffffff;
   --code-bg: #171d2b;
   --canvas-bg: #141a27;
-  /* Loggan är ljus (inverterad, se Header.css) i mörkt läge -- ingen
-     särskild logga-ton behövs här, bara den vanliga accentfärgen. */
+  /* The logo is light (inverted, see Header.css) in dark mode -- no
+     special logo tone needed here, just the regular accent color. */
   --logo-accent: var(--accent);
 }
 
@@ -212,10 +215,10 @@ p {
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  /* Fast height, inte min-height -- garanterar exakt samma höjd på alla
-     varianter oavsett eventuella små skillnader i hur webbläsaren beräknar
-     kant/padding per variant. Säkert eftersom white-space:nowrap redan
-     garanterar att innehållet aldrig radbryts till mer än en rad. */
+  /* Fixed height, not min-height -- guarantees the exact same height on all
+     variants regardless of any small differences in how the browser
+     computes border/padding per variant. Safe since white-space:nowrap
+     already guarantees the content never wraps to more than one line. */
   height: 44px;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -230,9 +233,10 @@ p {
 }
 
 .btn--primary {
-  /* Samma kantbredd som de andra varianterna (bara osynlig) -- annars kan
-     olika box-sizing-avrundning ge den här varianten en knapp pixel eller två
-     annorlunda höjd än en kantad variant, trots samma min-height. */
+  /* Same border width as the other variants (just invisible) -- otherwise
+     different box-sizing rounding could give this variant a pixel or two
+     of different height than a bordered variant, despite the same
+     min-height. */
   border: 1px solid transparent;
   background: var(--accent);
   color: var(--accent-contrast);
@@ -255,10 +259,10 @@ p {
 }
 
 .btn--neutral {
-  /* var(--border) i sig är nästan samma nyans som --page-bg -- kanten
-     "försvinner" mot sidbakgrunden och knappen läses som mindre/svagare än
-     .btn--primary trots identiska mått. Blanda in text-secondary för en kant
-     som faktiskt syns. */
+  /* var(--border) on its own is almost the same shade as --page-bg -- the
+     border "disappears" against the page background and the button reads
+     as smaller/weaker than .btn--primary despite identical dimensions. Mix
+     in text-secondary for a border that's actually visible. */
   border: 1px solid color-mix(in srgb, var(--border) 40%, var(--text-secondary) 60%);
   background: var(--bg);
   color: inherit;

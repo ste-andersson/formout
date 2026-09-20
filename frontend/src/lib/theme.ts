@@ -2,7 +2,7 @@ export type ThemePreference = 'light' | 'dark' | 'system'
 
 export const DEFAULT_THEME: ThemePreference = 'system'
 
-// Nyckelnamnet speglas i inline-scriptet i index.html -- håll dem i synk.
+// The key name is mirrored in public/prefs-init.js -- keep them in sync.
 const STORAGE_KEY = 'formout:theme'
 
 const darkMediaQuery = () => window.matchMedia('(prefers-color-scheme: dark)')
@@ -44,8 +44,8 @@ export function setTheme(preference: ThemePreference): void {
   try {
     localStorage.setItem(STORAGE_KEY, preference)
   } catch {
-    // localStorage kan vara otillgängligt -- temat tillämpas ändå för den här
-    // sidladdningen, det sparas bara inte till nästa.
+    // localStorage may be unavailable -- the theme still applies for this
+    // page load, it just won't be saved for the next one.
   }
   applyTheme(preference)
 }

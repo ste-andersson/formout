@@ -4,10 +4,10 @@
   flex-direction: column;
   min-width: 0;
   min-height: 24rem;
-  /* Matchar formulärets faktiska renderade bredd (samma 36rem som
-     .form-renderer/.form-editor__actions) -- annars sträcker sig ytan man
-     drar element till hela vägen ut på en bred skärm, mycket bredare än
-     formuläret någonsin faktiskt kommer att visas. */
+  /* Matches the form's actual rendered width (same 36rem as
+     .form-renderer/.form-editor__actions) -- otherwise the area you drag
+     elements into stretches all the way out on a wide screen, much wider
+     than the form will ever actually be shown. */
   max-width: 36rem;
 }
 

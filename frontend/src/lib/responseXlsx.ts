@@ -4,10 +4,11 @@ import type { FieldAnswerValue, FormAnswers } from './formAnswers'
 import type { SavedResponse } from './responseStorage'
 import { responseTimestamp } from './responseStorage'
 import { formatResponseDateTime } from './responseFormat'
+import type { ExportContext } from './exportContext'
 
-function formatAnswer(value: FieldAnswerValue | undefined): string {
+function formatAnswer(value: FieldAnswerValue | undefined, labels: ExportContext['labels']): string {
   if (value === undefined) return ''
-  if (typeof value === 'boolean') return value ? 'Ja' : 'Nej'
+  if (typeof value === 'boolean') return value ? labels.yes : labels.no
   if (Array.isArray(value)) return value.join('; ')
   return String(value)
 }
@@ -43,12 +44,16 @@ export async function buildResponseXlsx(
   schema: FormSchema,
   answers: FormAnswers,
   filledInAt: string,
+  ctx: ExportContext,
   password?: string,
 ): Promise<Blob> {
-  const rows: string[][] = [['Fråga', 'Svar'], ['Ifyllt', formatResponseDateTime(filledInAt)]]
+  const rows: string[][] = [
+    [ctx.labels.question, ctx.labels.answer],
+    [ctx.labels.filledIn, formatResponseDateTime(filledInAt, ctx.language)],
+  ]
   for (const field of schema.fields) {
     if (isContentBlock(field.type)) continue
-    rows.push([field.label, formatAnswer(answers[field.id])])
+    rows.push([field.label, formatAnswer(answers[field.id], ctx.labels)])
   }
   const workbook = await writeRows(rows)
   return workbook.outputAsync({ password })
@@ -57,13 +62,14 @@ export async function buildResponseXlsx(
 export async function buildBulkResponseXlsx(
   schema: FormSchema,
   responses: SavedResponse[],
+  ctx: ExportContext,
   password?: string,
 ): Promise<Blob> {
   const fields = schema.fields.filter((field) => !isContentBlock(field.type))
-  const header = ['Ifyllt', ...fields.map((field) => field.label)]
+  const header = [ctx.labels.filledIn, ...fields.map((field) => field.label)]
   const rows = responses.map((response) => [
-    formatResponseDateTime(responseTimestamp(response)),
-    ...fields.map((field) => formatAnswer(response.answers[field.id])),
+    formatResponseDateTime(responseTimestamp(response), ctx.language),
+    ...fields.map((field) => formatAnswer(response.answers[field.id], ctx.labels)),
   ])
   const workbook = await writeRows([header, ...rows])
   return workbook.outputAsync({ password })

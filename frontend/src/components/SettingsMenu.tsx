@@ -2,16 +2,20 @@ import { useAuth } from '@clerk/clerk-react'
 import { useEffect, useRef, useState } from 'react'
 import { COLOR_SCHEMES, getStoredScheme, setScheme } from '../lib/colorScheme'
 import { applyTheme, getStoredTheme, setTheme, type ThemePreference } from '../lib/theme'
+import type { Language } from '../lib/language'
 import { useOfflineMode } from './offlineModeContext'
 import { usePasswordMode } from './passwordModeContext'
+import { useTranslation } from './languageContext'
 import { GearIcon } from './icons'
 import { OfflineAuthExceptionModal } from './OfflineAuthExceptionModal'
 import './SettingsMenu.css'
 
-const THEME_OPTIONS: { id: ThemePreference; label: string }[] = [
-  { id: 'light', label: 'Ljust' },
-  { id: 'dark', label: 'Mörkt' },
-  { id: 'system', label: 'System' },
+// Language names are conventionally shown in their own language regardless
+// of the current UI language (same convention every OS/browser language
+// picker uses) -- deliberately not run through `t`.
+const LANGUAGE_OPTIONS: { id: Language; label: string }[] = [
+  { id: 'sv', label: 'Svenska' },
+  { id: 'en', label: 'English' },
 ]
 
 export function SettingsMenu() {
@@ -19,10 +23,17 @@ export function SettingsMenu() {
   const [currentTheme, setCurrentTheme] = useState(() => getStoredTheme())
   const { offlineMode, authExceptionsAllowed, setOfflineMode } = useOfflineMode()
   const { passwordMode, setPasswordMode } = usePasswordMode()
+  const { t, language, setLanguage } = useTranslation()
   const { isSignedIn } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const exceptionDialogRef = useRef<HTMLDialogElement>(null)
+
+  const themeOptions: { id: ThemePreference; label: string }[] = [
+    { id: 'light', label: t.settingsMenu.themeLight },
+    { id: 'dark', label: t.settingsMenu.themeDark },
+    { id: 'system', label: t.settingsMenu.themeSystem },
+  ]
 
   function handleOfflineToggleClick() {
     if (offlineMode) {
@@ -40,8 +51,9 @@ export function SettingsMenu() {
   }
 
   useEffect(() => {
-    // Sätter upp en live-lyssnare på OS-temat om preferensen är "system" --
-    // anti-flash-scriptet i index.html sätter bara det initiala värdet en gång.
+    // Sets up a live listener on the OS theme when the preference is
+    // "system" -- the anti-flash script in index.html only sets the initial
+    // value once.
     applyTheme(getStoredTheme())
   }, [])
 
@@ -61,7 +73,7 @@ export function SettingsMenu() {
       <button
         type="button"
         className="settings-menu__trigger"
-        aria-label="Inställningar"
+        aria-label={t.settingsMenu.trigger}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
@@ -69,21 +81,20 @@ export function SettingsMenu() {
       </button>
       {open && (
         <div className="settings-menu__menu" role="menu">
-          <div className="settings-menu__section-label">Språk</div>
-          <div className="settings-menu__theme-row" role="group" aria-label="Språk">
-            <button type="button" role="menuitemradio" aria-checked="true" className="settings-menu__theme-option">
-              Svenska
-            </button>
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked="false"
-              className="settings-menu__theme-option"
-              disabled
-              title="Kommer snart"
-            >
-              English
-            </button>
+          <div className="settings-menu__section-label">{t.settingsMenu.languageSectionLabel}</div>
+          <div className="settings-menu__theme-row" role="group" aria-label={t.settingsMenu.languageSectionLabel}>
+            {LANGUAGE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                role="menuitemradio"
+                aria-checked={option.id === language}
+                className="settings-menu__theme-option"
+                onClick={() => setLanguage(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
 
           <div className="settings-menu__divider" />
@@ -94,15 +105,11 @@ export function SettingsMenu() {
             aria-checked={offlineMode}
             className="settings-menu__option settings-menu__option--checkbox"
             onClick={handleOfflineToggleClick}
-            title={
-              offlineMode && authExceptionsAllowed
-                ? 'Anrop till Clerk (inloggning) och Cloudflare (bot-skydd) är tillåtna för att hålla dig inloggad.'
-                : undefined
-            }
+            title={offlineMode && authExceptionsAllowed ? t.settingsMenu.offlineAuthHint : undefined}
           >
             <span className="settings-menu__checkbox" aria-hidden="true" />
             <span>
-              Offline-läge
+              {t.settingsMenu.offlineLabel}
               {offlineMode && authExceptionsAllowed && <span aria-hidden="true">*</span>}
             </span>
           </button>
@@ -113,17 +120,17 @@ export function SettingsMenu() {
             aria-checked={passwordMode}
             className="settings-menu__option settings-menu__option--checkbox"
             onClick={() => setPasswordMode(!passwordMode)}
-            title="Delade länkar/QR-koder och exporterade filer kräver ett lösenord du väljer varje gång."
+            title={t.settingsMenu.passwordHint}
           >
             <span className="settings-menu__checkbox" aria-hidden="true" />
-            <span>Lösenordsskydd</span>
+            <span>{t.settingsMenu.passwordLabel}</span>
           </button>
 
           <div className="settings-menu__divider" />
 
-          <div className="settings-menu__section-label">Läge</div>
-          <div className="settings-menu__theme-row" role="group" aria-label="Ljust eller mörkt läge">
-            {THEME_OPTIONS.map((option) => (
+          <div className="settings-menu__section-label">{t.settingsMenu.modeSectionLabel}</div>
+          <div className="settings-menu__theme-row" role="group" aria-label={t.settingsMenu.modeSectionLabel}>
+            {themeOptions.map((option) => (
               <button
                 key={option.id}
                 type="button"
@@ -142,7 +149,7 @@ export function SettingsMenu() {
 
           <div className="settings-menu__divider" />
 
-          <div className="settings-menu__section-label">Färgschema</div>
+          <div className="settings-menu__section-label">{t.settingsMenu.schemeSectionLabel}</div>
           {COLOR_SCHEMES.map((scheme) => (
             <button
               key={scheme.id}
@@ -157,7 +164,7 @@ export function SettingsMenu() {
               }}
             >
               <span className="settings-menu__option-dot" style={{ background: scheme.swatch }} />
-              {scheme.label}
+              {t.colorScheme[scheme.id]}
             </button>
           ))}
         </div>

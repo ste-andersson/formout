@@ -9,6 +9,7 @@ import { useToast } from '../components/toastContext'
 import { FormFiller } from '../components/FormFiller'
 import { ResponseActions } from '../components/ResponseActions'
 import { useOfflineMode } from '../components/offlineModeContext'
+import { useTranslation } from '../components/languageContext'
 import './ResponseEditor.css'
 
 type LoadState =
@@ -25,12 +26,13 @@ export function ResponseEditor() {
 
 function ResponseEditorContent({ responseId }: { responseId?: string }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
-  // Captured on submit so the confirmation screen's Dela/Exportera reflect
-  // the just-saved answers, not the ones the page loaded with.
+  // Captured on submit so the confirmation screen's Share/Export reflect the
+  // just-saved answers, not the ones the page loaded with.
   const [savedResponse, setSavedResponse] = useState<SavedResponse | null>(null)
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { offlineMode } = useOfflineMode()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!responseId) {
@@ -69,22 +71,22 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   async function handleDelete(response: SavedResponse) {
     try {
       await deleteResponse(response.id)
-      showToast('Svaret är raderat', 'success')
+      showToast(t.responseEditor.deleteSuccessToast, 'success')
       navigate('/')
     } catch {
-      showToast('Kunde inte radera svaret', 'error')
+      showToast(t.responseEditor.deleteErrorToast, 'error')
     }
   }
 
   if (state.status === 'loading') {
-    return <p>Laddar…</p>
+    return <p>{t.responseEditor.loading}</p>
   }
 
   if (state.status === 'not-found') {
     return (
       <div>
-        <h1>Svaret hittades inte</h1>
-        <Link to="/">Tillbaka</Link>
+        <h1>{t.responseEditor.notFoundTitle}</h1>
+        <Link to="/">{t.common.back}</Link>
       </div>
     )
   }
@@ -92,9 +94,9 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   if (state.status === 'error') {
     return (
       <div>
-        <h1>Något gick fel</h1>
-        <p>Kunde inte hämta svaret just nu.</p>
-        <Link to="/">Tillbaka</Link>
+        <h1>{t.errorBoundary.title}</h1>
+        <p>{t.responseEditor.errorMessage}</p>
+        <Link to="/">{t.common.back}</Link>
       </div>
     )
   }
@@ -102,7 +104,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
   const { response } = state
   const form = state.status === 'loaded' ? state.form : undefined
   // Once saved, the confirmation screen below takes over with its own
-  // Dela/Exportera/Tillbaka -- keeping this bar too would just duplicate them.
+  // Share/Export/Back -- keeping this bar too would just duplicate them.
   const submitted = savedResponse !== null
 
   return (
@@ -110,7 +112,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
       {!submitted && (
         <ResponseActions response={response} form={form} className="response-editor__actions">
           <button type="button" className="btn btn--neutral" onClick={() => handleDelete(response)}>
-            Ta bort
+            {t.responseEditor.remove}
           </button>
         </ResponseActions>
       )}
@@ -118,7 +120,7 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
       {state.status === 'form-unavailable' && (
         <div>
           <h1>{response.formTitle}</h1>
-          <p>Formulärmallen finns inte längre. Du kan fortfarande exportera eller ta bort ditt sparade svar.</p>
+          <p>{t.responseEditor.formUnavailableMessage}</p>
         </div>
       )}
 
@@ -126,17 +128,17 @@ function ResponseEditorContent({ responseId }: { responseId?: string }) {
         <FormFiller
           schema={state.form.schema}
           initialAnswers={{ ...defaultAnswersFor(state.form.schema), ...response.answers }}
-          submitLabel="Spara ändringar"
-          savingLabel="Sparar…"
-          successToast="Ändringarna är sparade"
-          errorToast="Kunde inte spara ändringarna"
+          submitLabel={t.responseEditor.submitLabel}
+          savingLabel={t.responseEditor.savingLabel}
+          successToast={t.responseEditor.successToast}
+          errorToast={t.responseEditor.errorToast}
           confirmation={{
-            title: 'Sparat!',
-            message: 'Dina ändringar har nu sparats på den här enheten.',
+            title: t.responseEditor.savedTitle,
+            message: t.responseEditor.savedMessage,
             actions: savedResponse ? (
               <ResponseActions response={savedResponse} form={state.form} className="form-filler__confirmation-actions">
                 <Link to="/" className="btn btn--neutral">
-                  Tillbaka
+                  {t.common.back}
                 </Link>
               </ResponseActions>
             ) : undefined,

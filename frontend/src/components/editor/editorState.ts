@@ -1,6 +1,7 @@
 import type { Field, FieldType, FormSchema } from '../../lib/formSchema'
 import { createField } from '../../lib/formSchema'
 import { generateFormCode } from '../../lib/formCode'
+import type { Dictionary } from '../../lib/i18n'
 
 export interface EditorState {
   title: string
@@ -17,7 +18,7 @@ export type EditorAction =
   | { type: 'SET_TITLE'; title: string }
   | { type: 'SET_DESCRIPTION'; description: string }
   | { type: 'SET_SLUG'; slug: string }
-  | { type: 'ADD_ELEMENT'; fieldType: FieldType; index: number }
+  | { type: 'ADD_ELEMENT'; fieldType: FieldType; index: number; t: Dictionary['fieldDefaults'] }
   | { type: 'REMOVE_ELEMENT'; fieldId: string }
   | { type: 'UPDATE_ELEMENT'; fieldId: string; patch: Partial<Field> }
   | { type: 'MOVE_ELEMENT'; fieldId: string; toIndex: number }
@@ -72,7 +73,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, slug: action.slug }
 
     case 'ADD_ELEMENT': {
-      const field = createField(action.fieldType)
+      const field = createField(action.fieldType, action.t)
       const fields = [...state.fields]
       fields.splice(action.index, 0, field)
       return { ...state, fields, lastAddedFieldId: field.id }

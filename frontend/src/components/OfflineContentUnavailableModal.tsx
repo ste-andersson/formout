@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { useTranslation } from './languageContext'
 import '../components/ExportDialog.css'
 
 interface OfflineContentUnavailableModalProps {
@@ -7,6 +8,8 @@ interface OfflineContentUnavailableModalProps {
 }
 
 export function OfflineContentUnavailableModal({ dialogRef, onDisableOfflineMode }: OfflineContentUnavailableModalProps) {
+  const { t } = useTranslation()
+
   function close() {
     dialogRef.current?.close()
   }
@@ -20,11 +23,8 @@ export function OfflineContentUnavailableModal({ dialogRef, onDisableOfflineMode
       }}
     >
       <div className="export-dialog__panel">
-        <h2>Formuläret kräver internet</h2>
-        <p>
-          Det här formuläret finns inte sparat lokalt än, så det går inte att visa i offline-läge. Stäng av
-          offline-läget för att hämta det.
-        </p>
+        <h2>{t.offlineContentUnavailableModal.title}</h2>
+        <p>{t.offlineContentUnavailableModal.message}</p>
         <div className="export-dialog__options">
           <button
             type="button"
@@ -34,10 +34,10 @@ export function OfflineContentUnavailableModal({ dialogRef, onDisableOfflineMode
               close()
             }}
           >
-            Stäng av offline-läge
+            {t.offlineContentUnavailableModal.disableOffline}
           </button>
           <button type="button" className="btn btn--neutral" onClick={close}>
-            Avbryt
+            {t.common.cancel}
           </button>
         </div>
       </div>

@@ -43,11 +43,15 @@ export function defaultAnswersFor(schema: FormSchema): FormAnswers {
   return answers
 }
 
-export function validateRequiredFields(schema: FormSchema, answers: FormAnswers): Record<string, string> {
+export function validateRequiredFields(
+  schema: FormSchema,
+  answers: FormAnswers,
+  requiredFieldMessage: string,
+): Record<string, string> {
   const errors: Record<string, string> = {}
   for (const field of schema.fields) {
     if (field.required && !isFieldAnswered(field, answers)) {
-      errors[field.id] = 'Obligatoriskt fält'
+      errors[field.id] = requiredFieldMessage
     }
   }
   return errors

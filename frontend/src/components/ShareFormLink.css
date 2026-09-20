@@ -26,8 +26,8 @@
   flex: 1;
   min-width: 0;
   font: inherit;
-  /* Minst 16px -- annars zoomar iOS Safari in när dialogen auto-fokuserar
-     fältet vid showModal(). */
+  /* At least 16px -- otherwise iOS Safari zooms in when the dialog
+     auto-focuses the field on showModal(). */
   font-size: 1rem;
   min-height: 44px;
   padding: 0.5rem;

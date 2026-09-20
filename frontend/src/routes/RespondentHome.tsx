@@ -17,6 +17,7 @@ import { useToast } from '../components/toastContext'
 import { useOfflineMode } from '../components/offlineModeContext'
 import { usePasswordMode } from '../components/passwordModeContext'
 import { usePasswordPrompt } from '../components/usePasswordPrompt'
+import { useTranslation } from '../components/languageContext'
 import { ExportDialog } from '../components/ExportDialog'
 import { CsvNotProtectableModal } from '../components/CsvNotProtectableModal'
 import './RespondentHome.css'
@@ -31,16 +32,16 @@ interface FormCard {
   formTitle: string
   formDescription: string | null
   formSlug: string
-  // Owner-set relevance flag -- the only thing that decides aktuell/inaktuell.
+  // Owner-set relevance flag -- the only thing that decides current/outdated.
   // Respondents can't override this themselves, only hide a card entirely
-  // (hiddenLocally, via "Ta bort").
+  // (hiddenLocally, via "Remove").
   active: boolean
   hiddenLocally: boolean
   responses: SavedResponse[]
   sortKey: string
 }
 
-function buildFormCards(visited: VisitedForm[], responses: SavedResponse[]): FormCard[] {
+function buildFormCards(visited: VisitedForm[], responses: SavedResponse[], unknownFormLabel: string): FormCard[] {
   const visitedById = new Map(visited.map((v) => [v.formId, v]))
   const responsesByFormId = new Map<string, SavedResponse[]>()
   for (const response of responses) {
@@ -62,7 +63,7 @@ function buildFormCards(visited: VisitedForm[], responses: SavedResponse[]): For
 
     cards.push({
       formId,
-      formTitle: v?.formTitle ?? latestResponse?.formTitle ?? 'Okänt formulär',
+      formTitle: v?.formTitle ?? latestResponse?.formTitle ?? unknownFormLabel,
       formDescription: v?.formDescription ?? null,
       formSlug: v?.formSlug ?? latestResponse?.formSlug ?? '',
       // No visited-record yet (a response saved before this feature existed)
@@ -94,7 +95,9 @@ export function RespondentHome() {
   const { offlineMode } = useOfflineMode()
   const { passwordMode } = usePasswordMode()
   const { promptForPassword, modal: passwordPromptModal } = usePasswordPrompt()
-  // Which dialog ("Exportera alla" vs "Dela alla") opened the CSV-not-protectable
+  const { t, language } = useTranslation()
+  const exportCtx = { labels: t.exportChrome, language }
+  // Which dialog ("Export all" vs "Share all") opened the CSV-not-protectable
   // warning, so its buttons know what "anyway"/"use XLSX instead" mean.
   const [csvWarningContext, setCsvWarningContext] = useState<'export' | 'share' | null>(null)
 
@@ -102,8 +105,8 @@ export function RespondentHome() {
   // that call it so each caller decides for itself when/how to render.
   const loadCardsFromCache = useCallback(async (): Promise<FormCard[]> => {
     const [visited, responses] = await Promise.all([listVisitedForms(), listResponses()])
-    return buildFormCards(visited, responses)
-  }, [])
+    return buildFormCards(visited, responses, t.respondentHome.unknownForm)
+  }, [t.respondentHome.unknownForm])
 
   // Refreshes each visited form's owner-controlled metadata (title/
   // description/active) from the server and writes it back to the local
@@ -135,7 +138,7 @@ export function RespondentHome() {
     loadCardsFromCache()
       .then(setCards)
       .catch((error: unknown) => {
-        console.error('Kunde inte läsa sparade formulär från IndexedDB', error)
+        console.error('Could not read saved forms from IndexedDB', error)
       })
   }, [loadCardsFromCache])
 
@@ -158,7 +161,7 @@ export function RespondentHome() {
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        console.error('Kunde inte läsa sparade formulär från IndexedDB', error)
+        console.error('Could not read saved forms from IndexedDB', error)
         setLoadError(true)
       })
 
@@ -181,8 +184,8 @@ export function RespondentHome() {
     setHiddenLocally(card.formId, true)
       .then(reloadFromCache)
       .catch((error: unknown) => {
-        console.error('Kunde inte ta bort formuläret lokalt', error)
-        showToast('Kunde inte ta bort formuläret', 'error')
+        console.error('Could not remove the form locally', error)
+        showToast(t.respondentHome.removeFailedToast, 'error')
       })
   }
 
@@ -219,7 +222,7 @@ export function RespondentHome() {
 
   function exportPlainCsvAll() {
     if (!exportCard || !exportForm) return
-    const csv = buildBulkResponseCsv(exportForm.schema, exportCard.responses)
+    const csv = buildBulkResponseCsv(exportForm.schema, exportCard.responses, exportCtx)
     downloadCsv(`${safeFilenamePart(exportCard.formTitle)}-alla-svar.csv`, csv)
   }
 
@@ -227,13 +230,13 @@ export function RespondentHome() {
     if (!exportCard || !exportForm) return
     const csvFile = buildCsvFile(
       `${safeFilenamePart(exportCard.formTitle)}-alla-svar.csv`,
-      buildBulkResponseCsv(exportForm.schema, exportCard.responses),
+      buildBulkResponseCsv(exportForm.schema, exportCard.responses, exportCtx),
     )
     const result = await shareFiles([csvFile], exportCard.formTitle)
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
-      showToast('Kunde inte dela filen', 'error')
+      showToast(t.responseActions.shareFileFailedToast, 'error')
     }
   }
 
@@ -263,7 +266,7 @@ export function RespondentHome() {
     const namePart = safeFilenamePart(exportCard.formTitle)
 
     if (!passwordMode) {
-      const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses)
+      const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses, exportCtx)
       downloadPdf(`${namePart}-alla-svar.pdf`, pdf)
       exportDialogRef.current?.close()
       return
@@ -272,7 +275,7 @@ export function RespondentHome() {
     exportDialogRef.current?.close()
     promptForPassword().then((password) => {
       if (password === null) return
-      const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses, password)
+      const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses, exportCtx, password)
       downloadPdf(`${namePart}-alla-svar.pdf`, pdf)
     })
   }
@@ -288,13 +291,13 @@ export function RespondentHome() {
       password = entered
     }
 
-    const pdfBlob = buildBulkResponsePdf(exportForm.schema, exportCard.responses, password)
+    const pdfBlob = buildBulkResponsePdf(exportForm.schema, exportCard.responses, exportCtx, password)
     const pdfFile = new File([pdfBlob], `${namePart}-alla-svar.pdf`, { type: 'application/pdf' })
     const result = await shareFiles([pdfFile], exportCard.formTitle)
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
-      showToast('Kunde inte dela filen', 'error')
+      showToast(t.responseActions.shareFileFailedToast, 'error')
     }
   }
 
@@ -310,7 +313,7 @@ export function RespondentHome() {
       password = entered
     }
 
-    const xlsx = await buildBulkResponseXlsx(exportForm.schema, exportCard.responses, password)
+    const xlsx = await buildBulkResponseXlsx(exportForm.schema, exportCard.responses, exportCtx, password)
     downloadBlob(`${namePart}-alla-svar.xlsx`, xlsx)
   }
 
@@ -325,7 +328,7 @@ export function RespondentHome() {
       password = entered
     }
 
-    const xlsxBlob = await buildBulkResponseXlsx(exportForm.schema, exportCard.responses, password)
+    const xlsxBlob = await buildBulkResponseXlsx(exportForm.schema, exportCard.responses, exportCtx, password)
     const xlsxFile = new File([xlsxBlob], `${namePart}-alla-svar.xlsx`, {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
@@ -333,7 +336,7 @@ export function RespondentHome() {
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
-      showToast('Kunde inte dela filen', 'error')
+      showToast(t.responseActions.shareFileFailedToast, 'error')
     }
   }
 
@@ -356,7 +359,7 @@ export function RespondentHome() {
                 type="button"
                 className="respondent-home__card-remove"
                 onClick={() => handleRemove(card)}
-                aria-label="Ta bort formulär"
+                aria-label={t.respondentHome.removeFormAriaLabel}
               >
                 ×
               </button>
@@ -370,16 +373,16 @@ export function RespondentHome() {
             className="btn btn--primary btn--small"
             onClick={() => navigate(`/forms/${encodeURIComponent(card.formSlug)}`)}
           >
-            {hasResponses ? 'Fyll i igen' : 'Fyll i'}
+            {hasResponses ? t.respondentHome.fillInAgain : t.respondentHome.fillIn}
           </button>
           {hasResponses && (
             <>
               <button type="button" className="btn btn--neutral btn--small" onClick={() => handleOpenExportAll(card)}>
-                Exportera alla
+                {t.respondentHome.exportAll}
               </button>
               {isWebShareSupported() && (
                 <button type="button" className="btn btn--neutral btn--small" onClick={() => handleOpenShareAll(card)}>
-                  Dela alla
+                  {t.respondentHome.shareAll}
                 </button>
               )}
             </>
@@ -387,12 +390,12 @@ export function RespondentHome() {
         </div>
         {hasResponses && (
           <div className="respondent-home__card-section">
-            <h5 className="respondent-home__response-list-heading">Formulärsvar</h5>
+            <h5 className="respondent-home__response-list-heading">{t.respondentHome.responsesHeading}</h5>
             <ul className="respondent-home__response-list">
               {card.responses.map((response) => (
                 <li key={response.id}>
                   <Link to={`/responses/${response.id}`}>
-                    <span>{formatResponseDateTime(responseTimestamp(response))}</span>
+                    <span>{formatResponseDateTime(responseTimestamp(response), language)}</span>
                     <span className="respondent-home__response-arrow" aria-hidden="true">
                       →
                     </span>
@@ -408,15 +411,15 @@ export function RespondentHome() {
 
   return (
     <div className="respondent-home">
-      <h1>Fyll i ett formulär</h1>
+      <h1>{t.respondentHome.title}</h1>
       {offlineMode ? (
-        <p>Den här funktionen kräver internet och fungerar inte i offline-läge.</p>
+        <p>{t.respondentHome.offlineHint}</p>
       ) : (
         <>
-          <p>Ange koden du fått för formuläret.</p>
+          <p>{t.respondentHome.enterCodePrompt}</p>
           <form onSubmit={handleSubmit} className="respondent-home__form">
             <label htmlFor="form-code" className="respondent-home__label">
-              Formulärkod
+              {t.respondentHome.formCodeLabel}
             </label>
             <input
               id="form-code"
@@ -429,41 +432,41 @@ export function RespondentHome() {
               autoCorrect="off"
             />
             <button type="submit" className="btn btn--primary">
-              Ladda formulär
+              {t.respondentHome.loadFormButton}
             </button>
           </form>
         </>
       )}
 
-      {loadError && <p className="respondent-home__responses-error">Kunde inte hämta dina formulär.</p>}
+      {loadError && <p className="respondent-home__responses-error">{t.respondentHome.loadFailedError}</p>}
 
       {offlineMode && currentCards.length === 0 && outdatedCards.length === 0 && (
-        <p>Inga hämtade formulär att visa. Anslut till internet för att hämta ett formulär först.</p>
+        <p>{t.respondentHome.offlineEmptyMessage}</p>
       )}
 
       {(currentCards.length > 0 || outdatedCards.length > 0) && (
         <div className="respondent-home__responses">
-          <h2 className="respondent-home__list-heading">Mina formulär</h2>
+          <h2 className="respondent-home__list-heading">{t.respondentHome.myFormsHeading}</h2>
 
           {currentCards.length > 0 && (
             <div className="respondent-home__responses-group">
-              <h3 className="respondent-home__responses-heading">Aktuella formulär</h3>
+              <h3 className="respondent-home__responses-heading">{t.respondentHome.currentFormsHeading}</h3>
               {currentCards.map((card) => renderCard(card, false))}
             </div>
           )}
 
           {outdatedCards.length > 0 && (
             <div className="respondent-home__responses-group">
-              <h3 className="respondent-home__responses-heading">Inaktuella formulär</h3>
+              <h3 className="respondent-home__responses-heading">{t.respondentHome.outdatedFormsHeading}</h3>
               {outdatedCards.map((card) => renderCard(card, true))}
             </div>
           )}
         </div>
       )}
 
-      <ExportDialog dialogRef={exportDialogRef} title="Exportera alla">
-        {exportLoadState === 'loading' && <p>Hämtar formulär…</p>}
-        {exportLoadState === 'error' && <p>Kunde inte hämta formuläret.</p>}
+      <ExportDialog dialogRef={exportDialogRef} title={t.respondentHome.exportAllTitle}>
+        {exportLoadState === 'loading' && <p>{t.respondentHome.fetchingForm}</p>}
+        {exportLoadState === 'error' && <p>{t.respondentHome.fetchFormFailed}</p>}
         {exportLoadState === 'idle' && exportForm && (
           <>
             <button type="button" className="btn btn--neutral" onClick={handleExportAllCsv}>
@@ -479,9 +482,9 @@ export function RespondentHome() {
         )}
       </ExportDialog>
 
-      <ExportDialog dialogRef={shareDialogRef} title="Dela alla">
-        {exportLoadState === 'loading' && <p>Hämtar formulär…</p>}
-        {exportLoadState === 'error' && <p>Kunde inte hämta formuläret.</p>}
+      <ExportDialog dialogRef={shareDialogRef} title={t.respondentHome.shareAllTitle}>
+        {exportLoadState === 'loading' && <p>{t.respondentHome.fetchingForm}</p>}
+        {exportLoadState === 'error' && <p>{t.respondentHome.fetchFormFailed}</p>}
         {exportLoadState === 'idle' && exportForm && (
           <>
             <button type="button" className="btn btn--neutral" onClick={handleShareAllCsv}>

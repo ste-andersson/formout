@@ -13,6 +13,7 @@ import { buildSharedResponsePayload, buildSharedResponseUrl } from '../lib/share
 import { usePasswordMode } from './passwordModeContext'
 import { usePasswordPrompt } from './usePasswordPrompt'
 import { useToast } from './toastContext'
+import { useTranslation } from './languageContext'
 import { ExportDialog } from './ExportDialog'
 import { CsvNotProtectableModal } from './CsvNotProtectableModal'
 import './ResponseActions.css'
@@ -24,9 +25,9 @@ interface ResponseActionsProps {
   // need the schema to render field labels, so they're left out when it's gone.
   form: FormDetail | undefined
   className?: string
-  // Extra buttons/links rendered in the same row, after Dela/Exportera --
-  // e.g. "Ta bort" on the response page, or "Ändra"/"Tillbaka" right after a
-  // fresh submission.
+  // Extra buttons/links rendered in the same row, after Share/Export -- e.g.
+  // "Remove" on the response page, or "Edit"/"Back" right after a fresh
+  // submission.
   children?: ReactNode
 }
 
@@ -34,9 +35,9 @@ function safeFilenamePart(title: string): string {
   return title.replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '-').replace(/^-+|-+$/g, '') || 'formular'
 }
 
-// Dela + Exportera for a single saved response -- shared between the
-// response detail page and the confirmation screen shown right after a
-// respondent submits a form, so the CSV/PDF/XLSX/share/QR logic only lives once.
+// Share + Export for a single saved response -- shared between the response
+// detail page and the confirmation screen shown right after a respondent
+// submits a form, so the CSV/PDF/XLSX/share/QR logic only lives once.
 export function ResponseActions({ response, form, className, children }: ResponseActionsProps) {
   const exportDialogRef = useRef<HTMLDialogElement>(null)
   const shareDialogRef = useRef<HTMLDialogElement>(null)
@@ -45,8 +46,10 @@ export function ResponseActions({ response, form, className, children }: Respons
   const { showToast } = useToast()
   const { passwordMode } = usePasswordMode()
   const { promptForPassword, modal: passwordPromptModal } = usePasswordPrompt()
+  const { t, language } = useTranslation()
+  const exportCtx = { labels: t.exportChrome, language }
 
-  // Which action ("Exportera" vs "Dela") opened the CSV-not-protectable
+  // Which action ("Export" vs "Share") opened the CSV-not-protectable
   // warning, so its buttons know what "anyway"/"use XLSX instead" mean.
   const [csvWarningContext, setCsvWarningContext] = useState<'export' | 'share' | null>(null)
 
@@ -87,20 +90,24 @@ export function ResponseActions({ response, form, className, children }: Respons
   }
 
   function exportPlainCsv() {
-    const csv = form ? buildResponseCsv(form.schema, response.answers) : buildResponseCsvFallback(response.answers)
+    const csv = form
+      ? buildResponseCsv(form.schema, response.answers, exportCtx)
+      : buildResponseCsvFallback(response.answers, exportCtx)
     const dateStr = responseTimestamp(response).slice(0, 10)
     downloadCsv(`${safeFilenamePart(response.formTitle)}-${dateStr}.csv`, csv)
   }
 
   async function sharePlainCsv() {
     const dateStr = responseTimestamp(response).slice(0, 10)
-    const csv = form ? buildResponseCsv(form.schema, response.answers) : buildResponseCsvFallback(response.answers)
+    const csv = form
+      ? buildResponseCsv(form.schema, response.answers, exportCtx)
+      : buildResponseCsvFallback(response.answers, exportCtx)
     const csvFile = buildCsvFile(`${safeFilenamePart(response.formTitle)}-${dateStr}.csv`, csv)
     const result = await shareFiles([csvFile], response.formTitle)
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
-      showToast('Kunde inte dela filen', 'error')
+      showToast(t.responseActions.shareFileFailedToast, 'error')
     }
   }
 
@@ -131,7 +138,7 @@ export function ResponseActions({ response, form, className, children }: Respons
     const namePart = safeFilenamePart(response.formTitle)
 
     if (!passwordMode) {
-      const pdf = buildResponsePdf(form.schema, response.answers, responseTimestamp(response))
+      const pdf = buildResponsePdf(form.schema, response.answers, responseTimestamp(response), exportCtx)
       downloadPdf(`${namePart}-${dateStr}.pdf`, pdf)
       exportDialogRef.current?.close()
       return
@@ -140,7 +147,7 @@ export function ResponseActions({ response, form, className, children }: Respons
     exportDialogRef.current?.close()
     promptForPassword().then((password) => {
       if (password === null) return
-      const pdf = buildResponsePdf(form.schema, response.answers, responseTimestamp(response), password)
+      const pdf = buildResponsePdf(form.schema, response.answers, responseTimestamp(response), exportCtx, password)
       downloadPdf(`${namePart}-${dateStr}.pdf`, pdf)
     })
   }
@@ -157,13 +164,13 @@ export function ResponseActions({ response, form, className, children }: Respons
       password = entered
     }
 
-    const pdfBlob = buildResponsePdf(form.schema, response.answers, responseTimestamp(response), password)
+    const pdfBlob = buildResponsePdf(form.schema, response.answers, responseTimestamp(response), exportCtx, password)
     const pdfFile = new File([pdfBlob], `${namePart}-${dateStr}.pdf`, { type: 'application/pdf' })
     const result = await shareFiles([pdfFile], response.formTitle)
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
-      showToast('Kunde inte dela filen', 'error')
+      showToast(t.responseActions.shareFileFailedToast, 'error')
     }
   }
 
@@ -180,7 +187,7 @@ export function ResponseActions({ response, form, className, children }: Respons
       password = entered
     }
 
-    const xlsx = await buildResponseXlsx(form.schema, response.answers, responseTimestamp(response), password)
+    const xlsx = await buildResponseXlsx(form.schema, response.answers, responseTimestamp(response), exportCtx, password)
     downloadBlob(`${namePart}-${dateStr}.xlsx`, xlsx)
   }
 
@@ -196,7 +203,7 @@ export function ResponseActions({ response, form, className, children }: Respons
       password = entered
     }
 
-    const xlsxBlob = await buildResponseXlsx(form.schema, response.answers, responseTimestamp(response), password)
+    const xlsxBlob = await buildResponseXlsx(form.schema, response.answers, responseTimestamp(response), exportCtx, password)
     const xlsxFile = new File([xlsxBlob], `${namePart}-${dateStr}.xlsx`, {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
@@ -204,7 +211,7 @@ export function ResponseActions({ response, form, className, children }: Respons
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
-      showToast('Kunde inte dela filen', 'error')
+      showToast(t.responseActions.shareFileFailedToast, 'error')
     }
   }
 
@@ -213,11 +220,11 @@ export function ResponseActions({ response, form, className, children }: Respons
     const url = await resolveLinkUrl()
     if (url === 'cancelled') return
     if (!url) {
-      showToast('Formuläret är för långt för att delas som länk. Använd Dela eller Exportera istället', 'error')
+      showToast(t.responseActions.linkTooLongMailToast, 'error')
       return
     }
     const subject = encodeURIComponent(response.formTitle)
-    const body = encodeURIComponent(`Här är mitt ifyllda formulär:\n\n${url}`)
+    const body = encodeURIComponent(t.responseActions.mailSubjectBody(url))
     window.location.href = `mailto:?subject=${subject}&body=${body}`
   }
 
@@ -226,12 +233,12 @@ export function ResponseActions({ response, form, className, children }: Respons
     const url = await resolveLinkUrl()
     if (url === 'cancelled') return
     if (!url) {
-      showToast('Formuläret är för långt för att visas som QR-kod/länk', 'error')
+      showToast(t.responseActions.linkTooLongQrToast, 'error')
       return
     }
-    // Öppna nästa dialog i en ny frame -- att göra det i samma tick som
-    // close() lämnar webbläsaren i ett inkonsekvent tillstånd på vissa
-    // mobila webbläsare, där den nya dialogens första klick "äts upp".
+    // Open the next dialog on a new frame -- doing it in the same tick as
+    // close() leaves the browser in an inconsistent state on some mobile
+    // browsers, where the new dialog's first tap is swallowed.
     requestAnimationFrame(() => qrDialogRef.current?.showModal())
   }
 
@@ -239,9 +246,9 @@ export function ResponseActions({ response, form, className, children }: Respons
     if (!activeLinkUrl) return
     try {
       await navigator.clipboard.writeText(activeLinkUrl)
-      showToast('Länken är kopierad', 'success')
+      showToast(t.responseActions.linkCopiedToast, 'success')
     } catch {
-      showToast('Kunde inte kopiera länken', 'error')
+      showToast(t.responseActions.linkCopyFailedToast, 'error')
     }
   }
 
@@ -250,16 +257,16 @@ export function ResponseActions({ response, form, className, children }: Respons
       <div className={className}>
         {form && (
           <button type="button" className="btn btn--neutral" onClick={() => shareDialogRef.current?.showModal()}>
-            Dela
+            {t.responseActions.shareButton}
           </button>
         )}
         <button type="button" className="btn btn--neutral" onClick={() => exportDialogRef.current?.showModal()}>
-          Exportera
+          {t.responseActions.exportButton}
         </button>
         {children}
       </div>
 
-      <ExportDialog dialogRef={exportDialogRef} title="Exportera">
+      <ExportDialog dialogRef={exportDialogRef} title={t.responseActions.exportTitle}>
         <button type="button" className="btn btn--neutral" onClick={handleExportCsv}>
           CSV
         </button>
@@ -276,7 +283,7 @@ export function ResponseActions({ response, form, className, children }: Respons
       </ExportDialog>
 
       {form && (
-        <ExportDialog dialogRef={shareDialogRef} title="Dela">
+        <ExportDialog dialogRef={shareDialogRef} title={t.responseActions.shareTitle}>
           {isWebShareSupported() && (
             <>
               <button type="button" className="btn btn--neutral" onClick={handleShareCsv}>
@@ -293,18 +300,18 @@ export function ResponseActions({ response, form, className, children }: Respons
           <button
             type="button"
             className={!passwordMode && !linkUrl ? 'btn btn--neutral export-dialog__option--muted' : 'btn btn--neutral'}
-            title={!passwordMode && !linkUrl ? 'Formuläret är för långt för att delas som länk.' : undefined}
+            title={!passwordMode && !linkUrl ? t.responseActions.mailLinkHint : undefined}
             onClick={handleShareLink}
           >
-            Maila länk
+            {t.responseActions.mailLink}
           </button>
           <button
             type="button"
             className={!passwordMode && !linkUrl ? 'btn btn--neutral export-dialog__option--muted' : 'btn btn--neutral'}
-            title={!passwordMode && !linkUrl ? 'Formuläret är för långt för att visas som QR-kod/länk.' : undefined}
+            title={!passwordMode && !linkUrl ? t.responseActions.qrHint : undefined}
             onClick={handleOpenQr}
           >
-            Visa QR-kod/länk
+            {t.responseActions.showQr}
           </button>
         </ExportDialog>
       )}
@@ -316,7 +323,7 @@ export function ResponseActions({ response, form, className, children }: Respons
           could race the DOM commit and silently no-op the first time
           (qrDialogRef.current still null), only working on a retry once the
           dialog happened to already be mounted from the previous attempt. */}
-      <ExportDialog dialogRef={qrDialogRef} title="QR-kod">
+      <ExportDialog dialogRef={qrDialogRef} title={t.responseActions.qrTitle}>
         {activeLinkUrl && (
           <div className="response-actions__qr">
             <div className="response-actions__qr-frame">
@@ -331,7 +338,7 @@ export function ResponseActions({ response, form, className, children }: Respons
                 className="response-actions__link-input"
               />
               <button type="button" className="btn btn--neutral btn--small" onClick={handleCopyLink}>
-                Kopiera länk
+                {t.responseActions.copyLink}
               </button>
             </div>
           </div>

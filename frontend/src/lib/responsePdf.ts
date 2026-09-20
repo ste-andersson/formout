@@ -4,6 +4,7 @@ import type { FieldAnswerValue, FormAnswers } from './formAnswers'
 import type { SavedResponse } from './responseStorage'
 import { responseTimestamp } from './responseStorage'
 import { formatResponseDateTime } from './responseFormat'
+import type { ExportContext } from './exportContext'
 
 const MARGIN = 20
 const PAGE_HEIGHT = 297
@@ -216,10 +217,21 @@ function drawField(cursor: PdfCursor, field: Field, answer: FieldAnswerValue | u
   }
 }
 
-function drawResponseContent(cursor: PdfCursor, schema: FormSchema, answers: FormAnswers, filledInAt: string) {
-  // schema.title är internt (används bara för att identifiera formuläret i adminlistan
-  // och i filnamnet) -- skrivs medvetet inte ut här, av samma skäl som i FormRenderer.
-  drawText(cursor, `Ifyllt: ${formatResponseDateTime(filledInAt)}`, { fontSize: 9, color: 110, gapAfter: 6 })
+function drawResponseContent(
+  cursor: PdfCursor,
+  schema: FormSchema,
+  answers: FormAnswers,
+  filledInAt: string,
+  ctx: ExportContext,
+) {
+  // schema.title is internal only (used just to identify the form in the
+  // admin list and in the filename) -- deliberately not printed here, same
+  // reason as in FormRenderer.
+  drawText(cursor, `${ctx.labels.filledIn}: ${formatResponseDateTime(filledInAt, ctx.language)}`, {
+    fontSize: 9,
+    color: 110,
+    gapAfter: 6,
+  })
 
   for (const field of schema.fields) {
     drawField(cursor, field, answers[field.id])
@@ -232,20 +244,31 @@ function encryptionOption(password: string | undefined) {
   return password ? { encryption: { userPassword: password, ownerPassword: password } } : {}
 }
 
-export function buildResponsePdf(schema: FormSchema, answers: FormAnswers, filledInAt: string, password?: string): Blob {
+export function buildResponsePdf(
+  schema: FormSchema,
+  answers: FormAnswers,
+  filledInAt: string,
+  ctx: ExportContext,
+  password?: string,
+): Blob {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', ...encryptionOption(password) })
-  drawResponseContent(new PdfCursor(doc), schema, answers, filledInAt)
+  drawResponseContent(new PdfCursor(doc), schema, answers, filledInAt, ctx)
   return doc.output('blob')
 }
 
-export function buildBulkResponsePdf(schema: FormSchema, responses: SavedResponse[], password?: string): Blob {
+export function buildBulkResponsePdf(
+  schema: FormSchema,
+  responses: SavedResponse[],
+  ctx: ExportContext,
+  password?: string,
+): Blob {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', ...encryptionOption(password) })
   responses.forEach((response, index) => {
     const cursor = new PdfCursor(doc)
     if (index > 0) {
       cursor.newPage()
     }
-    drawResponseContent(cursor, schema, response.answers, responseTimestamp(response))
+    drawResponseContent(cursor, schema, response.answers, responseTimestamp(response), ctx)
   })
   return doc.output('blob')
 }

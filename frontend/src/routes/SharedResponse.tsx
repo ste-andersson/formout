@@ -11,6 +11,7 @@ import { FormRenderer } from '../components/FormRenderer'
 import { useOfflineMode } from '../components/offlineModeContext'
 import { OfflineContentUnavailableModal } from '../components/OfflineContentUnavailableModal'
 import { PasswordPromptModal } from '../components/PasswordPromptModal'
+import { useTranslation } from '../components/languageContext'
 import './SharedResponse.css'
 
 type LoadState =
@@ -20,13 +21,14 @@ type LoadState =
 
 export function SharedResponse() {
   const [payload] = useState(() => decodeSharedResponsePayload(window.location.hash))
+  const { t } = useTranslation()
 
   if (!payload) {
     return (
       <div>
-        <h1>Länken är ogiltig</h1>
-        <p>Länken verkar vara trasig eller ofullständig.</p>
-        <Link to="/">Till startsidan</Link>
+        <h1>{t.sharedResponse.invalidLinkTitle}</h1>
+        <p>{t.sharedResponse.invalidLinkMessage}</p>
+        <Link to="/">{t.formFiller.backHome}</Link>
       </div>
     )
   }
@@ -40,6 +42,7 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
   const unavailableDialogRef = useRef<HTMLDialogElement>(null)
   const passwordDialogRef = useRef<HTMLDialogElement>(null)
   const navigate = useNavigate()
+  const { t, language } = useTranslation()
 
   // null while a password-protected payload hasn't been unlocked yet.
   const [answers, setAnswers] = useState<FormAnswers | null>(payload.protected ? null : payload.answers)
@@ -98,14 +101,14 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
       passwordDialogRef.current?.close()
     } catch {
       // Wrong password -- AES-GCM's auth tag check fails and decrypt() throws.
-      setPasswordError('Fel lösenord. Försök igen.')
+      setPasswordError(t.sharedResponse.wrongPassword)
     }
   }
 
   if (isPasswordProtectedSharedResponsePayload(payload) && !answers) {
     return (
       <div>
-        <p>Denna länk är lösenordsskyddad.</p>
+        <p>{t.sharedResponse.protectedNotice}</p>
         <PasswordPromptModal
           dialogRef={passwordDialogRef}
           variant="enter"
@@ -121,15 +124,15 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
   }
 
   if (state.status === 'loading') {
-    return <p>Laddar…</p>
+    return <p>{t.sharedResponse.loading}</p>
   }
 
   if (state.status === 'not-found') {
     return (
       <div>
-        <h1>Formuläret kunde inte hämtas</h1>
-        <p>Formulärmallen finns inte längre, eller så gick det inte att nå just nu.</p>
-        <Link to="/">Till startsidan</Link>
+        <h1>{t.sharedResponse.notFoundTitle}</h1>
+        <p>{t.sharedResponse.notFoundMessage}</p>
+        <Link to="/">{t.formFiller.backHome}</Link>
         <OfflineContentUnavailableModal
           dialogRef={unavailableDialogRef}
           onDisableOfflineMode={() => setOfflineMode(false)}
@@ -140,7 +143,7 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
 
   return (
     <div className="shared-response">
-      <p className="shared-response__meta">Ifyllt: {formatResponseDateTime(payload.filledInAt)}</p>
+      <p className="shared-response__meta">{t.sharedResponse.filledIn(formatResponseDateTime(payload.filledInAt, language))}</p>
       <FormRenderer schema={state.form.schema} answers={answers ?? {}} readOnly />
     </div>
   )

@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { useTranslation } from './languageContext'
 import '../components/ExportDialog.css'
 
 interface CsvNotProtectableModalProps {
@@ -16,6 +17,8 @@ interface CsvNotProtectableModalProps {
 // so this explains the gap and offers a real way forward instead of just
 // silently exporting an unprotected file.
 export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxInstead, onCancel }: CsvNotProtectableModalProps) {
+  const { t } = useTranslation()
+
   function close() {
     dialogRef.current?.close()
   }
@@ -32,8 +35,8 @@ export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxIns
       }}
     >
       <div className="export-dialog__panel">
-        <h2>CSV kan inte lösenordsskyddas</h2>
-        <p>CSV-formatet stödjer inte lösenord. Välj XLSX istället, eller exportera/dela CSV-filen utan lösenord.</p>
+        <h2>{t.csvNotProtectableModal.title}</h2>
+        <p>{t.csvNotProtectableModal.message}</p>
         <div className="export-dialog__options">
           {onUseXlsxInstead && (
             <button
@@ -44,7 +47,7 @@ export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxIns
                 close()
               }}
             >
-              Använd XLSX istället
+              {t.csvNotProtectableModal.useXlsxInstead}
             </button>
           )}
           <button
@@ -55,7 +58,7 @@ export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxIns
               close()
             }}
           >
-            Fortsätt utan lösenord
+            {t.csvNotProtectableModal.continueWithoutPassword}
           </button>
           <button
             type="button"
@@ -65,7 +68,7 @@ export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxIns
               close()
             }}
           >
-            Avbryt
+            {t.common.cancel}
           </button>
         </div>
       </div>

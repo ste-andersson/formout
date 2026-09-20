@@ -1,15 +1,11 @@
 import { API_BASE_URL } from './apiBaseUrl'
 import type { Field, FormSchema } from './formSchema'
+import type { Dictionary } from './i18n'
 
 export type FormStatus = 'DRAFT' | 'PUBLISHED'
 
-export function formStatusLabel(status: FormStatus): string {
-  switch (status) {
-    case 'DRAFT':
-      return 'Utkast'
-    case 'PUBLISHED':
-      return 'Publicerad'
-  }
+export function formStatusLabel(status: FormStatus, t: Dictionary['formStatus']): string {
+  return t[status]
 }
 
 export interface AdminFormSummary {
@@ -167,7 +163,7 @@ export async function interpretImage(token: string, file: File, previousFields?:
 
   // Backend has its own 90s read timeout on the OpenAI call, which should
   // always produce a proper error response first. This is just a fallback so
-  // the "tolkar formuläret"-modal can never hang forever even if the stall
+  // the interpretation modal can never hang forever even if the stall
   // happens somewhere between the browser and the backend instead.
   const timeoutController = new AbortController()
   const timeoutId = setTimeout(() => timeoutController.abort(), 100_000)

@@ -1,10 +1,10 @@
 import type { FieldType } from "../../lib/formSchema";
 
-// Källa: handritade SVG:er (viewBox 0 0 64 64) från C:\Users\stefan\salt\repositories\
+// Source: hand-drawn SVGs (viewBox 0 0 64 64) from C:\Users\stefan\salt\repositories\
 // personal-projects\office-ping-pong-2\frontend\public\assets\original\formout-icons-svg
-// Ursprungets två fasta kulörer (grundfärg #E9DED1 / accentfärg #B46D3D) är ersatta med
-// currentColor / var(--accent) här så ikonerna följer valt färgschema och mörkt/ljust läge
-// istället för att vara låsta till en enda nyans.
+// The originals' two fixed colors (base #E9DED1 / accent #B46D3D) are replaced with
+// currentColor / var(--accent) here so the icons follow the chosen color scheme and
+// dark/light mode instead of being locked to a single shade.
 const BASE = "currentColor";
 const ACCENT = "var(--accent)";
 const ACCENT_CONTRAST = "var(--accent-contrast)";
@@ -14,9 +14,9 @@ export function FieldTypeIcon({
   size = "65%",
 }: {
   type: FieldType;
-  // Ett procenttal (standard) skalar ikonen med sin lådas storlek -- rätt när
-  // knappen sitter i det responsiva rutnätet. Ett pixeltal används bara när
-  // storleken redan är uppmätt från en specifik källa, t.ex. drag-spöket.
+  // A percentage (default) scales the icon with its box's size -- right when
+  // the button sits in the responsive grid. A pixel value is only used when
+  // the size has already been measured from a specific source, e.g. the drag ghost.
   size?: number | string;
 }) {
   switch (type) {

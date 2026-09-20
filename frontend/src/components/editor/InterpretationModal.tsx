@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from '../languageContext'
 import './InterpretationModal.css'
 
-// Ingen riktig stegvis progress finns från backend (ett enda långt AI-anrop),
-// så de här stegen är en tidsstyrd, ärlig approximation av vad som pågår --
-// inget specifikt ("fält 3 av 12") som skulle kunna vara fel.
-const STEPS = ['Läser av bilden…', 'Tolkar formulärets innehåll…', 'Identifierar fält och frågor…', 'Bygger ditt formulär…']
-
+// No real step-by-step progress exists from the backend (one single long AI
+// call), so these steps are a time-based, honest approximation of what's
+// happening -- nothing specific ("field 3 of 12") that could be wrong.
 const STEP_INTERVAL_MS = 2500
 
 export function InterpretationModal({ open }: { open: boolean }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [stepIndex, setStepIndex] = useState(0)
+  const { t } = useTranslation()
+  const steps = t.interpretationModal.steps
 
-  // <dialog> måste stängas via close() -- att bara låta React ta bort noden ur
-  // DOM:en (som conditional rendering gjorde tidigare) lämnar webbläsarens
-  // modal-/inert-tillstånd kvar på resten av sidan, så den slutar gå att
-  // klicka i trots att dialogen själv är borta. Komponenten hålls därför
-  // alltid monterad och öppnas/stängs imperativt istället.
+  // <dialog> must be closed via close() -- just letting React remove the node
+  // from the DOM (as conditional rendering did before) leaves the browser's
+  // modal/inert state stuck on the rest of the page, so it stops being
+  // clickable even though the dialog itself is gone. The component is
+  // therefore always kept mounted and opened/closed imperatively instead.
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
@@ -31,22 +32,22 @@ export function InterpretationModal({ open }: { open: boolean }) {
   useEffect(() => {
     if (!open) return
     const interval = setInterval(() => {
-      setStepIndex((index) => Math.min(index + 1, STEPS.length - 1))
+      setStepIndex((index) => Math.min(index + 1, steps.length - 1))
     }, STEP_INTERVAL_MS)
     return () => {
       clearInterval(interval)
       setStepIndex(0)
     }
-  }, [open])
+  }, [open, steps.length])
 
   return (
     <dialog ref={dialogRef} className="interpretation-modal">
       <div className="interpretation-modal__panel">
         <div className="interpretation-modal__spinner" aria-hidden="true" />
         <p className="interpretation-modal__step" aria-live="polite">
-          {STEPS[stepIndex]}
+          {steps[stepIndex]}
         </p>
-        <p className="interpretation-modal__hint">Det här kan ta upp till någon minut.</p>
+        <p className="interpretation-modal__hint">{t.interpretationModal.hint}</p>
       </div>
     </dialog>
   )

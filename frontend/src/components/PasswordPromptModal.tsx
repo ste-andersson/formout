@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent, RefObject } from 'react'
+import { useTranslation } from './languageContext'
 import '../components/ExportDialog.css'
 import './PasswordPromptModal.css'
 
@@ -16,14 +17,13 @@ interface PasswordPromptModalProps {
   onCancel: () => void
 }
 
-const COPY = {
-  set: { heading: 'Välj ett lösenord', submitLabel: 'Fortsätt' },
-  enter: { heading: 'Ange lösenord', submitLabel: 'Visa svar' },
-} as const
-
 export function PasswordPromptModal({ dialogRef, variant, error, onSubmit, onCancel }: PasswordPromptModalProps) {
   const [password, setPassword] = useState('')
-  const copy = COPY[variant]
+  const { t } = useTranslation()
+  const copy =
+    variant === 'set'
+      ? { heading: t.passwordPromptModal.setHeading, submitLabel: t.passwordPromptModal.setSubmit }
+      : { heading: t.passwordPromptModal.enterHeading, submitLabel: t.passwordPromptModal.enterSubmit }
 
   function reset() {
     setPassword('')
@@ -69,7 +69,7 @@ export function PasswordPromptModal({ dialogRef, variant, error, onSubmit, onCan
             required
             minLength={4}
             autoFocus
-            placeholder="Lösenord"
+            placeholder={t.passwordPromptModal.placeholder}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="password-prompt-modal__input"
@@ -80,7 +80,7 @@ export function PasswordPromptModal({ dialogRef, variant, error, onSubmit, onCan
               {copy.submitLabel}
             </button>
             <button type="button" className="btn btn--neutral" onClick={handleCancel}>
-              Avbryt
+              {t.common.cancel}
             </button>
           </div>
         </form>

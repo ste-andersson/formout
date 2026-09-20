@@ -5,6 +5,7 @@ import type { SavedResponse } from './responseStorage'
 import { responseTimestamp } from './responseStorage'
 import { formatResponseDateTime } from './responseFormat'
 import { downloadBlob } from './downloadFile'
+import type { ExportContext } from './exportContext'
 
 function csvEscape(value: string): string {
   // Always quote, not just when a special character is present: Excel/LibreOffice
@@ -15,40 +16,40 @@ function csvEscape(value: string): string {
   return `"${value.replace(/"/g, '""')}"`
 }
 
-function formatAnswer(value: FieldAnswerValue | undefined): string {
+function formatAnswer(value: FieldAnswerValue | undefined, labels: ExportContext['labels']): string {
   if (value === undefined) return ''
-  if (typeof value === 'boolean') return value ? 'Ja' : 'Nej'
+  if (typeof value === 'boolean') return value ? labels.yes : labels.no
   if (Array.isArray(value)) return value.join('; ')
   return String(value)
 }
 
-export function buildResponseCsv(schema: FormSchema, answers: FormAnswers): string {
-  const rows: string[][] = [['Fråga', 'Svar']]
+export function buildResponseCsv(schema: FormSchema, answers: FormAnswers, ctx: ExportContext): string {
+  const rows: string[][] = [[ctx.labels.question, ctx.labels.answer]]
 
   for (const field of schema.fields) {
     if (isContentBlock(field.type)) {
       continue
     }
-    rows.push([field.label, formatAnswer(answers[field.id])])
+    rows.push([field.label, formatAnswer(answers[field.id], ctx.labels)])
   }
 
   return toCsv(rows)
 }
 
-export function buildBulkResponseCsv(schema: FormSchema, responses: SavedResponse[]): string {
+export function buildBulkResponseCsv(schema: FormSchema, responses: SavedResponse[], ctx: ExportContext): string {
   const fields = schema.fields.filter((field) => !isContentBlock(field.type))
-  const header = ['Ifyllt', ...fields.map((field) => field.label)]
+  const header = [ctx.labels.filledIn, ...fields.map((field) => field.label)]
   const rows = responses.map((response) => [
-    formatResponseDateTime(responseTimestamp(response)),
-    ...fields.map((field) => formatAnswer(response.answers[field.id])),
+    formatResponseDateTime(responseTimestamp(response), ctx.language),
+    ...fields.map((field) => formatAnswer(response.answers[field.id], ctx.labels)),
   ])
   return toCsv([header, ...rows])
 }
 
-export function buildResponseCsvFallback(answers: FormAnswers): string {
-  const rows: string[][] = [['Fält', 'Svar']]
+export function buildResponseCsvFallback(answers: FormAnswers, ctx: ExportContext): string {
+  const rows: string[][] = [[ctx.labels.field, ctx.labels.answer]]
   for (const [fieldId, value] of Object.entries(answers)) {
-    rows.push([fieldId, formatAnswer(value)])
+    rows.push([fieldId, formatAnswer(value, ctx.labels)])
   }
   return toCsv(rows)
 }
