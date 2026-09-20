@@ -160,7 +160,6 @@ export function SettingsMenu() {
               onClick={() => {
                 setScheme(scheme.id)
                 setCurrentScheme(scheme.id)
-                setOpen(false)
               }}
             >
               <span className="settings-menu__option-dot" style={{ background: scheme.swatch }} />
