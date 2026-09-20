@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Field } from '../../lib/formSchema'
 import { fieldTypeLabel } from '../../lib/formSchema'
 import { blurActiveFieldIfKeyboardOpen } from '../../lib/device'
+import { useTranslation } from '../languageContext'
 import { FieldPreview } from './FieldPreview'
 import './SortableFieldItem.css'
 
@@ -24,6 +25,7 @@ export function SortableFieldItem({ field, autoFocus, onChange, onFocused, onRem
     transform: CSS.Transform.toString(transform),
     transition,
   }
+  const { t } = useTranslation()
 
   return (
     <div
@@ -36,7 +38,7 @@ export function SortableFieldItem({ field, autoFocus, onChange, onFocused, onRem
       <button
         type="button"
         className="sortable-field-item__handle"
-        aria-label="Dra för att flytta"
+        aria-label={t.sortableFieldItem.dragHandle}
         onPointerDownCapture={(e) => {
           if (blurActiveFieldIfKeyboardOpen()) {
             e.stopPropagation()
@@ -48,10 +50,10 @@ export function SortableFieldItem({ field, autoFocus, onChange, onFocused, onRem
         ⠿
       </button>
       <div className="sortable-field-item__body">
-        <span className="sortable-field-item__type">{fieldTypeLabel(field.type)}</span>
+        <span className="sortable-field-item__type">{fieldTypeLabel(field.type, t.fieldType)}</span>
         <FieldPreview field={field} autoFocus={autoFocus} onChange={onChange} onFocused={onFocused} />
       </div>
-      <button type="button" className="sortable-field-item__remove" onClick={onRemove} aria-label="Ta bort">
+      <button type="button" className="sortable-field-item__remove" onClick={onRemove} aria-label={t.sortableFieldItem.remove}>
         ×
       </button>
     </div>

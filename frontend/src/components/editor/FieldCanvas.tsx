@@ -2,6 +2,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Fragment } from 'react'
 import type { Field } from '../../lib/formSchema'
+import { useTranslation } from '../languageContext'
 import { SortableFieldItem } from './SortableFieldItem'
 import './FieldCanvas.css'
 
@@ -26,13 +27,14 @@ export function FieldCanvas({
     id: 'field-canvas',
     data: { source: 'canvas' },
   })
+  const { t } = useTranslation()
 
   return (
     <div className="field-canvas-wrapper">
       <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="field-canvas" data-drop-active={dropIndicatorIndex !== null || undefined}>
           {fields.length === 0 && dropIndicatorIndex === null && (
-            <p className="field-canvas__empty">Dra ett element hit</p>
+            <p className="field-canvas__empty">{t.fieldCanvas.emptyHint}</p>
           )}
           {fields.map((field, index) => (
             <Fragment key={field.id}>

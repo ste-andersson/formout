@@ -2,10 +2,10 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  /* Bara ett generöst yttre säkerhetstak -- de faktiska breddbesluten görs
-     per sektion nedan (36rem som standard, 51rem i mellanläget, se
-     kommentarerna vid .form-editor__build). Det här hindrar bara Bygg-fliken
-     från att breda ut sig obegränsat på en riktigt jättebred skärm. */
+  /* Just a generous outer safety cap -- the actual width decisions happen
+     per section below (36rem by default, 51rem in the mid-size mode, see
+     the comments on .form-editor__build). This only stops the Build tab
+     from spreading out unbounded on a really huge screen. */
   max-width: 90rem;
   margin: 0 auto;
 }
@@ -59,22 +59,22 @@
   border-radius: 0.375rem;
 }
 
-/* Kod- och Status-raderna delar ett rutnät med tre kolumner -- etikett,
-   värde, knapp -- så "Kod:"/"Status:" radar upp sig, "sm4z"/"Publicerad"
-   radar upp sig, och "Generera ny kod"/Publicera/Arkivera radar upp sig,
-   oavsett att raderna har olika textlängd. .form-editor__code och
-   .form-editor__status har display:contents -- de äger bara sina barn
-   semantiskt, det är barnen (span + strong + knapp) som faktiskt blir
-   rutnätsceller. */
+/* The Code and Status rows share a grid with three columns -- label,
+   value, button -- so "Code:"/"Status:" line up, "sm4z"/"Published" line
+   up, and "Generate new code"/Publish/Archive line up, regardless of the
+   rows having different text lengths. .form-editor__code and
+   .form-editor__status use display:contents -- they only own their
+   children semantically, it's the children (span + strong + button) that
+   actually become grid cells. */
 .form-editor__meta-rows {
   display: grid;
   grid-template-columns: auto auto auto;
   align-items: center;
   gap: 0.5rem 0.75rem;
   width: fit-content;
-  /* Extra luft utöver .form-editor__metas 0.5rem-gap -- annars sitter kod-/
-     statusraderna för tight mot beskrivningsfältet ovanför och flikraden
-     under. */
+  /* Extra breathing room beyond .form-editor__meta's 0.5rem gap --
+     otherwise the code/status rows sit too tight against the description
+     field above and the tab row below. */
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   font-size: 0.85rem;
@@ -140,12 +140,13 @@
   width: 100%;
 }
 
-/* Mobil/tablet (<1024px): palett och canvas ligger staplade i en kolumn --
-   samma 36rem-cap + centrering som resten av sidan, annars sträcker sig
-   paletten (som är ett vanligt flex-barn utan egen bredd, se
-   ElementPalette.css) kant-till-kant medan canvasen (som redan har sin egen
-   max-width:36rem, se FieldCanvas.css) hamnar smalare men ocentrerad under
-   den -- två olika bredder på samma smala skärm. */
+/* Mobile/tablet (<1024px): palette and canvas are stacked in one column --
+   same 36rem cap + centering as the rest of the page, otherwise the
+   palette (a plain flex child with no width of its own, see
+   ElementPalette.css) stretches edge-to-edge while the canvas (which
+   already has its own max-width:36rem, see FieldCanvas.css) ends up
+   narrower but off-center beneath it -- two different widths on the same
+   narrow screen. */
 .form-editor__build {
   max-width: 36rem;
   margin: 0 auto;
@@ -190,9 +191,9 @@
   border-radius: 0.5rem;
 }
 
-/* Flersidiga formulär: en sida per tumnagel i normalfallet ser precis ut som
-   den tidigare enstaka förhandsvisningen (en full-bredd bild), men fler
-   sidor radar upp sig i ett enkelt rutnät istället för att bli jättebreda. */
+/* Multi-page forms: a single page in the normal case looks exactly like
+   the earlier single-page preview (one full-width image), but more pages
+   line up in a simple grid instead of becoming huge. */
 .form-editor__image-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
@@ -256,8 +257,8 @@
   word-break: break-all;
 }
 
-/* Nollställ knappstilarna -- den finns bara för klickbarheten, ska se ut
-   exakt som miniatyren den omsluter. */
+/* Reset the button styles -- it's only there for clickability, should look
+   exactly like the thumbnail it wraps. */
 .form-editor__image-page-enlarge {
   display: block;
   width: 100%;
@@ -267,10 +268,10 @@
   cursor: zoom-in;
 }
 
-/* Samma centrerings-/animationsmönster som ExportDialog (position:fixed,
-   scroll-oberoende) -- stängning sker alltid via en användarklick här
-   (bakgrund eller X-knappen), aldrig programmatiskt, så övergången är säker
-   att animera (till skillnad från InterpretationModal). */
+/* Same centering/animation pattern as ExportDialog (position:fixed,
+   scroll-independent) -- closing here always happens via a user click
+   (backdrop or the X button), never programmatically, so the transition is
+   safe to animate (unlike InterpretationModal). */
 .form-editor__lightbox {
   position: fixed;
   inset: 0;
@@ -347,13 +348,13 @@
   }
 }
 
-/* Mellanläge (1024-1439px): palett + canvas delar en 51rem-klump (14rem
-   palett + 1rem mellanrum + 36rem canvas, exakt -- inte avrundat, annars blir
-   den här bredden och klumpens faktiska bredd omärkligt olika och det ser
-   ojämnt ut) -- det finns inte tillräckligt med marginal på den här bredden
-   för att låta paletten sticka ut i kanten (se 1440px-läget nedan), så
-   istället breddas de smalare enkolumns-sektionerna till samma 51rem här, så
-   att INGET hoppar i bredd mellan flikarna. */
+/* Mid-size mode (1024-1439px): palette + canvas share a 51rem block (14rem
+   palette + 1rem gap + 36rem canvas, exactly -- not rounded, otherwise this
+   width and the block's actual width would be imperceptibly different and
+   it would look uneven) -- there isn't enough margin at this width to let
+   the palette stick out at the edge (see the 1440px mode below), so instead
+   the narrower single-column sections are widened to the same 51rem here,
+   so NOTHING jumps in width between the tabs. */
 @media (min-width: 1024px) and (max-width: 1439.98px) {
   .form-editor__intro,
   .form-editor__meta,
@@ -371,21 +372,22 @@
   }
 }
 
-/* Brett läge (≥1440px): nu finns gott om marginal, så paletten flyttar ut dit
-   (se ElementPalette.css/FieldCanvas.css) och canvasen matchar exakt samma
-   36rem-bredd som Förhandsvisning istället för att dela utrymme med paletten
-   i en gemensam klump. */
+/* Wide mode (≥1440px): now there's plenty of margin, so the palette moves
+   out there (see ElementPalette.css/FieldCanvas.css) and the canvas
+   matches exactly the same 36rem width as Preview instead of sharing space
+   with the palette in one combined block. */
 @media (min-width: 1440px) {
   .form-editor__build {
     display: grid;
     grid-template-columns: 1fr 36rem 1fr;
     column-gap: 1rem;
-    /* align-items stannar på sitt standardvärde (stretch) -- canvasen ska
-       fortsätta sträcka sig till minst samma höjd som paletten (annars
-       "svävar" Spara-knappen under den långt under en canvas som klipps av
-       för tidigt). Bara paletten själv optar ut ur det, se ElementPalette.css. */
-    /* Rensar den smala mobil-capen (36rem) -- annars kläms hela rutnätet,
-       inklusive marginalkolumnerna paletten ska stå i, ihop till den bredden. */
+    /* align-items stays at its default (stretch) -- the canvas should keep
+       stretching to at least the same height as the palette (otherwise the
+       Save button "floats" far below a canvas that's clipped too early).
+       Only the palette itself opts out of this, see ElementPalette.css. */
+    /* Clears the narrow mobile cap (36rem) -- otherwise the whole grid,
+       including the margin columns the palette should sit in, gets
+       squeezed together to that width. */
     max-width: none;
   }
 }

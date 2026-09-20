@@ -1,11 +1,11 @@
 .interpretation-modal {
-  /* Samma centreringstrick som ExportDialog -- scroll-oberoende. Medvetet
-     UTAN öppnings-/stängningsanimation (@starting-style/allow-discrete):
-     den här dialogen stängs alltid programmatiskt från ett useEffect, inte
-     av en användargest (knapptryck, Escape, bakgrundsklick) -- och det
-     visade sig i praktiken kunna lämna övergången i limbo så dialogen blev
-     stående synlig trots att den redan var stängd under huven. Ingen
-     övergång att fastna i löser det helt. */
+  /* Same centering trick as ExportDialog -- scroll-independent. Deliberately
+     WITHOUT an opening/closing animation (@starting-style/allow-discrete):
+     this dialog is always closed programmatically from a useEffect, never
+     by a user gesture (button press, Escape, backdrop click) -- and that
+     turned out in practice to be able to leave the transition in limbo, so
+     the dialog stayed visibly open even though it was already closed under
+     the hood. No transition to get stuck in fixes this entirely. */
   position: fixed;
   inset: 0;
   margin: auto;

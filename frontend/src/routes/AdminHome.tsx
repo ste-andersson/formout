@@ -9,6 +9,7 @@ import { listVisitedForms, recordFormVisit } from "../lib/visitedForms";
 import { ShareFormLink } from "../components/ShareFormLink";
 import { useOfflineMode } from "../components/offlineModeContext";
 import { OfflineAuthExceptionModal } from "../components/OfflineAuthExceptionModal";
+import { useTranslation } from "../components/languageContext";
 import "./AdminHome.css";
 
 export function AdminHome() {
@@ -16,6 +17,7 @@ export function AdminHome() {
   const { offlineMode, authExceptionsAllowed, setAuthExceptionsAllowed } = useOfflineMode();
   const { openSignIn } = useClerk();
   const signInExceptionDialogRef = useRef<HTMLDialogElement>(null);
+  const { t } = useTranslation();
   // Signing in needs Clerk's own network calls -- while offline, that's only
   // possible once the auth exception has been granted (see SettingsMenu.tsx
   // for the other place this same exception can be granted).
@@ -23,30 +25,26 @@ export function AdminHome() {
 
   return (
     <div className="admin-home">
-      <h1>Skapa ett formulär</h1>
+      <h1>{t.adminHome.title}</h1>
       {offlineMode ? (
-        <p>Den här funktionen kräver internet och fungerar inte i offline-läge.</p>
+        <p>{t.adminHome.offlineHint}</p>
       ) : (
-        <p>
-          {isMobile
-            ? "Fotografera ett befintligt formulär eller bygg det från grunden."
-            : "Ladda upp en fil med ett befintligt formulär eller bygg det från grunden."}
-        </p>
+        <p>{isMobile ? t.adminHome.uploadHintMobile : t.adminHome.uploadHintDesktop}</p>
       )}
       <SignedOut>
-        <p>Du behöver ett konto för att skapa formulär.</p>
+        <p>{t.adminHome.needAccountMessage}</p>
         {signInNeedsException ? (
           <button
             type="button"
             className="btn btn--primary"
             onClick={() => signInExceptionDialogRef.current?.showModal()}
           >
-            Logga in eller skapa konto
+            {t.adminHome.signInButton}
           </button>
         ) : (
           <SignInButton mode="modal">
             <button type="button" className="btn btn--primary">
-              Logga in eller skapa konto
+              {t.adminHome.signInButton}
             </button>
           </SignInButton>
         )}
@@ -71,6 +69,7 @@ function PhotoUploadButton() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = isTouchDevice();
+  const { t } = useTranslation();
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
@@ -86,7 +85,7 @@ function PhotoUploadButton() {
         className="btn btn--primary"
         onClick={() => inputRef.current?.click()}
       >
-        {isMobile ? "Formulär från foto" : "Formulär från fil"}
+        {isMobile ? t.adminHome.photoUploadMobile : t.adminHome.photoUploadDesktop}
       </button>
       <input
         ref={inputRef}
@@ -123,6 +122,7 @@ function MyForms() {
   const { getToken } = useAuth();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const { offlineMode } = useOfflineMode();
+  const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
@@ -159,10 +159,10 @@ function MyForms() {
         // Best-effort -- keeps the offline fallback fresh, never blocks
         // rendering the list that just loaded successfully.
         cacheMyForms(forms).catch((error: unknown) => {
-          console.error("Kunde inte cacha formulärlistan lokalt", error);
+          console.error("Could not cache the form list locally", error);
         });
         cacheMissingFormSchemas(token, forms).catch((error: unknown) => {
-          console.error("Kunde inte cacha formulärinnehåll lokalt", error);
+          console.error("Could not cache form content locally", error);
         });
       })
       .catch(() => {
@@ -184,19 +184,19 @@ function MyForms() {
         <div className="my-forms__actions">
           <PhotoUploadButton />
           <Link to="/admin/forms/new" className="btn btn--secondary">
-            Bygg formulär
+            {t.adminHome.buildForm}
           </Link>
         </div>
       )}
 
       <div className="my-forms__list-section">
-        <h2 className="my-forms__list-heading">Mina skapade formulär</h2>
-        {state.status === "loading" && <p>Laddar…</p>}
-        {state.status === "error" && <p>Kunde inte hämta dina formulär.</p>}
+        <h2 className="my-forms__list-heading">{t.adminHome.myFormsHeading}</h2>
+        {state.status === "loading" && <p>{t.adminHome.loading}</p>}
+        {state.status === "error" && <p>{t.adminHome.loadFailedError}</p>}
         {state.status === "loaded" && (
           <>
             {state.forms.length === 0 ? (
-              <p>Du har inga formulär än.</p>
+              <p>{t.adminHome.noFormsYet}</p>
             ) : (
               <ul className="my-forms__list">
                 {state.forms.map((form) => (
@@ -214,7 +214,7 @@ function MyForms() {
                       <span
                         className={`status-badge status-badge--${form.status.toLowerCase()}`}
                       >
-                        {formStatusLabel(form.status)}
+                        {formStatusLabel(form.status, t.formStatus)}
                       </span>
                       <ShareFormLink
                         slug={form.slug}

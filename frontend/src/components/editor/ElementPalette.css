@@ -18,10 +18,11 @@
   margin: 0 0 0.5rem;
 }
 
-/* Fast antal kolumner istället för fast pixelbredd per ikon -- annars
-   delar 44px-knapparna sällan jämnt på bredden och lämnar ett tomt
-   spillutrymme i kortets högerkant. Med grid + 1fr-kolumner fyller
-   knapparna alltid ut hela raden, oavsett hur bred paletten råkar vara. */
+/* Fixed number of columns instead of a fixed pixel width per icon --
+   otherwise the 44px buttons rarely divide evenly across the width and
+   leave empty spillover space at the card's right edge. With grid +
+   1fr columns, the buttons always fill the whole row, regardless of how
+   wide the palette happens to be. */
 .element-palette__items {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -52,9 +53,10 @@
   .element-palette {
     width: 14rem;
     flex-shrink: 0;
-    /* Behåller sin egna, naturliga höjd inom raden istället för att sträckas
-       till samma höjd som canvasen (flex-radens standardbeteende) -- sticky
-       behöver den marginalen för att kunna "resa" nedåt alls. */
+    /* Keeps its own natural height within the row instead of being
+       stretched to match the canvas's height (the flex row's default
+       behavior) -- sticky needs that margin to be able to "travel"
+       downward at all. */
     align-self: flex-start;
   }
 
@@ -63,16 +65,16 @@
   }
 }
 
-/* Brett läge (≥1440px): .form-editor__build blir ett 1fr/36rem/1fr-rutnät
-   (se FormEditor.css) -- paletten flyttar till den vänstra marginalkolumnen
-   och kramar canvasens kant istället för att stå i en gemensam rad med den. */
+/* Wide mode (≥1440px): .form-editor__build becomes a 1fr/36rem/1fr grid
+   (see FormEditor.css) -- the palette moves into the left margin column
+   and hugs the canvas's edge instead of sharing a row with it. */
 @media (min-width: 1440px) {
   .element-palette {
     grid-column: 1;
     justify-self: end;
-    /* Samma anledning som align-self: flex-start i 1024px-läget ovan -- egen
-       naturlig höjd istället för att sträckas till radens/rutnätets höjd, så
-       sticky har utrymme att "resa" i. */
+    /* Same reason as align-self: flex-start in the 1024px mode above --
+       its own natural height instead of being stretched to the row's/
+       grid's height, so sticky has room to "travel" in. */
     align-self: start;
   }
 }

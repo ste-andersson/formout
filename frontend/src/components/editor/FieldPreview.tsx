@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { isTouchDevice } from '../../lib/device'
 import type { Field, FieldSettings, FieldType } from '../../lib/formSchema'
 import { isContentBlock } from '../../lib/formSchema'
+import { useTranslation } from '../languageContext'
 import './FieldPreview.css'
 
 interface FieldPreviewProps {
@@ -12,6 +13,7 @@ interface FieldPreviewProps {
 }
 
 export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPreviewProps) {
+  const { t } = useTranslation()
   const primaryElRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
   const primaryRef = (el: HTMLInputElement | HTMLTextAreaElement | null) => {
     primaryElRef.current = el
@@ -49,7 +51,7 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
   }
 
   function addOption() {
-    updateSettings({ options: [...options, `Alternativ ${options.length + 1}`] })
+    updateSettings({ options: [...options, t.fieldPreview.defaultOption(options.length + 1)] })
   }
 
   return (
@@ -141,13 +143,13 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
                 value={option}
                 onChange={(e) => updateOption(index, e.target.value)}
               />
-              <button type="button" onClick={() => removeOption(index)} aria-label="Ta bort alternativ">
+              <button type="button" onClick={() => removeOption(index)} aria-label={t.fieldPreview.removeOption}>
                 ×
               </button>
             </div>
           ))}
           <button type="button" className="field-preview__add-option" onClick={addOption}>
-            + Lägg till alternativ
+            {t.fieldPreview.addOption}
           </button>
         </div>
       )}
@@ -180,14 +182,14 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
             <input
               type="text"
               className="field-preview__scale-endlabel"
-              placeholder="Etikett för min"
+              placeholder={t.fieldPreview.minLabelPlaceholder}
               value={field.settings.minLabel ?? ''}
               onChange={(e) => updateSettings({ minLabel: e.target.value || null })}
             />
             <input
               type="text"
               className="field-preview__scale-endlabel field-preview__scale-endlabel--max"
-              placeholder="Etikett för max"
+              placeholder={t.fieldPreview.maxLabelPlaceholder}
               value={field.settings.maxLabel ?? ''}
               onChange={(e) => updateSettings({ maxLabel: e.target.value || null })}
             />
@@ -202,7 +204,7 @@ export function FieldPreview({ field, autoFocus, onChange, onFocused }: FieldPre
             checked={field.required}
             onChange={(e) => onChange({ required: e.target.checked })}
           />
-          Obligatorisk
+          {t.fieldPreview.required}
         </label>
       )}
     </div>

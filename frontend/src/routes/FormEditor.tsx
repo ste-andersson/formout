@@ -17,14 +17,16 @@ import { InterpretationModal } from '../components/editor/InterpretationModal'
 import { FieldCanvas } from '../components/editor/FieldCanvas'
 import { buildFormSchema, editorReducer, findField, initialEditorState } from '../components/editor/editorState'
 import { useOfflineMode } from '../components/offlineModeContext'
+import { useTranslation } from '../components/languageContext'
 import { recordFormVisit } from '../lib/visitedForms'
 import './FormEditor.css'
 
 export function FormEditor() {
+  const { t } = useTranslation()
   return (
     <>
       <SignedOut>
-        <p>Du måste logga in för att komma åt admin.</p>
+        <p>{t.formEditor.signInRequired}</p>
         <SignInButton mode="modal" />
       </SignedOut>
       <SignedIn>
@@ -48,6 +50,7 @@ function FormEditorContent() {
   const location = useLocation()
   const { showToast } = useToast()
   const { offlineMode, setOfflineMode } = useOfflineMode()
+  const { t } = useTranslation()
 
   const [uploadedImages, setUploadedImages] = useState<File[]>(() => {
     const navState = location.state as { uploadedFiles?: File[] } | null
@@ -79,7 +82,7 @@ function FormEditorContent() {
   const [activeTab, setActiveTab] = useState<'build' | 'image' | 'preview'>(
     uploadedImages.length > 0 ? 'image' : 'build',
   )
-  // The Bygg-tab is hidden entirely in offline mode (see the tabs row below)
+  // The Build tab is hidden entirely in offline mode (see the tabs row below)
   // -- if offline mode gets switched on while it's already the active tab,
   // this falls back to another tab for rendering purposes without needing a
   // setState-in-effect (activeTab itself is untouched, so it's restored the
@@ -87,8 +90,8 @@ function FormEditorContent() {
   const displayedTab =
     offlineMode && activeTab === 'build' ? (uploadedImages.length > 0 ? 'image' : 'preview') : activeTab
   const [formStatus, setFormStatus] = useState<adminApi.FormStatus | null>(null)
-  // Owner-set relevance flag (aktuell/inaktuell), separate from formStatus --
-  // see the "Relevans"-row below and adminApi.markCurrent/markOutdated.
+  // Owner-set relevance flag (current/outdated), separate from formStatus --
+  // see the "Relevance" row below and adminApi.markCurrent/markOutdated.
   const [formActive, setFormActive] = useState<boolean | null>(null)
   const addPageInputRef = useRef<HTMLInputElement>(null)
   const lightboxRef = useRef<HTMLDialogElement>(null)
@@ -123,23 +126,23 @@ function FormEditorContent() {
         // respondent's visit does -- lets a shared response for this form
         // still be viewed offline later, see SharedResponse.tsx.
         recordFormVisit(form).catch((error: unknown) => {
-          console.error('Kunde inte spara besökt formulär lokalt', error)
+          console.error('Could not save visited form locally', error)
         })
       })
       .catch(() => {
         if (cancelled) return
-        setLoadState({ status: 'error', message: 'Kunde inte hämta formuläret.' })
+        setLoadState({ status: 'error', message: t.formEditor.loadFailedError })
       })
 
     return () => {
       cancelled = true
     }
-  }, [isEditMode, id, getToken])
+  }, [isEditMode, id, getToken, t.formEditor.loadFailedError])
 
   // The first page interpreted replaces title/description/fields (as before);
   // every page after that is interpreted independently and only APPENDS its
   // fields -- it never touches what an earlier page already produced, even
-  // if the admin has since edited those fields by hand. The already-tolkade
+  // if the admin has since edited those fields by hand. The already-interpreted
   // fields (minus their internal ids) are sent along as read-only context so
   // the AI can avoid repeating a running header and can follow a repeating
   // pattern, but the response is still only ever used for the new page.
@@ -185,17 +188,17 @@ function FormEditorContent() {
       const ok = await interpretPage(file)
       if (ok) {
         setInterpretState({ status: 'ready' })
-        showToast(wasFirstPage ? 'Formuläret är tolkat' : 'Sidan är tolkad', 'success')
+        showToast(t.formEditor.interpretedToast(wasFirstPage), 'success')
         if (wasFirstPage) setActiveTab('preview')
       } else {
         setInterpretState({
           status: 'error',
-          message: wasFirstPage ? 'Kunde inte tolka formuläret.' : 'Kunde inte tolka den nya sidan.',
+          message: t.formEditor.interpretFailedMessage(wasFirstPage),
         })
-        showToast(wasFirstPage ? 'Kunde inte tolka formuläret' : 'Kunde inte tolka den nya sidan', 'error')
+        showToast(t.formEditor.interpretFailedToast(wasFirstPage), 'error')
       }
     },
-    [interpretPage, showToast],
+    [interpretPage, showToast, t.formEditor],
   )
 
   const runInitialInterpretation = useCallback(
@@ -207,17 +210,17 @@ function FormEditorContent() {
         if (!ok) {
           setInterpretState({
             status: 'error',
-            message: wasFirstPage ? 'Kunde inte tolka formuläret.' : 'Kunde inte tolka den nya sidan.',
+            message: t.formEditor.interpretFailedMessage(wasFirstPage),
           })
-          showToast(wasFirstPage ? 'Kunde inte tolka formuläret' : 'Kunde inte tolka den nya sidan', 'error')
+          showToast(t.formEditor.interpretFailedToast(wasFirstPage), 'error')
           return
         }
       }
       setInterpretState({ status: 'ready' })
-      showToast('Formuläret är tolkat', 'success')
+      showToast(t.formEditor.interpretedToast(true), 'success')
       setActiveTab('preview')
     },
-    [interpretPage, showToast],
+    [interpretPage, showToast, t.formEditor],
   )
 
   const handleAddPage = useCallback(
@@ -324,7 +327,7 @@ function FormEditorContent() {
     if (!activeData || targetIndex === null) return
 
     if (activeData.source === 'palette') {
-      dispatch({ type: 'ADD_ELEMENT', fieldType: activeData.fieldType, index: targetIndex })
+      dispatch({ type: 'ADD_ELEMENT', fieldType: activeData.fieldType, index: targetIndex, t: t.fieldDefaults })
     } else {
       dispatch({ type: 'MOVE_ELEMENT', fieldId: activeData.fieldId, toIndex: targetIndex })
     }
@@ -341,7 +344,7 @@ function FormEditorContent() {
   }, [])
 
   // The one place "publish" actually happens -- used by both the bottom
-  // action button and the status row's "Publicera" button, so the two can
+  // action button and the status row's "Publish" button, so the two can
   // never mean different things (one only publishing whatever was last
   // saved, the other saving-then-publishing) -- that mismatch is exactly the
   // kind of status confusion this whole change is meant to remove.
@@ -359,7 +362,7 @@ function FormEditorContent() {
         const updated = await adminApi.publish(token, id)
         setFormStatus(updated.status)
         setSaveState({ status: 'ready' })
-        showToast('Formuläret är publicerat', 'success')
+        showToast(t.formEditor.publishedToast, 'success')
       } else {
         let slug = state.slug
         let created: adminApi.AdminFormDetail | undefined
@@ -384,12 +387,12 @@ function FormEditorContent() {
 
         if (!created) throw new Error('Could not generate a unique code')
         await adminApi.publish(token, created.id)
-        showToast('Formuläret är publicerat', 'success')
+        showToast(t.formEditor.publishedToast, 'success')
         navigate(`/admin/forms/${created.id}/edit`)
       }
     } catch {
-      setSaveState({ status: 'error', message: 'Kunde inte publicera formuläret.' })
-      showToast('Kunde inte publicera formuläret', 'error')
+      setSaveState({ status: 'error', message: t.formEditor.publishFailedMessage })
+      showToast(t.formEditor.publishFailedToast, 'error')
     }
   }
 
@@ -402,14 +405,14 @@ function FormEditorContent() {
       if (action === 'unpublish') {
         const updated = await adminApi.unpublish(token, id)
         setFormStatus(updated.status)
-        showToast('Formuläret är avpublicerat', 'success')
+        showToast(t.formEditor.unpublishedToast, 'success')
       } else {
         await adminApi.deleteForm(token, id)
-        showToast('Formuläret är raderat', 'success')
+        showToast(t.formEditor.deletedToast, 'success')
         navigate('/admin')
       }
     } catch {
-      showToast(action === 'unpublish' ? 'Kunde inte avpublicera formuläret' : 'Kunde inte radera formuläret', 'error')
+      showToast(action === 'unpublish' ? t.formEditor.unpublishFailedToast : t.formEditor.deleteFailedToast, 'error')
     }
   }
 
@@ -422,19 +425,17 @@ function FormEditorContent() {
       const updated =
         action === 'mark-current' ? await adminApi.markCurrent(token, id) : await adminApi.markOutdated(token, id)
       setFormActive(updated.active)
-      showToast(action === 'mark-current' ? 'Formuläret är markerat som aktuellt' : 'Formuläret är markerat som inaktuellt', 'success')
+      showToast(action === 'mark-current' ? t.formEditor.markCurrentToast : t.formEditor.markOutdatedToast, 'success')
     } catch {
       showToast(
-        action === 'mark-current'
-          ? 'Kunde inte markera formuläret som aktuellt'
-          : 'Kunde inte markera formuläret som inaktuellt',
+        action === 'mark-current' ? t.formEditor.markCurrentFailedToast : t.formEditor.markOutdatedFailedToast,
         'error',
       )
     }
   }
 
   if (loadState.status === 'loading') {
-    return <p>Laddar…</p>
+    return <p>{t.formEditor.loading}</p>
   }
 
   if (loadState.status === 'error') {
@@ -453,29 +454,26 @@ function FormEditorContent() {
     >
       <div className="form-editor">
         <div className="form-editor__intro">
-          <h1>Bygg eller redigera formulär</h1>
+          <h1>{t.formEditor.heading}</h1>
           {offlineMode ? (
             <div className="form-editor__offline-notice">
-              <p>Du är i offline-läge och kan därför inte redigera formuläret just nu.</p>
+              <p>{t.formEditor.offlineNotice}</p>
               <button
                 type="button"
                 className="btn btn--neutral btn--small"
                 onClick={() => setOfflineMode(false)}
               >
-                Stäng av offline-läge
+                {t.offlineContentUnavailableModal.disableOffline}
               </button>
             </div>
           ) : (
-            <p>
-              Dra in element från paletten och släpp dem där du vill ha dem. Du kan när som helst flytta ett element
-              till en ny plats genom att dra det dit.
-            </p>
+            <p>{t.formEditor.dragHint}</p>
           )}
         </div>
 
         <div className="form-editor__meta">
           <label>
-            Titel
+            {t.formEditor.titleLabel}
             <input
               value={state.title}
               onChange={(e) => dispatch({ type: 'SET_TITLE', title: e.target.value })}
@@ -483,7 +481,7 @@ function FormEditorContent() {
             />
           </label>
           <label>
-            Beskrivning
+            {t.formEditor.descriptionLabel}
             <input
               value={state.description}
               onChange={(e) => dispatch({ type: 'SET_DESCRIPTION', description: e.target.value })}
@@ -492,7 +490,7 @@ function FormEditorContent() {
           </label>
           <div className="form-editor__meta-rows">
             <div className="form-editor__code">
-              <span>Kod:</span>
+              <span>{t.formEditor.codeLabel}</span>
               <strong>{state.slug}</strong>
               {offlineMode ? (
                 <span />
@@ -502,31 +500,31 @@ function FormEditorContent() {
                   className="btn btn--neutral btn--small"
                   onClick={() => dispatch({ type: 'SET_SLUG', slug: generateFormCode() })}
                 >
-                  Generera ny kod
+                  {t.formEditor.generateNewCode}
                 </button>
               )}
             </div>
             {isEditMode && formStatus && (
               <div className="form-editor__status">
-                <span>Status:</span>
-                <strong>{adminApi.formStatusLabel(formStatus)}</strong>
+                <span>{t.formEditor.statusLabel}</span>
+                <strong>{adminApi.formStatusLabel(formStatus, t.formStatus)}</strong>
                 {offlineMode ? (
                   <span />
                 ) : formStatus === 'DRAFT' ? (
                   <button type="button" className="btn btn--neutral btn--small" onClick={handlePublish}>
-                    Publicera
+                    {t.formEditor.publish}
                   </button>
                 ) : (
                   <button type="button" className="btn btn--neutral btn--small" onClick={() => handleStatusAction('unpublish')}>
-                    Avpublicera
+                    {t.formEditor.unpublish}
                   </button>
                 )}
               </div>
             )}
             {isEditMode && formActive !== null && (
               <div className="form-editor__relevance">
-                <span>Relevans:</span>
-                <strong>{formActive ? 'Aktuell' : 'Inaktuell'}</strong>
+                <span>{t.formEditor.relevanceLabel}</span>
+                <strong>{formActive ? t.formEditor.current : t.formEditor.outdated}</strong>
                 {offlineMode ? (
                   <span />
                 ) : formActive ? (
@@ -535,7 +533,7 @@ function FormEditorContent() {
                     className="btn btn--neutral btn--small"
                     onClick={() => handleRelevanceAction('mark-outdated')}
                   >
-                    Markera som inaktuell
+                    {t.formEditor.markOutdated}
                   </button>
                 ) : (
                   <button
@@ -543,7 +541,7 @@ function FormEditorContent() {
                     className="btn btn--neutral btn--small"
                     onClick={() => handleRelevanceAction('mark-current')}
                   >
-                    Markera som aktuell
+                    {t.formEditor.markCurrent}
                   </button>
                 )}
               </div>
@@ -558,7 +556,7 @@ function FormEditorContent() {
               onClick={() => setActiveTab('image')}
               data-active={displayedTab === 'image' || undefined}
             >
-              Bild
+              {t.formEditor.imageTab}
             </button>
           )}
           {!offlineMode && (
@@ -567,7 +565,7 @@ function FormEditorContent() {
               onClick={() => setActiveTab('build')}
               data-active={activeTab === 'build' || undefined}
             >
-              Bygg
+              {t.formEditor.buildTab}
             </button>
           )}
           <button
@@ -575,7 +573,7 @@ function FormEditorContent() {
             onClick={() => setActiveTab('preview')}
             data-active={displayedTab === 'preview' || undefined}
           >
-            Förhandsvisning
+            {t.formEditor.previewTab}
           </button>
         </div>
 
@@ -586,7 +584,7 @@ function FormEditorContent() {
                 <div className="form-editor__image-status form-editor__image-status--error">
                   <p>{interpretState.message}</p>
                   <button type="button" className="btn btn--neutral btn--small" onClick={retryInterpretation}>
-                    Försök igen
+                    {t.formEditor.retry}
                   </button>
                 </div>
               )}
@@ -598,8 +596,8 @@ function FormEditorContent() {
                       <button
                         type="button"
                         className="form-editor__image-page-remove"
-                        aria-label="Ta bort sidan"
-                        title="Ta bort sidan"
+                        aria-label={t.formEditor.removePage}
+                        title={t.formEditor.removePage}
                         onClick={() => setUploadedImages((prev) => prev.filter((f) => f !== file))}
                       >
                         ×
@@ -618,7 +616,7 @@ function FormEditorContent() {
                             lightboxRef.current?.showModal()
                           }}
                         >
-                          <img src={url} alt={`Sida ${index + 1}`} className="form-editor__image-preview" />
+                          <img src={url} alt={t.formEditor.pageLabel(index + 1)} className="form-editor__image-preview" />
                         </button>
                       )}
                     </div>
@@ -628,7 +626,7 @@ function FormEditorContent() {
               {!offlineMode && (
                 <>
                   <button type="button" className="btn btn--neutral" onClick={() => addPageInputRef.current?.click()}>
-                    + Lägg till sida
+                    {t.formEditor.addPage}
                   </button>
                   <input
                     ref={addPageInputRef}
@@ -667,15 +665,15 @@ function FormEditorContent() {
           ref={lightboxRef}
           className="form-editor__lightbox"
           onClick={(e) => {
-            // Klick på ::backdrop bubblar som ett klick på <dialog> själv.
+            // A click on ::backdrop bubbles as a click on <dialog> itself.
             if (e.target === lightboxRef.current) lightboxRef.current?.close()
           }}
         >
-          {enlargedImageUrl && <img src={enlargedImageUrl} alt="Förstorad sida" />}
+          {enlargedImageUrl && <img src={enlargedImageUrl} alt={t.formEditor.enlargedImageAlt} />}
           <button
             type="button"
             className="form-editor__lightbox-close"
-            aria-label="Stäng"
+            aria-label={t.common.close}
             onClick={() => lightboxRef.current?.close()}
           >
             ×
@@ -690,7 +688,7 @@ function FormEditorContent() {
               onClick={handlePublish}
               disabled={saveState.status === 'loading'}
             >
-              Publicera
+              {t.formEditor.publish}
             </button>
           )}
           {isEditMode && (
@@ -698,7 +696,7 @@ function FormEditorContent() {
               <ShareFormLink slug={state.slug} title={state.title} disabled={formStatus !== 'PUBLISHED'} />
               {!offlineMode && (
                 <button type="button" className="btn btn--neutral" onClick={() => handleStatusAction('delete')}>
-                  Radera
+                  {t.formEditor.delete}
                 </button>
               )}
             </>
