@@ -10,10 +10,15 @@ import type { VisitedForm } from '../lib/visitedForms'
 import { formatResponseDateTime } from '../lib/responseFormat'
 import { buildBulkResponseCsv, buildCsvFile, downloadCsv } from '../lib/responseExport'
 import { buildBulkResponsePdf, downloadPdf } from '../lib/responsePdf'
+import { buildBulkResponseXlsx } from '../lib/responseXlsx'
+import { downloadBlob } from '../lib/downloadFile'
 import { isWebShareSupported, shareFiles } from '../lib/webShare'
 import { useToast } from '../components/toastContext'
 import { useOfflineMode } from '../components/offlineModeContext'
+import { usePasswordMode } from '../components/passwordModeContext'
+import { usePasswordPrompt } from '../components/usePasswordPrompt'
 import { ExportDialog } from '../components/ExportDialog'
+import { CsvNotProtectableModal } from '../components/CsvNotProtectableModal'
 import './RespondentHome.css'
 
 // A form the respondent has loaded and/or filled in, merged from two local
@@ -83,9 +88,15 @@ export function RespondentHome() {
   const [exportLoadState, setExportLoadState] = useState<ExportLoadState>('idle')
   const exportDialogRef = useRef<HTMLDialogElement>(null)
   const shareDialogRef = useRef<HTMLDialogElement>(null)
+  const csvWarningDialogRef = useRef<HTMLDialogElement>(null)
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { offlineMode } = useOfflineMode()
+  const { passwordMode } = usePasswordMode()
+  const { promptForPassword, modal: passwordPromptModal } = usePasswordPrompt()
+  // Which dialog ("Exportera alla" vs "Dela alla") opened the CSV-not-protectable
+  // warning, so its buttons know what "anyway"/"use XLSX instead" mean.
+  const [csvWarningContext, setCsvWarningContext] = useState<'export' | 'share' | null>(null)
 
   // Pure data loading, no setState -- kept separate from the effect/handlers
   // that call it so each caller decides for itself when/how to render.
@@ -206,21 +217,13 @@ export function RespondentHome() {
     return title.replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '-').replace(/^-+|-+$/g, '') || 'formular'
   }
 
-  function handleExportAllCsv() {
+  function exportPlainCsvAll() {
     if (!exportCard || !exportForm) return
     const csv = buildBulkResponseCsv(exportForm.schema, exportCard.responses)
     downloadCsv(`${safeFilenamePart(exportCard.formTitle)}-alla-svar.csv`, csv)
-    exportDialogRef.current?.close()
   }
 
-  function handleExportAllPdf() {
-    if (!exportCard || !exportForm) return
-    const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses)
-    downloadPdf(`${safeFilenamePart(exportCard.formTitle)}-alla-svar.pdf`, pdf)
-    exportDialogRef.current?.close()
-  }
-
-  async function handleShareAllCsv() {
+  async function sharePlainCsvAll() {
     if (!exportCard || !exportForm) return
     const csvFile = buildCsvFile(
       `${safeFilenamePart(exportCard.formTitle)}-alla-svar.csv`,
@@ -234,13 +237,99 @@ export function RespondentHome() {
     }
   }
 
+  function handleExportAllCsv() {
+    if (!passwordMode) {
+      exportPlainCsvAll()
+      exportDialogRef.current?.close()
+      return
+    }
+    exportDialogRef.current?.close()
+    setCsvWarningContext('export')
+    csvWarningDialogRef.current?.showModal()
+  }
+
+  async function handleShareAllCsv() {
+    if (!passwordMode) {
+      await sharePlainCsvAll()
+      return
+    }
+    shareDialogRef.current?.close()
+    setCsvWarningContext('share')
+    csvWarningDialogRef.current?.showModal()
+  }
+
+  function handleExportAllPdf() {
+    if (!exportCard || !exportForm) return
+    const namePart = safeFilenamePart(exportCard.formTitle)
+
+    if (!passwordMode) {
+      const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses)
+      downloadPdf(`${namePart}-alla-svar.pdf`, pdf)
+      exportDialogRef.current?.close()
+      return
+    }
+
+    exportDialogRef.current?.close()
+    promptForPassword().then((password) => {
+      if (password === null) return
+      const pdf = buildBulkResponsePdf(exportForm.schema, exportCard.responses, password)
+      downloadPdf(`${namePart}-alla-svar.pdf`, pdf)
+    })
+  }
+
   async function handleShareAllPdf() {
     if (!exportCard || !exportForm) return
-    const pdfBlob = buildBulkResponsePdf(exportForm.schema, exportCard.responses)
-    const pdfFile = new File([pdfBlob], `${safeFilenamePart(exportCard.formTitle)}-alla-svar.pdf`, {
-      type: 'application/pdf',
-    })
+    const namePart = safeFilenamePart(exportCard.formTitle)
+
+    let password: string | undefined
+    if (passwordMode) {
+      const entered = await promptForPassword()
+      if (entered === null) return
+      password = entered
+    }
+
+    const pdfBlob = buildBulkResponsePdf(exportForm.schema, exportCard.responses, password)
+    const pdfFile = new File([pdfBlob], `${namePart}-alla-svar.pdf`, { type: 'application/pdf' })
     const result = await shareFiles([pdfFile], exportCard.formTitle)
+    if (result === 'shared') {
+      shareDialogRef.current?.close()
+    } else if (result === 'error' || result === 'unsupported') {
+      showToast('Kunde inte dela filen', 'error')
+    }
+  }
+
+  async function handleExportAllXlsx() {
+    if (!exportCard || !exportForm) return
+    const namePart = safeFilenamePart(exportCard.formTitle)
+    exportDialogRef.current?.close()
+
+    let password: string | undefined
+    if (passwordMode) {
+      const entered = await promptForPassword()
+      if (entered === null) return
+      password = entered
+    }
+
+    const xlsx = await buildBulkResponseXlsx(exportForm.schema, exportCard.responses, password)
+    downloadBlob(`${namePart}-alla-svar.xlsx`, xlsx)
+  }
+
+  async function handleShareAllXlsx() {
+    if (!exportCard || !exportForm) return
+    const namePart = safeFilenamePart(exportCard.formTitle)
+
+    let password: string | undefined
+    if (passwordMode) {
+      const entered = await promptForPassword()
+      if (entered === null) return
+      password = entered
+    }
+
+    const xlsxBlob = await buildBulkResponseXlsx(exportForm.schema, exportCard.responses, password)
+    const xlsxFile = new File([xlsxBlob], `${namePart}-alla-svar.xlsx`, {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const result = await shareFiles([xlsxFile], exportCard.formTitle)
     if (result === 'shared') {
       shareDialogRef.current?.close()
     } else if (result === 'error' || result === 'unsupported') {
@@ -383,6 +472,9 @@ export function RespondentHome() {
             <button type="button" className="btn btn--neutral" onClick={handleExportAllPdf}>
               PDF
             </button>
+            <button type="button" className="btn btn--neutral" onClick={handleExportAllXlsx}>
+              XLSX
+            </button>
           </>
         )}
       </ExportDialog>
@@ -398,9 +490,31 @@ export function RespondentHome() {
             <button type="button" className="btn btn--neutral" onClick={handleShareAllPdf}>
               PDF
             </button>
+            <button type="button" className="btn btn--neutral" onClick={handleShareAllXlsx}>
+              XLSX
+            </button>
           </>
         )}
       </ExportDialog>
+
+      <CsvNotProtectableModal
+        dialogRef={csvWarningDialogRef}
+        onExportAnyway={() => {
+          if (csvWarningContext === 'export') exportPlainCsvAll()
+          else if (csvWarningContext === 'share') sharePlainCsvAll()
+        }}
+        onUseXlsxInstead={
+          exportForm
+            ? () => {
+                if (csvWarningContext === 'export') handleExportAllXlsx()
+                else if (csvWarningContext === 'share') handleShareAllXlsx()
+              }
+            : undefined
+        }
+        onCancel={() => {}}
+      />
+
+      {passwordPromptModal}
     </div>
   )
 }

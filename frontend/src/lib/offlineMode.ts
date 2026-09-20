@@ -25,7 +25,10 @@ const DEFAULT_SETTINGS: OfflineModeSettings = {
 // service worker, rather than duplicating it in two storage layers.
 export async function getOfflineModeSettings(): Promise<OfflineModeSettings> {
   const db = await getFormoutDb()
-  const existing = await db.get('settings', SETTINGS_ID)
+  // The 'settings' store holds more than one settings shape now (see
+  // passwordMode.ts) -- this lookup is keyed by a fixed id that's always
+  // this specific shape, which the store's own value type can't express.
+  const existing = (await db.get('settings', SETTINGS_ID)) as OfflineModeSettings | undefined
   return existing ?? DEFAULT_SETTINGS
 }
 
