@@ -119,7 +119,10 @@ export function ResponseActions({ response, form, className, children }: Respons
     }
     exportDialogRef.current?.close()
     setCsvWarningContext('export')
-    csvWarningDialogRef.current?.showModal()
+    // Same reasoning as handleOpenQr below -- opening the next dialog in the
+    // same tick as closing this one leaves some mobile browsers swallowing
+    // the new dialog's first tap.
+    requestAnimationFrame(() => csvWarningDialogRef.current?.showModal())
   }
 
   async function handleShareCsv() {
@@ -129,7 +132,7 @@ export function ResponseActions({ response, form, className, children }: Respons
     }
     shareDialogRef.current?.close()
     setCsvWarningContext('share')
-    csvWarningDialogRef.current?.showModal()
+    requestAnimationFrame(() => csvWarningDialogRef.current?.showModal())
   }
 
   function handleExportPdf() {
@@ -359,7 +362,6 @@ export function ResponseActions({ response, form, className, children }: Respons
               }
             : undefined
         }
-        onCancel={() => {}}
       />
 
       {passwordPromptModal}

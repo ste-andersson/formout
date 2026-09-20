@@ -249,7 +249,9 @@ export function RespondentHome() {
     }
     exportDialogRef.current?.close()
     setCsvWarningContext('export')
-    csvWarningDialogRef.current?.showModal()
+    // Opening the next dialog in the same tick as closing this one leaves
+    // some mobile browsers swallowing the new dialog's first tap.
+    requestAnimationFrame(() => csvWarningDialogRef.current?.showModal())
   }
 
   async function handleShareAllCsv() {
@@ -259,7 +261,7 @@ export function RespondentHome() {
     }
     shareDialogRef.current?.close()
     setCsvWarningContext('share')
-    csvWarningDialogRef.current?.showModal()
+    requestAnimationFrame(() => csvWarningDialogRef.current?.showModal())
   }
 
   function handleExportAllPdf() {
@@ -515,7 +517,6 @@ export function RespondentHome() {
               }
             : undefined
         }
-        onCancel={() => {}}
       />
 
       {passwordPromptModal}
