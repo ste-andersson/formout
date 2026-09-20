@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getStoredLanguage, setLanguage as persistLanguage } from '../lib/language'
 import type { Language } from '../lib/language'
@@ -19,9 +19,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     persistLanguage(next)
   }, [])
 
-  return (
-    <LanguageContext.Provider value={{ language, t: dictionaries[language], setLanguage }}>
-      {children}
-    </LanguageContext.Provider>
-  )
+  const value = useMemo(() => ({ language, t: dictionaries[language], setLanguage }), [language, setLanguage])
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }

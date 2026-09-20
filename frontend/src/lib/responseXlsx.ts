@@ -1,17 +1,11 @@
 import type { FormSchema } from './formSchema'
 import { isContentBlock } from './formSchema'
-import type { FieldAnswerValue, FormAnswers } from './formAnswers'
+import type { FormAnswers } from './formAnswers'
 import type { SavedResponse } from './responseStorage'
 import { responseTimestamp } from './responseStorage'
 import { formatResponseDateTime } from './responseFormat'
 import type { ExportContext } from './exportContext'
-
-function formatAnswer(value: FieldAnswerValue | undefined, labels: ExportContext['labels']): string {
-  if (value === undefined) return ''
-  if (typeof value === 'boolean') return value ? labels.yes : labels.no
-  if (Array.isArray(value)) return value.join('; ')
-  return String(value)
-}
+import { formatAnswer } from './exportContext'
 
 // Loaded dynamically -- xlsx-populate's browser bundle is ~1.6MB (it embeds
 // its own pure-JS crypto/zip/XML implementations), so this is code-split

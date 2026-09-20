@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getPasswordModeSettings, setPasswordModeEnabled } from '../lib/passwordMode'
 import { PasswordModeContext } from './passwordModeContext'
@@ -30,7 +30,7 @@ export function PasswordModeProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  return (
-    <PasswordModeContext.Provider value={{ passwordMode, setPasswordMode }}>{children}</PasswordModeContext.Provider>
-  )
+  const value = useMemo(() => ({ passwordMode, setPasswordMode }), [passwordMode, setPasswordMode])
+
+  return <PasswordModeContext.Provider value={value}>{children}</PasswordModeContext.Provider>
 }

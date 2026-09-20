@@ -42,12 +42,12 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        // The default glob patterns missed .webp (the header logo images),
-        // which then got 503'd by the offline-mode gate in src/sw.ts like
-        // any other non-precached request -- explicit list of every
-        // extension actually present in the build output instead of relying
-        // on the default set.
-        globPatterns: ['**/*.{css,html,js,png,svg,webmanifest,webp}'],
+        // An explicit extension list here already missed .webp once (the
+        // header logo images), which then got 503'd by the offline-mode
+        // gate in src/sw.ts like any other non-precached request -- a
+        // catch-all avoids that whole class of bug recurring for the next
+        // asset type that shows up in the build output.
+        globPatterns: ['**/*'],
         // The app shell itself is small; keep the default glob patterns but
         // raise the per-file size limit slightly for the largest JS chunk.
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
