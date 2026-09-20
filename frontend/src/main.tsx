@@ -15,12 +15,18 @@ import { FormViewer } from './routes/FormViewer.tsx'
 import { RespondentHome } from './routes/RespondentHome.tsx'
 import { ResponseEditor } from './routes/ResponseEditor.tsx'
 import { SharedResponse } from './routes/SharedResponse.tsx'
+import { requestPersistentStorage } from './lib/storagePersistence.ts'
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 if (!clerkPublishableKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY environment variable')
 }
+
+// Fire-and-forget -- reduces the odds of the browser silently evicting
+// locally-cached forms/responses under storage pressure. Never blocks the
+// initial render.
+requestPersistentStorage()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
