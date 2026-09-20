@@ -226,14 +226,20 @@ function drawResponseContent(cursor: PdfCursor, schema: FormSchema, answers: For
   }
 }
 
-export function buildResponsePdf(schema: FormSchema, answers: FormAnswers, filledInAt: string): Blob {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+// Same value for both -- there's no separate "owner permissions" password
+// concept in this app's UI, just the one password the user set.
+function encryptionOption(password: string | undefined) {
+  return password ? { encryption: { userPassword: password, ownerPassword: password } } : {}
+}
+
+export function buildResponsePdf(schema: FormSchema, answers: FormAnswers, filledInAt: string, password?: string): Blob {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', ...encryptionOption(password) })
   drawResponseContent(new PdfCursor(doc), schema, answers, filledInAt)
   return doc.output('blob')
 }
 
-export function buildBulkResponsePdf(schema: FormSchema, responses: SavedResponse[]): Blob {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+export function buildBulkResponsePdf(schema: FormSchema, responses: SavedResponse[], password?: string): Blob {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', ...encryptionOption(password) })
   responses.forEach((response, index) => {
     const cursor = new PdfCursor(doc)
     if (index > 0) {
@@ -244,13 +250,4 @@ export function buildBulkResponsePdf(schema: FormSchema, responses: SavedRespons
   return doc.output('blob')
 }
 
-export function downloadPdf(filename: string, blob: Blob): void {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
+export { downloadBlob as downloadPdf } from './downloadFile'
