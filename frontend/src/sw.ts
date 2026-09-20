@@ -23,18 +23,22 @@ function isAllowedAuthHost(hostname: string): boolean {
   return ALLOWED_AUTH_HOSTS.includes(hostname) || hostname.endsWith('.protect.clerk.com')
 }
 
-// Google Fonts: cache-first, forever, in its own cache -- these are static,
-// user-independent files (the app's typeface), never form data, so once
-// fetched at least once during a normal online visit they stay usable
-// offline indefinitely. Deliberately NOT fetched live while offline mode is
-// on and nothing's cached yet -- that would quietly add a second unstated
-// exception to the "all other network calls stay blocked" promise the
-// consent modal makes.
-const GOOGLE_FONTS_CACHE = 'google-fonts'
-const GOOGLE_FONTS_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com']
+// Cache-first, forever, in its own cache -- static-ish assets that are
+// never form data, so once fetched at least once during a normal online
+// visit they stay usable offline indefinitely: Google Fonts (the app's
+// typeface, user-independent) and the signed-in user's Clerk avatar
+// (per-user, but still just profile chrome, not form/response data).
+// Deliberately NOT fetched live while offline mode is on and nothing's
+// cached yet -- that would quietly add an unstated exception to the "all
+// other network calls stay blocked" promise the consent modal makes.
+// Caveat: if the user changes their Clerk avatar, the old cached image
+// keeps being served until it's fetched again online -- acceptable for a
+// decorative image, not something to rely on for freshness.
+const STATIC_ASSET_CACHE = 'static-assets'
+const STATIC_ASSET_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'img.clerk.com']
 
-async function handleGoogleFontsRequest(request: Request, offlineModeEnabled: boolean): Promise<Response> {
-  const cache = await caches.open(GOOGLE_FONTS_CACHE)
+async function handleStaticAssetRequest(request: Request, offlineModeEnabled: boolean): Promise<Response> {
+  const cache = await caches.open(STATIC_ASSET_CACHE)
   // Google Fonts' CSS response varies by User-Agent (different font formats
   // per browser) -- Cache.match() respects that Vary header by default, so a
   // lookup can miss even right after a successful put() if the request
@@ -48,14 +52,13 @@ async function handleGoogleFontsRequest(request: Request, offlineModeEnabled: bo
   }
 
   const response = await fetch(request)
-  // The <link> for the CSS has no `crossorigin` attribute (browsers don't
-  // need one to just apply a stylesheet), and the @font-face files it
-  // references are fetched the same way -- both come back as "opaque"
-  // responses here: status 0, response.ok always false, since the SW isn't
-  // allowed to inspect a cross-origin no-cors response. Caching opaque
-  // responses is fine (the browser can still use them); response.ok is
-  // simply never a usable signal for this request type, so opaque is
-  // accepted alongside a normal ok response instead.
+  // Neither the Google Fonts <link> nor Clerk's <img> for the avatar carry a
+  // `crossorigin` attribute, so both come back as "opaque" responses here:
+  // status 0, response.ok always false, since the SW isn't allowed to
+  // inspect a cross-origin no-cors response. Caching opaque responses is
+  // fine (the browser can still use them); response.ok is simply never a
+  // usable signal for these request types, so opaque is accepted alongside
+  // a normal ok response instead.
   if (response.ok || response.type === 'opaque') {
     await cache.put(request, response.clone())
   }
@@ -81,8 +84,8 @@ async function handleFetch(request: Request): Promise<Response> {
   const settings = await getOfflineModeSettings()
   const url = new URL(request.url)
 
-  if (GOOGLE_FONTS_HOSTS.includes(url.hostname)) {
-    return handleGoogleFontsRequest(request, settings.enabled)
+  if (STATIC_ASSET_HOSTS.includes(url.hostname)) {
+    return handleStaticAssetRequest(request, settings.enabled)
   }
 
   if (!settings.enabled) {
