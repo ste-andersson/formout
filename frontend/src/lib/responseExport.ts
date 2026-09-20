@@ -4,6 +4,7 @@ import type { FieldAnswerValue, FormAnswers } from './formAnswers'
 import type { SavedResponse } from './responseStorage'
 import { responseTimestamp } from './responseStorage'
 import { formatResponseDateTime } from './responseFormat'
+import { downloadBlob } from './downloadFile'
 
 function csvEscape(value: string): string {
   // Always quote, not just when a special character is present: Excel/LibreOffice
@@ -82,7 +83,7 @@ const CP1252_HIGH_RANGE: Record<number, number> = {
 // only matters for the shortcut-open path -- but that's the one people hit by
 // default, so we match what that path actually expects. Characters outside
 // Windows-1252 (emoji, non-Latin scripts) fall back to '?'.
-function encodeWindows1252(text: string): Uint8Array<ArrayBuffer> {
+export function encodeWindows1252(text: string): Uint8Array<ArrayBuffer> {
   const bytes: number[] = []
   for (const char of text) {
     const codePoint = char.codePointAt(0) ?? 0x3f
@@ -99,15 +100,7 @@ function encodeWindows1252(text: string): Uint8Array<ArrayBuffer> {
 }
 
 export function downloadCsv(filename: string, content: string): void {
-  const blob = new Blob([encodeWindows1252(content)], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadBlob(filename, new Blob([encodeWindows1252(content)], { type: 'text/csv' }))
 }
 
 export function buildCsvFile(filename: string, content: string): File {
