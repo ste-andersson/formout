@@ -108,15 +108,16 @@ export function RespondentHome() {
     return buildFormCards(visited, responses, t.respondentHome.unknownForm)
   }, [t.respondentHome.unknownForm])
 
-  // Refreshes each visited form's owner-controlled metadata (title/
-  // description/active) from the server and writes it back to the local
-  // cache. Without this, a form the owner marks inactive would keep
-  // showing as current on the respondent's home page until they happened to
-  // re-open that specific form via its code -- the cached flag only updates
-  // on an active visit (see recordFormVisit), and the home page itself
-  // never talked to the backend before. Returns whether anything changed,
-  // so the caller knows whether a re-render is worth it. Not called at all
-  // in offline mode -- see the mount effect below.
+  // Refreshes each card's owner-controlled metadata (title/description/
+  // active) from the server and writes it back to the local cache. Without
+  // this, a form the owner marks inactive would keep showing as current on
+  // the respondent's home page until they happened to re-open that specific
+  // form via its code. Also backfills the full schema for any card that has
+  // a saved response but no cached template (cache was cleared, or predates
+  // this cache existing) -- see refreshVisitedFormMeta's upsert behavior.
+  // Returns whether anything changed, so the caller knows whether a
+  // re-render is worth it. Not called at all in offline mode -- see the
+  // mount effect below.
   const refreshActiveStatusFromServer = useCallback(async (cards: FormCard[]): Promise<boolean> => {
     const results = await Promise.all(
       cards.map((card) =>
