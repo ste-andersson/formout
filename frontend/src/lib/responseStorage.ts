@@ -51,7 +51,7 @@ interface FormoutResponsesDB extends DBSchema {
   }
   settings: {
     key: string
-    value: import('./offlineMode').OfflineModeSettings
+    value: import('./offlineMode').OfflineModeSettings | import('./passwordMode').PasswordModeSettings
   }
 }
 

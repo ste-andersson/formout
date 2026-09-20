@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { COLOR_SCHEMES, getStoredScheme, setScheme } from '../lib/colorScheme'
 import { applyTheme, getStoredTheme, setTheme, type ThemePreference } from '../lib/theme'
 import { useOfflineMode } from './offlineModeContext'
+import { usePasswordMode } from './passwordModeContext'
 import { GearIcon } from './icons'
 import { OfflineAuthExceptionModal } from './OfflineAuthExceptionModal'
 import './SettingsMenu.css'
@@ -17,6 +18,7 @@ export function SettingsMenu() {
   const [currentScheme, setCurrentScheme] = useState(() => getStoredScheme())
   const [currentTheme, setCurrentTheme] = useState(() => getStoredTheme())
   const { offlineMode, authExceptionsAllowed, setOfflineMode } = useOfflineMode()
+  const { passwordMode, setPasswordMode } = usePasswordMode()
   const { isSignedIn } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -103,6 +105,18 @@ export function SettingsMenu() {
               Offline-läge
               {offlineMode && authExceptionsAllowed && <span aria-hidden="true">*</span>}
             </span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={passwordMode}
+            className="settings-menu__option settings-menu__option--checkbox"
+            onClick={() => setPasswordMode(!passwordMode)}
+            title="Delade länkar/QR-koder och exporterade filer kräver ett lösenord du väljer varje gång."
+          >
+            <span className="settings-menu__checkbox" aria-hidden="true" />
+            <span>Lösenordsskydd</span>
           </button>
 
           <div className="settings-menu__divider" />
