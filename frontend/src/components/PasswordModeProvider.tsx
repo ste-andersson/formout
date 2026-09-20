@@ -16,7 +16,7 @@ export function PasswordModeProvider({ children }: { children: ReactNode }) {
         setPasswordModeState(settings.enabled)
       })
       .catch((error: unknown) => {
-        console.error('Kunde inte läsa lösenordsläge från IndexedDB', error)
+        console.error('Could not read password mode from IndexedDB', error)
       })
     return () => {
       cancelled = true
@@ -26,7 +26,7 @@ export function PasswordModeProvider({ children }: { children: ReactNode }) {
   const setPasswordMode = useCallback((value: boolean) => {
     setPasswordModeState(value)
     setPasswordModeEnabled(value).catch((error: unknown) => {
-      console.error('Kunde inte spara lösenordsläge', error)
+      console.error('Could not save password mode', error)
     })
   }, [])
 

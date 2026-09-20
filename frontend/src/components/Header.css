@@ -40,16 +40,17 @@
   }
 }
 
-/* Loggan är mörk (transparent bakgrund) -- vänd den ljus i mörkt läge så den
-   syns mot den mörka bakgrunden istället för att försvinna i den. */
+/* The logo is dark (transparent background) -- flip it light in dark mode
+   so it's visible against the dark background instead of disappearing
+   into it. */
 :root[data-theme='dark'] .app-header__logo {
   filter: invert(1);
 }
 
-/* Det första "o":et i "Formout" målas separat ovanpå (logo-wide-no-o.webp
-   saknar just den ringen) med logo-wide-o.webp som mask, färgad i temats
-   accentfärg -- ingen invertering behövs här, färgen kommer helt från
-   background och följer redan schema/mörkt läge. */
+/* The first "o" in "Formout" is painted separately on top (logo-wide-no-o.webp
+   is missing exactly that ring) using logo-wide-o.webp as a mask, colored in
+   the theme's accent color -- no inversion needed here, the color comes
+   entirely from background and already follows scheme/dark mode. */
 .app-header__logo-o {
   position: absolute;
   inset: 0;

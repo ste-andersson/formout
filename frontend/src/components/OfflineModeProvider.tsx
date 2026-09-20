@@ -24,7 +24,7 @@ export function OfflineModeProvider({ children }: { children: ReactNode }) {
         setAuthExceptionsAllowedState(settings.authExceptionsAllowed)
       })
       .catch((error: unknown) => {
-        console.error('Kunde inte läsa offline-läge från IndexedDB', error)
+        console.error('Could not read offline mode from IndexedDB', error)
       })
     return () => {
       cancelled = true
@@ -35,14 +35,14 @@ export function OfflineModeProvider({ children }: { children: ReactNode }) {
     setOfflineModeState(value)
     setAuthExceptionsAllowedState(value && exceptionsAllowed)
     setOfflineModeEnabled(value, exceptionsAllowed).catch((error: unknown) => {
-      console.error('Kunde inte spara offline-läge', error)
+      console.error('Could not save offline mode', error)
     })
   }, [])
 
   const setAuthExceptionsAllowed = useCallback((value: boolean) => {
     setAuthExceptionsAllowedState(value)
     persistAuthExceptionsAllowed(value).catch((error: unknown) => {
-      console.error('Kunde inte spara undantag för offline-läge', error)
+      console.error('Could not save offline mode exception', error)
     })
   }, [])
 
