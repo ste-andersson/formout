@@ -66,26 +66,27 @@ export async function getCachedFormBySlug(slug: string): Promise<FormDetail | nu
   }
 }
 
-export async function refreshVisitedFormMeta(
-  formId: string,
-  meta: {
-    title: string
-    description: string | null
-    active: boolean
-    schema: FormSchema
-    currentVersion: number
-  },
-): Promise<void> {
+// Upserts, not a pure update: a card can reach this with no existing cache
+// entry at all (a saved response survives even if its visitedForms record
+// was cleared, or predates this cache existing) -- backfilling it here is
+// what lets that form keep working offline, the same gap already closed for
+// form owners in AdminHome.tsx's cacheMissingFormSchemas(). visitedAt and
+// hiddenLocally are preserved when a record already exists (this call is a
+// passive background refresh, not a real "visit"), and only get sensible
+// defaults when creating a fresh record.
+export async function refreshVisitedFormMeta(formId: string, form: FormDetail): Promise<void> {
   const db = await getFormoutDb()
   const existing = await db.get('visitedForms', formId)
-  if (!existing) return
   await db.put('visitedForms', {
-    ...existing,
-    formTitle: meta.title,
-    formDescription: meta.description,
-    active: meta.active,
-    schema: meta.schema,
-    currentVersion: meta.currentVersion,
+    formId,
+    formSlug: form.slug,
+    formTitle: form.title,
+    formDescription: form.description,
+    active: form.active,
+    schema: form.schema,
+    currentVersion: form.currentVersion,
+    visitedAt: existing?.visitedAt ?? new Date().toISOString(),
+    hiddenLocally: existing?.hiddenLocally ?? false,
   })
 }
 
