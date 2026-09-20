@@ -32,10 +32,13 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          // Only source art available today is this 256x256 logo mark --
-          // declared at its real size rather than claiming a 512x512 that
-          // doesn't exist. Swap in a proper 512x512 asset if/when one exists.
-          { src: '/favicon.png', sizes: '256x256', type: 'image/png' },
+          // Opaque background (not transparent), same reasoning as the
+          // favicon/apple-touch-icon in index.html -- a home-screen icon
+          // sits directly on the OS's own wallpaper/dock, so it needs its
+          // own fixed background to stay legible instead of depending on
+          // whatever's behind it.
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       injectManifest: {

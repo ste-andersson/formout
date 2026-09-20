@@ -25,7 +25,18 @@
       "
     />
     <script src="/prefs-init.js"></script>
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <!-- Two icons, not one: the mark is dark-on-transparent in one file and
+         light-on-transparent in the other, so it stays visible against the
+         browser's own tab-bar background regardless of OS/browser dark mode
+         -- this follows prefers-color-scheme, not the in-app theme picker
+         (see lib/theme.ts), since it's the browser chrome reading it, not our JS. -->
+    <link rel="icon" type="image/png" href="/favicon-light.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+    <!-- iOS ignores the manifest's icons for "Add to Home Screen", it only
+         looks for this -- opaque background (not transparent) so it looks
+         right regardless of wallpaper, same reasoning as the manifest icons
+         below. -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
