@@ -1,3 +1,5 @@
+import type { Dictionary } from './i18n'
+
 export type FieldType =
   | 'TEXT'
   | 'TEXTAREA'
@@ -41,101 +43,43 @@ export function emptyFieldSettings(): FieldSettings {
   return { min: null, max: null, minLabel: null, maxLabel: null, options: null }
 }
 
-export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
-  { label: 'Innehåll', types: ['HEADING', 'SUBHEADING', 'PARAGRAPH', 'DIVIDER'] },
-  {
-    label: 'Svarstyper',
-    types: ['TEXT', 'TEXTAREA', 'NUMBER', 'CHECKBOX', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'SCALE', 'DATE', 'TIME', 'DATETIME'],
-  },
-]
+// A module-level constant can't react to a language change -- called from
+// the render body instead (see ElementPalette.tsx), fresh every render.
+export function getFieldTypeGroups(t: Dictionary['fieldTypeGroup']): { label: string; types: FieldType[] }[] {
+  return [
+    { label: t.content, types: ['HEADING', 'SUBHEADING', 'PARAGRAPH', 'DIVIDER'] },
+    {
+      label: t.answerTypes,
+      types: ['TEXT', 'TEXTAREA', 'NUMBER', 'CHECKBOX', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'SCALE', 'DATE', 'TIME', 'DATETIME'],
+    },
+  ]
+}
 
-export function fieldTypeLabel(type: FieldType): string {
-  switch (type) {
-    case 'HEADING':
-      return 'Rubrik'
-    case 'SUBHEADING':
-      return 'Underrubrik'
-    case 'PARAGRAPH':
-      return 'Text'
-    case 'DIVIDER':
-      return 'Avdelare'
-    case 'TEXT':
-      return 'Kort text'
-    case 'TEXTAREA':
-      return 'Lång text'
-    case 'NUMBER':
-      return 'Nummer'
-    case 'CHECKBOX':
-      return 'Kryssruta'
-    case 'SINGLE_CHOICE':
-      return 'Ett val'
-    case 'MULTIPLE_CHOICE':
-      return 'Flera val'
-    case 'SCALE':
-      return 'Skala'
-    case 'DATE':
-      return 'Datum'
-    case 'TIME':
-      return 'Tid'
-    case 'DATETIME':
-      return 'Datum och tid'
-  }
+export function fieldTypeLabel(type: FieldType, t: Dictionary['fieldType']): string {
+  return t[type]
 }
 
 export function isContentBlock(type: FieldType): boolean {
   return type === 'HEADING' || type === 'SUBHEADING' || type === 'PARAGRAPH' || type === 'DIVIDER'
 }
 
-function defaultLabelFor(type: FieldType): string {
-  switch (type) {
-    case 'HEADING':
-      return 'Rubrik'
-    case 'SUBHEADING':
-      return 'Underrubrik'
-    case 'PARAGRAPH':
-      return 'Förklarande text'
-    case 'DIVIDER':
-      return ''
-    case 'TEXT':
-      return 'Skriv ett kort svar'
-    case 'TEXTAREA':
-      return 'Skriv ett långt svar'
-    case 'NUMBER':
-      return 'Skriv en siffra'
-    case 'CHECKBOX':
-      return 'Kryssa i rutan'
-    case 'SINGLE_CHOICE':
-      return 'Välj ett alternativ'
-    case 'MULTIPLE_CHOICE':
-      return 'Välj ett eller flera alternativ'
-    case 'SCALE':
-      return 'Välj en position på skalan'
-    case 'DATE':
-      return 'Välj ett datum'
-    case 'TIME':
-      return 'Välj en tid'
-    case 'DATETIME':
-      return 'Välj datum och tid'
-  }
-}
-
-function defaultSettingsFor(type: FieldType): FieldSettings {
+function defaultSettingsFor(type: FieldType, t: Dictionary['fieldDefaults']): FieldSettings {
   if (type === 'SCALE') {
     return { min: 1, max: 5, minLabel: null, maxLabel: null, options: null }
   }
   if (type === 'SINGLE_CHOICE' || type === 'MULTIPLE_CHOICE') {
-    return { min: null, max: null, minLabel: null, maxLabel: null, options: ['Alternativ 1', 'Alternativ 2'] }
+    return { min: null, max: null, minLabel: null, maxLabel: null, options: [...t.options] }
   }
   return emptyFieldSettings()
 }
 
-export function createField(type: FieldType): Field {
+export function createField(type: FieldType, t: Dictionary['fieldDefaults']): Field {
   return {
     id: generateId(),
     type,
-    label: defaultLabelFor(type),
+    label: t.labels[type],
     required: false,
-    settings: defaultSettingsFor(type),
+    settings: defaultSettingsFor(type, t),
   }
 }
 
