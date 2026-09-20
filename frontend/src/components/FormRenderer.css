@@ -1,9 +1,9 @@
 .form-renderer {
   max-width: 36rem;
   margin: 0 auto;
-  /* Utan det här krymper kortet till nästan inget (bara paddingen) när
-     formuläret är tomt -- inget innehåll ger flex-kolumnen något att sträcka
-     sig efter på egen hand. */
+  /* Without this the card shrinks to almost nothing (just the padding)
+     when the form is empty -- no content gives the flex column anything
+     to stretch to on its own. */
   width: 100%;
   padding: 1.5rem;
   background: var(--bg);

@@ -27,19 +27,21 @@
   opacity: 1;
 }
 
-/* Startläget för öppningsanimationen -- utan denna hoppar dialogen direkt
-   till sitt slutläge eftersom en display-övergång annars inte kan animeras. */
+/* The starting state for the opening animation -- without this the dialog
+   jumps straight to its end state, since a display transition otherwise
+   can't be animated. */
 @starting-style {
   .export-dialog[open] {
     opacity: 0;
   }
 }
 
-/* Skalningen/förskjutningen sker på en inre panel, inte på <dialog> själv --
-   Safari räknar om sin inbyggda auto-centrering av <dialog> mitt i
-   stängningsövergången om elementet som centreras även har en transform,
-   vilket syns som att rutan hoppar till en annan position precis innan den
-   tonar bort. En oanimerad <dialog>-box håller centreringen stabil. */
+/* The scaling/offset happens on an inner panel, not on <dialog> itself --
+   Safari recomputes its built-in auto-centering of <dialog> mid-way through
+   the closing transition if the element being centered also has a
+   transform, which shows up as the box jumping to a different position
+   right before it fades away. An unanimated <dialog> box keeps the
+   centering stable. */
 .export-dialog__panel {
   border: 1px solid var(--border);
   border-radius: 0.5rem;

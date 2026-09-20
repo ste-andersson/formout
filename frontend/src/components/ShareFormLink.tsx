@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import QRCode from 'react-qr-code'
 import { useToast } from './toastContext'
+import { useTranslation } from './languageContext'
 import { ExportDialog } from './ExportDialog'
 import './ShareFormLink.css'
 
@@ -15,11 +16,12 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
   const shareDialogRef = useRef<HTMLDialogElement>(null)
   const qrDialogRef = useRef<HTMLDialogElement>(null)
   const { showToast } = useToast()
+  const { t } = useTranslation()
   const link = `${window.location.origin}/forms/${slug}`
 
   function handleMailLink() {
     const subject = encodeURIComponent(title)
-    const body = encodeURIComponent(`Fyll i formuläret via länken nedan:\n\n${link}`)
+    const body = encodeURIComponent(t.shareFormLink.mailBody(link))
     window.location.href = `mailto:?subject=${subject}&body=${body}`
     shareDialogRef.current?.close()
   }
@@ -27,18 +29,18 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(link)
-      showToast('Länken är kopierad', 'success')
+      showToast(t.shareFormLink.linkCopiedToast, 'success')
     } catch {
-      showToast('Kunde inte kopiera länken', 'error')
+      showToast(t.shareFormLink.linkCopyFailedToast, 'error')
     }
   }
 
   async function handleCopyCode() {
     try {
       await navigator.clipboard.writeText(slug)
-      showToast('Formulär-koden är kopierad', 'success')
+      showToast(t.shareFormLink.codeCopiedToast, 'success')
     } catch {
-      showToast('Kunde inte kopiera formulär-koden', 'error')
+      showToast(t.shareFormLink.codeCopyFailedToast, 'error')
     }
   }
 
@@ -51,41 +53,42 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
       <button
         type="button"
         className={triggerClasses || undefined}
-        title={disabled ? 'Publicera formuläret innan du kan dela det.' : undefined}
+        title={disabled ? t.shareFormLink.publishFirstHint : undefined}
         onClick={() => {
           if (disabled) {
-            showToast('Publicera formuläret innan du kan dela det', 'error')
+            showToast(t.shareFormLink.publishFirstToast, 'error')
             return
           }
           shareDialogRef.current?.showModal()
         }}
       >
-        Dela
+        {t.shareFormLink.shareButton}
       </button>
 
-      <ExportDialog dialogRef={shareDialogRef} title="Dela formulär">
+      <ExportDialog dialogRef={shareDialogRef} title={t.shareFormLink.shareFormTitle}>
         <button type="button" className="btn btn--neutral" onClick={handleCopyCode}>
-          Kopiera formulär-kod - {slug}
+          {t.shareFormLink.copyCode(slug)}
         </button>
         <button type="button" className="btn btn--neutral" onClick={handleMailLink}>
-          Maila länk
+          {t.shareFormLink.mailLink}
         </button>
         <button
           type="button"
           className="btn btn--neutral"
           onClick={() => {
             shareDialogRef.current?.close()
-            // Öppna nästa dialog i en ny frame -- att göra det i samma tick som
-            // close() lämnar webbläsaren i ett inkonsekvent tillstånd på vissa
-            // mobila webbläsare, där den nya dialogens första klick "äts upp".
+            // Open the next dialog on a new frame -- doing it in the same
+            // tick as close() leaves the browser in an inconsistent state on
+            // some mobile browsers, where the new dialog's first tap is
+            // swallowed.
             requestAnimationFrame(() => qrDialogRef.current?.showModal())
           }}
         >
-          Visa QR-kod/länk
+          {t.shareFormLink.showQr}
         </button>
       </ExportDialog>
 
-      <ExportDialog dialogRef={qrDialogRef} title="QR-kod">
+      <ExportDialog dialogRef={qrDialogRef} title={t.shareFormLink.qrTitle}>
         <div className="share-form-link__qr">
           <div className="share-form-link__qr-frame">
             <QRCode value={link} size={200} />
@@ -99,7 +102,7 @@ export function ShareFormLink({ slug, title, disabled, triggerClassName }: Share
               className="share-form-link__link-input"
             />
             <button type="button" className="btn btn--neutral btn--small" onClick={handleCopyLink}>
-              Kopiera länk
+              {t.shareFormLink.copyLink}
             </button>
           </div>
         </div>

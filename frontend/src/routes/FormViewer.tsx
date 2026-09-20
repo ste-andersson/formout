@@ -9,6 +9,7 @@ import { recordFormVisit } from '../lib/visitedForms'
 import { FormFiller } from '../components/FormFiller'
 import { ResponseActions } from '../components/ResponseActions'
 import { useOfflineMode } from '../components/offlineModeContext'
+import { useTranslation } from '../components/languageContext'
 
 type LoadState =
   | { status: 'loading' }
@@ -23,10 +24,11 @@ export function FormViewer() {
 
 function FormViewerContent({ slug }: { slug?: string }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
-  // Captured on submit so the confirmation screen can offer Dela/Exportera/
-  // Ändra for the response that was just saved.
+  // Captured on submit so the confirmation screen can offer Share/Export/
+  // Edit for the response that was just saved.
   const [savedResponse, setSavedResponse] = useState<SavedResponse | null>(null)
   const { offlineMode } = useOfflineMode()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!slug) {
@@ -43,7 +45,7 @@ function FormViewerContent({ slug }: { slug?: string }) {
         // resolves -- it's a fire-and-forget local write, not tied to render.
         if (form) {
           recordFormVisit(form).catch((error: unknown) => {
-            console.error('Kunde inte spara besökt formulär lokalt', error)
+            console.error('Could not save visited form locally', error)
           })
         }
       })
@@ -58,15 +60,15 @@ function FormViewerContent({ slug }: { slug?: string }) {
   }, [slug, offlineMode])
 
   if (state.status === 'loading') {
-    return <p>Laddar formulär…</p>
+    return <p>{t.formViewer.loading}</p>
   }
 
   if (state.status === 'not-found') {
     return (
       <div>
-        <h1>Formuläret hittades inte</h1>
-        <p>Kontrollera att koden stämmer.</p>
-        <Link to="/">Tillbaka</Link>
+        <h1>{t.formViewer.notFoundTitle}</h1>
+        <p>{t.formViewer.notFoundMessage}</p>
+        <Link to="/">{t.common.back}</Link>
       </div>
     )
   }
@@ -74,9 +76,9 @@ function FormViewerContent({ slug }: { slug?: string }) {
   if (state.status === 'error') {
     return (
       <div>
-        <h1>Något gick fel</h1>
-        <p>Kunde inte hämta formuläret just nu.</p>
-        <Link to="/">Tillbaka</Link>
+        <h1>{t.errorBoundary.title}</h1>
+        <p>{t.formViewer.errorMessage}</p>
+        <Link to="/">{t.common.back}</Link>
       </div>
     )
   }
@@ -87,20 +89,20 @@ function FormViewerContent({ slug }: { slug?: string }) {
     <FormFiller
       schema={form.schema}
       initialAnswers={defaultAnswersFor(form.schema)}
-      submitLabel="Spara på enheten"
-      savingLabel="Sparar…"
-      successToast="Formuläret är ifyllt"
-      errorToast="Kunde inte spara svaret lokalt"
+      submitLabel={t.formViewer.submitLabel}
+      savingLabel={t.formViewer.savingLabel}
+      successToast={t.formViewer.successToast}
+      errorToast={t.formViewer.errorToast}
       confirmation={{
-        title: 'Sparat!',
-        message: 'Dina svar har nu sparats på den här enheten.',
+        title: t.formViewer.savedTitle,
+        message: t.formViewer.savedMessage,
         actions: savedResponse ? (
           <ResponseActions response={savedResponse} form={form} className="form-filler__confirmation-actions">
             <Link to={`/responses/${savedResponse.id}`} className="btn btn--neutral">
-              Ändra
+              {t.formViewer.edit}
             </Link>
             <Link to="/" className="btn btn--neutral">
-              Tillbaka
+              {t.common.back}
             </Link>
           </ResponseActions>
         ) : undefined,

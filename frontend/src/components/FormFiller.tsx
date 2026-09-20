@@ -5,6 +5,7 @@ import type { FormSchema } from '../lib/formSchema'
 import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
 import { validateRequiredFields } from '../lib/formAnswers'
 import { useToast } from './toastContext'
+import { useTranslation } from './languageContext'
 import { FormRenderer } from './FormRenderer'
 import './FormFiller.css'
 
@@ -15,8 +16,8 @@ interface FormFillerProps {
   savingLabel: string
   successToast: string
   errorToast: string
-  // actions replaces the default "Till startsidan" link -- e.g. Dela/
-  // Exportera/Ändra/Tillbaka right after a fresh submission.
+  // actions replaces the default "Back to home" link -- e.g. Share/
+  // Export/Edit/Back right after a fresh submission.
   confirmation: { title: string; message: string; actions?: ReactNode }
   onSubmit: (answers: FormAnswers) => Promise<void>
 }
@@ -36,6 +37,7 @@ export function FormFiller({
   const [submitted, setSubmitted] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const { showToast } = useToast()
+  const { t } = useTranslation()
 
   function handleAnswerChange(fieldId: string, value: FieldAnswerValue) {
     setAnswers((prev) => ({ ...prev, [fieldId]: value }))
@@ -43,10 +45,10 @@ export function FormFiller({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    const validationErrors = validateRequiredFields(schema, answers)
+    const validationErrors = validateRequiredFields(schema, answers, t.formAnswers.requiredField)
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length > 0) {
-      showToast('Fyll i de obligatoriska fälten', 'error')
+      showToast(t.formFiller.requiredFieldsToast, 'error')
       return
     }
 
@@ -67,7 +69,7 @@ export function FormFiller({
       <div className="form-filler__confirmation">
         <h1>{confirmation.title}</h1>
         <p>{confirmation.message}</p>
-        {confirmation.actions ?? <Link to="/">Till startsidan</Link>}
+        {confirmation.actions ?? <Link to="/">{t.formFiller.backHome}</Link>}
       </div>
     )
   }

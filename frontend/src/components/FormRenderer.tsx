@@ -1,5 +1,6 @@
 import type { Field, FormSchema } from '../lib/formSchema'
 import type { FieldAnswerValue, FormAnswers } from '../lib/formAnswers'
+import { useTranslation } from './languageContext'
 import './FormRenderer.css'
 
 interface FormRendererProps {
@@ -11,13 +12,15 @@ interface FormRendererProps {
 }
 
 export function FormRenderer({ schema, answers, errors, onAnswerChange, readOnly }: FormRendererProps) {
+  const { t } = useTranslation()
   return (
     <div className="form-renderer">
-      {/* schema.title/description är enbart interna (identifierar formuläret i adminlistan
-          m.m.) och visas medvetet inte här -- det som visas är precis det som finns i
-          fields, inklusive ev. HEADING/PARAGRAPH-element som byggaren själv lagt till. */}
+      {/* schema.title/description are internal only (identify the form in the
+          admin list etc.) and are deliberately not shown here -- what's shown
+          is exactly what's in fields, including any HEADING/PARAGRAPH
+          elements the builder itself added. */}
       {schema.fields.length === 0 ? (
-        <p className="form-renderer__empty">Formuläret har inga fält ännu.</p>
+        <p className="form-renderer__empty">{t.formRenderer.emptyForm}</p>
       ) : (
         schema.fields.map((field) => (
           <FormRendererField
