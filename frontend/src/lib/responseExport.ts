@@ -1,11 +1,12 @@
 import type { FormSchema } from './formSchema'
 import { isContentBlock } from './formSchema'
-import type { FieldAnswerValue, FormAnswers } from './formAnswers'
+import type { FormAnswers } from './formAnswers'
 import type { SavedResponse } from './responseStorage'
 import { responseTimestamp } from './responseStorage'
 import { formatResponseDateTime } from './responseFormat'
 import { downloadBlob } from './downloadFile'
 import type { ExportContext } from './exportContext'
+import { formatAnswer } from './exportContext'
 
 function csvEscape(value: string): string {
   // Always quote, not just when a special character is present: Excel/LibreOffice
@@ -14,13 +15,6 @@ function csvEscape(value: string): string {
   // column break during import. Quoting unconditionally is what actually keeps a
   // value like "2 sep. 2026 14:32" in a single cell.
   return `"${value.replace(/"/g, '""')}"`
-}
-
-function formatAnswer(value: FieldAnswerValue | undefined, labels: ExportContext['labels']): string {
-  if (value === undefined) return ''
-  if (typeof value === 'boolean') return value ? labels.yes : labels.no
-  if (Array.isArray(value)) return value.join('; ')
-  return String(value)
 }
 
 export function buildResponseCsv(schema: FormSchema, answers: FormAnswers, ctx: ExportContext): string {

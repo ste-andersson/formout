@@ -9,7 +9,9 @@ interface CsvNotProtectableModalProps {
   // own gating elsewhere in this file) -- hides that option entirely rather
   // than offering a button that can't work.
   onUseXlsxInstead?: () => void
-  onCancel: () => void
+  // Both call sites currently have nothing to do on cancel beyond closing
+  // the dialog -- optional rather than a required no-op prop.
+  onCancel?: () => void
 }
 
 // Shown when password mode is on and someone reaches for CSV specifically --
@@ -29,7 +31,7 @@ export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxIns
       className="export-dialog"
       onClick={(event) => {
         if (event.target === dialogRef.current) {
-          onCancel()
+          onCancel?.()
           close()
         }
       }}
@@ -64,7 +66,7 @@ export function CsvNotProtectableModal({ dialogRef, onExportAnyway, onUseXlsxIns
             type="button"
             className="btn btn--neutral"
             onClick={() => {
-              onCancel()
+              onCancel?.()
               close()
             }}
           >

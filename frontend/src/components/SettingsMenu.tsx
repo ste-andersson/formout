@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/clerk-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { COLOR_SCHEMES, getStoredScheme, setScheme } from '../lib/colorScheme'
 import { applyTheme, getStoredTheme, setTheme, type ThemePreference } from '../lib/theme'
 import type { Language } from '../lib/language'
@@ -29,11 +29,14 @@ export function SettingsMenu() {
   const rootRef = useRef<HTMLDivElement>(null)
   const exceptionDialogRef = useRef<HTMLDialogElement>(null)
 
-  const themeOptions: { id: ThemePreference; label: string }[] = [
-    { id: 'light', label: t.settingsMenu.themeLight },
-    { id: 'dark', label: t.settingsMenu.themeDark },
-    { id: 'system', label: t.settingsMenu.themeSystem },
-  ]
+  const themeOptions = useMemo<{ id: ThemePreference; label: string }[]>(
+    () => [
+      { id: 'light', label: t.settingsMenu.themeLight },
+      { id: 'dark', label: t.settingsMenu.themeDark },
+      { id: 'system', label: t.settingsMenu.themeSystem },
+    ],
+    [t],
+  )
 
   function handleOfflineToggleClick() {
     if (offlineMode) {

@@ -47,6 +47,7 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
   // null while a password-protected payload hasn't been unlocked yet.
   const [answers, setAnswers] = useState<FormAnswers | null>(payload.protected ? null : payload.answers)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const needsPassword = isPasswordProtectedSharedResponsePayload(payload) && !answers
 
   useEffect(() => {
     let cancelled = false
@@ -73,17 +74,23 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
   // Not just "not found" -- while offline, this form may simply never have
   // been cached (e.g. never opened in the editor). Explain that and offer a
   // way out, instead of the plain not-found text looking like a dead end.
+  // `needsPassword` is in the dependency array (not just state.status/
+  // offlineMode): the dialog this opens is always mounted below regardless
+  // of which view is active, but a not-found result that arrives while the
+  // password prompt is still up needs this effect to re-check once the
+  // password is entered and needsPassword flips to false -- state.status/
+  // offlineMode alone wouldn't have changed at that point.
   useEffect(() => {
-    if (state.status === 'not-found' && offlineMode && !unavailableDialogRef.current?.open) {
+    if (!needsPassword && state.status === 'not-found' && offlineMode && !unavailableDialogRef.current?.open) {
       unavailableDialogRef.current?.showModal()
     }
-  }, [state.status, offlineMode])
+  }, [state.status, offlineMode, needsPassword])
 
   useEffect(() => {
-    if (isPasswordProtectedSharedResponsePayload(payload) && !answers && !passwordDialogRef.current?.open) {
+    if (needsPassword && !passwordDialogRef.current?.open) {
       passwordDialogRef.current?.showModal()
     }
-  }, [payload, answers])
+  }, [needsPassword])
 
   async function handlePasswordSubmit(password: string) {
     if (!isPasswordProtectedSharedResponsePayload(payload)) return
@@ -105,46 +112,47 @@ function SharedResponseContent({ payload }: { payload: SharedResponsePayload }) 
     }
   }
 
-  if (isPasswordProtectedSharedResponsePayload(payload) && !answers) {
-    return (
-      <div>
-        <p>{t.sharedResponse.protectedNotice}</p>
-        <PasswordPromptModal
-          dialogRef={passwordDialogRef}
-          variant="enter"
-          error={passwordError}
-          onSubmit={handlePasswordSubmit}
-          // Nothing meaningful to show behind a cancelled password prompt --
-          // unlike ResponseActions.tsx's 'set' variant, where cancelling just
-          // aborts a share action the user was already looking at a page for.
-          onCancel={() => navigate('/')}
-        />
-      </div>
-    )
-  }
-
-  if (state.status === 'loading') {
-    return <p>{t.sharedResponse.loading}</p>
-  }
-
-  if (state.status === 'not-found') {
-    return (
-      <div>
-        <h1>{t.sharedResponse.notFoundTitle}</h1>
-        <p>{t.sharedResponse.notFoundMessage}</p>
-        <Link to="/">{t.formFiller.backHome}</Link>
-        <OfflineContentUnavailableModal
-          dialogRef={unavailableDialogRef}
-          onDisableOfflineMode={() => setOfflineMode(false)}
-        />
-      </div>
-    )
-  }
-
   return (
-    <div className="shared-response">
-      <p className="shared-response__meta">{t.sharedResponse.filledIn(formatResponseDateTime(payload.filledInAt, language))}</p>
-      <FormRenderer schema={state.form.schema} answers={answers ?? {}} readOnly />
+    <div>
+      {needsPassword && <p>{t.sharedResponse.protectedNotice}</p>}
+
+      {!needsPassword && state.status === 'loading' && <p>{t.sharedResponse.loading}</p>}
+
+      {!needsPassword && state.status === 'not-found' && (
+        <>
+          <h1>{t.sharedResponse.notFoundTitle}</h1>
+          <p>{t.sharedResponse.notFoundMessage}</p>
+          <Link to="/">{t.formFiller.backHome}</Link>
+        </>
+      )}
+
+      {!needsPassword && state.status === 'loaded' && answers && (
+        <div className="shared-response">
+          <p className="shared-response__meta">
+            {t.sharedResponse.filledIn(formatResponseDateTime(payload.filledInAt, language))}
+          </p>
+          <FormRenderer schema={state.form.schema} answers={answers} readOnly />
+        </div>
+      )}
+
+      {/* Always mounted, not gated on needsPassword/state.status -- same
+          reasoning as the QR dialog in ResponseActions.tsx: an effect calling
+          showModal() on a ref that isn't attached yet (because the dialog
+          only mounted in one particular view) silently no-ops. */}
+      <PasswordPromptModal
+        dialogRef={passwordDialogRef}
+        variant="enter"
+        error={passwordError}
+        onSubmit={handlePasswordSubmit}
+        // Nothing meaningful to show behind a cancelled password prompt --
+        // unlike ResponseActions.tsx's 'set' variant, where cancelling just
+        // aborts a share action the user was already looking at a page for.
+        onCancel={() => navigate('/')}
+      />
+      <OfflineContentUnavailableModal
+        dialogRef={unavailableDialogRef}
+        onDisableOfflineMode={() => setOfflineMode(false)}
+      />
     </div>
   )
 }
